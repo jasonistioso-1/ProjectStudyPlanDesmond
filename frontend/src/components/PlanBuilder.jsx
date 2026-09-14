@@ -424,15 +424,15 @@ export default function PlanBuilder({
                 {onOpenOfficialDocument && (
                   <button
                     onClick={onOpenOfficialDocument}
-                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                    className="px-3.5 py-1.5 bg-[#8A0000] hover:bg-red-900 text-white rounded-md font-semibold text-xs shadow-sm transition-colors flex items-center gap-1.5 border border-red-800"
                     title="Export official physical study plan document (PDF / PNG)"
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Export Document (PDF/PNG)
+                    <BookOpen className="w-3.5 h-3.5 text-amber-300" /> Export Document (PDF/PNG)
                   </button>
                 )}
                 <button
                   onClick={onSavePlan}
-                  className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
                 >
                   <Save className="w-3.5 h-3.5 text-slate-500" /> Save Draft
                 </button>
@@ -444,10 +444,11 @@ export default function PlanBuilder({
               <div className="space-y-5">
                 {years.map(yearObj => {
                   return (
-                    <div key={yearObj.level} className="bg-slate-50/60 border border-slate-200/80 rounded-xl p-4">
+                    <div key={yearObj.level} className="bg-slate-50/80 border border-slate-200 rounded-xl p-4 shadow-2xs">
                       {/* Year Level Tag */}
                       <div className="flex justify-between items-center mb-3">
-                        <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-md bg-slate-900 text-white">
+                        <span className="text-xs font-mono font-bold px-3 py-1 rounded-md bg-[#8A0000] text-white shadow-2xs flex items-center gap-1.5 border border-red-900">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                           {yearObj.yearName}
                         </span>
                       </div>
@@ -484,10 +485,10 @@ export default function PlanBuilder({
             <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => onRecommendPlan && onRecommendPlan()}
-                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-all flex items-center gap-2"
+                className="px-5 py-2 bg-[#8A0000] hover:bg-red-900 text-white rounded-md font-extrabold text-xs shadow-md transition-all flex items-center gap-2 border border-red-900"
               >
                 <span>Recommend Plan to Student</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5 text-amber-300" />
               </button>
             </div>
           </div>

@@ -69,7 +69,7 @@ export default function WorkflowStepper({ currentStatus, activeRole }) {
                   <div
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 border ${
                       isCurrent
-                        ? 'bg-slate-900 text-white border-slate-900 font-semibold shadow-2xs'
+                        ? 'bg-[#8A0000] text-white border-red-900 font-bold shadow-sm'
                         : isPassed
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium'
                         : 'bg-slate-50 text-slate-400 border-slate-200'
@@ -79,7 +79,7 @@ export default function WorkflowStepper({ currentStatus, activeRole }) {
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     ) : (
                       <span className={`w-4 h-4 rounded-full text-[10px] font-mono flex items-center justify-center font-bold ${
-                        isCurrent ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'
+                        isCurrent ? 'bg-amber-400 text-red-950 font-extrabold' : 'bg-slate-200 text-slate-500'
                       }`}>
                         {idx + 1}
                       </span>
