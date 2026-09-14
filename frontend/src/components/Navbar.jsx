@@ -34,21 +34,21 @@ export default function Navbar({
   const navItems = isChair ? chairNavItems : studentNavItems;
 
   return (
-    <header className="bg-white border-b border-slate-200/80 sticky top-0 z-40 font-sans shadow-2xs">
+    <header className="bg-white border-b border-slate-200/80 sticky top-0 z-40 font-sans shadow-2xs border-t-4 border-t-red-700">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-6">
         
-        {/* Left: Brand Identity (Calm Enterprise SaaS Logo) */}
+        {/* Left: Brand Identity (PT3 Solutions / Murdoch Visualizer aesthetic) */}
         <div 
           className="flex items-center gap-3 cursor-pointer shrink-0 group select-none" 
           onClick={() => onTabChange('STUDY_PLAN')}
         >
-          <div className="bg-slate-900 text-white w-8 h-8 rounded-lg flex items-center justify-center font-extrabold shadow-2xs group-hover:bg-slate-800 transition-colors">
-            <GraduationCap className="w-4 h-4 text-emerald-400" />
+          <div className="bg-red-800 text-white w-8 h-8 rounded-lg flex items-center justify-center font-extrabold shadow-2xs group-hover:bg-red-900 transition-colors">
+            <GraduationCap className="w-4 h-4 text-white" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-bold text-slate-900 tracking-tight">PT3 Solutions</span>
             <span className="text-slate-300 font-light">/</span>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">SPR</span>
+            <span className="text-xs font-bold text-red-800 uppercase tracking-wide bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">SPR Visualiser</span>
           </div>
         </div>
 
