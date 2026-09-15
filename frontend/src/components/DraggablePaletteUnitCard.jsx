@@ -41,13 +41,13 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white border border-slate-200 hover:border-slate-300 p-3 rounded-xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative"
+      className="bg-white border border-slate-200 hover:border-slate-300 p-3.5 rounded-2xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative"
     >
-      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+      <div className="flex items-center gap-3 min-w-0 pr-2">
         <button
           {...attributes}
           {...listeners}
-          className="text-slate-300 group-hover:text-slate-500 cursor-grab active:cursor-grabbing p-0.5 shrink-0 transition-colors"
+          className="p-1.5 rounded-lg bg-slate-100/90 hover:bg-slate-200 text-slate-400 group-hover:text-slate-700 cursor-grab active:cursor-grabbing shrink-0 transition-all border border-slate-200/70 shadow-2xs"
           title="Drag unit into a semester slot"
         >
           <GripVertical className="w-4 h-4" />
@@ -55,35 +55,35 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-heading font-bold text-slate-900 text-xs tracking-tight bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/80 shadow-2xs">{unit.code}</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${lvlBadge}`}>
+            <span className="font-heading font-bold text-slate-900 text-xs tracking-tight bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/80 shadow-2xs">{unit.code}</span>
+            <span className={`text-[10px] px-2.5 py-0.5 rounded-full border ${lvlBadge}`}>
               Level {uLvl}
             </span>
           </div>
-          <div className="text-slate-800 text-xs font-medium truncate mt-1">
+          <div className="text-slate-900 text-xs font-semibold truncate mt-1">
             {unit.title}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-2">
-            <span className="tabular-nums font-semibold text-slate-700">{unit.credit_points || 3} CP</span>
+          <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-2 font-medium">
+            <span className="tabular-nums font-semibold text-slate-700 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/70">{unit.credit_points || 3} CP</span>
             <span className="text-slate-300">•</span>
-            <span className="text-slate-500 font-normal">Perth Campus</span>
+            <span className="text-slate-500">Perth Campus</span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0 relative">
+      <div className="flex items-center gap-1.5 shrink-0 relative">
         <button
           onClick={() => onAdd(unit)}
-          className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-all shadow-2xs flex items-center gap-1"
+          className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
           title="Add to study plan"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Add</span>
+          <span>Add Unit</span>
         </button>
 
         <button
           onClick={() => setShowPicker(!showPicker)}
-          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg transition-colors"
+          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl transition-colors"
           title="Choose specific target semester"
         >
           <ChevronDown className="w-3.5 h-3.5" />

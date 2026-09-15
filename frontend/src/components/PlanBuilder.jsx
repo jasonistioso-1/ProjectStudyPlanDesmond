@@ -519,22 +519,36 @@ export default function PlanBuilder({
                 </div>
 
                 {/* 3-Year Drag & Drop Grid */}
-                <div className="space-y-5">
+                <div className="space-y-6">
                   {years.map(yearObj => {
-                    let yearTagStyle = 'bg-red-700 text-white';
-                    if (yearObj.level === 2) yearTagStyle = 'bg-slate-800 text-white';
-                    else if (yearObj.level === 3) yearTagStyle = 'bg-indigo-900 text-white';
+                    let yearTagStyle = 'bg-gradient-to-r from-red-700 to-red-800 text-white';
+                    let yearDesc = 'Foundation & Core Prerequisites';
+
+                    if (yearObj.level === 2) {
+                      yearTagStyle = 'bg-gradient-to-r from-slate-900 to-slate-800 text-white';
+                      yearDesc = 'Major & System Specialisation';
+                    } else if (yearObj.level === 3) {
+                      yearTagStyle = 'bg-gradient-to-r from-indigo-950 to-indigo-900 text-white';
+                      yearDesc = 'Advanced Capstone & Synthesis';
+                    }
 
                     return (
-                      <div key={yearObj.level} className="bg-slate-50/60 border border-slate-200 rounded-2xl p-4.5">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className={`text-xs font-mono font-bold px-3 py-1 rounded-lg ${yearTagStyle}`}>
-                            {yearObj.yearName}
+                      <div key={yearObj.level} className="bg-slate-50/70 border border-slate-200/90 hover:border-slate-300/90 rounded-2xl p-5 md:p-6 shadow-2xs transition-all space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pb-1 border-b border-slate-200/60">
+                          <div className="flex items-center gap-3">
+                            <span className={`text-sm font-bold font-heading px-4 py-1.5 rounded-xl shadow-xs ${yearTagStyle}`}>
+                              {yearObj.yearName}
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium">
+                              • {yearDesc}
+                            </span>
+                          </div>
+                          <span className="text-xs font-semibold text-slate-600 bg-white border border-slate-200/80 px-3 py-1 rounded-lg shadow-2xs w-fit">
+                            Max 12 CP / Teaching Period
                           </span>
-                          <span className="text-xs font-mono text-slate-500">Max 12 CP / Period</span>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           {defaultPeriodList.map(period => {
                             const droppableId = `year_${yearObj.level}_period_${period.period_id}`;
                             const unitsInPeriod = planUnits.filter(
