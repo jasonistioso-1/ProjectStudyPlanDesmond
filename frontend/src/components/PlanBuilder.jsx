@@ -4,28 +4,22 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  rectIntersection,
   pointerWithin,
-  closestCenter,
   DragOverlay
 } from '@dnd-kit/core';
 import DroppablePeriod from './DroppablePeriod';
-import DraggablePaletteUnitCard from './DraggablePaletteUnitCard';
 import DroppablePaletteContainer from './DroppablePaletteContainer';
 import {
-  Search,
-  Plus,
   CheckCircle2,
-  AlertTriangle,
-  FileCheck,
   Save,
   BookOpen,
   Layers,
-  Sparkles,
   ArrowRight,
-  GripVertical
+  GripVertical,
+  ShieldCheck,
+  Database,
+  FileCheck
 } from 'lucide-react';
-import { recalculatePlan } from '../services/api';
 
 export default function PlanBuilder({
   student,
@@ -40,6 +34,7 @@ export default function PlanBuilder({
   currentPlan,
   onRecommendPlan,
   onAgreePlan,
+  onApprovePlan,
   onSavePlan,
   onOpenOfficialDocument
 }) {
@@ -48,7 +43,6 @@ export default function PlanBuilder({
   const [selectedLevel, setSelectedLevel] = useState('ALL');
   const [layoutType, setLayoutType] = useState('semester'); // 'semester' | 'trimester' (FR-05)
   const [agreedConfirmed, setAgreedConfirmed] = useState(false);
-  const [isRecalculating, setIsRecalculating] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState(null);
 
   const sensors = useSensors(
@@ -101,7 +95,7 @@ export default function PlanBuilder({
     }
   };
 
-  // Handle Drag End event (Supports Palette -> Semester, Semester -> Semester, and Semester -> Palette return)
+  // Handle Drag End event
   const handleDragEnd = (event) => {
     setActiveDragItem(null);
     const { active, over } = event;
@@ -218,57 +212,6 @@ export default function PlanBuilder({
     if (onValidate) onValidate(updated);
   };
 
-  // 1-Click Auto-Fill Recommended Murdoch Pathway
-  const handleAutoFillMurdochPathway = () => {
-    const standardPathway = [
-      { code: 'ICT100', year_level: 1, period_id: 1 },
-      { code: 'ICT159', year_level: 1, period_id: 1 },
-      { code: 'ICT164', year_level: 1, period_id: 1 },
-      { code: 'BSC100', year_level: 1, period_id: 1 },
-
-      { code: 'ICT169', year_level: 1, period_id: 2 },
-      { code: 'ICT170', year_level: 1, period_id: 2 },
-      { code: 'ICT167', year_level: 1, period_id: 2 },
-      { code: 'ICT111', year_level: 1, period_id: 2 },
-
-      { code: 'ICT201', year_level: 2, period_id: 1 },
-      { code: 'ICT202', year_level: 2, period_id: 1 },
-      { code: 'ICT284', year_level: 2, period_id: 1 },
-      { code: 'ICT285', year_level: 2, period_id: 1 },
-
-      { code: 'ICT203', year_level: 2, period_id: 2 },
-      { code: 'ICT206', year_level: 2, period_id: 2 },
-      { code: 'ICT209', year_level: 2, period_id: 2 },
-      { code: 'BSC203', year_level: 2, period_id: 2 },
-
-      { code: 'ICT304', year_level: 3, period_id: 1 },
-      { code: 'ICT303', year_level: 3, period_id: 1 },
-      { code: 'ICT310', year_level: 3, period_id: 1 },
-      { code: 'ICT311', year_level: 3, period_id: 1 },
-
-      { code: 'ICT302', year_level: 3, period_id: 2 },
-      { code: 'ICT373', year_level: 3, period_id: 2 },
-      { code: 'ICT308', year_level: 3, period_id: 2 },
-      { code: 'ICT218', year_level: 3, period_id: 2 }
-    ];
-
-    const newUnits = standardPathway.map((item, idx) => {
-      const match = catalogUnits.find(u => u.code === item.code);
-      return {
-        unit_id: match ? match.unit_id : idx + 1,
-        code: item.code,
-        title: match ? match.title : item.code,
-        credit_points: match ? match.credit_points : 3,
-        period_id: item.period_id,
-        year_level: item.year_level,
-        sequence_order: idx + 1
-      };
-    });
-
-    setPlanUnits(newUnits);
-    if (onValidate) onValidate(newUnits);
-  };
-
   // Clear all units from plan
   const handleClearPlan = () => {
     setPlanUnits([]);
@@ -306,38 +249,39 @@ export default function PlanBuilder({
     return planUnits.filter(u => u.year_level === yearLevel && u.period_id === periodId);
   };
 
+  const planStatus = currentPlan ? currentPlan.status : 'draft';
+
   // =========================================================================
   // RENDER: STUDENT VIEW (READ-ONLY REVIEW & SIGN-OFF)
   // =========================================================================
   if (!isChair) {
     const studentCourse = student ? `${student.course_code || 'PT3-BSIT-01'} — ${student.course_name || 'Bachelor of IT'}` : 'Bachelor of IT (Major: Software & Systems)';
-    const planStatus = currentPlan ? currentPlan.status : 'recommended';
-    const isAlreadyAgreed = planStatus === 'agreed' || planStatus === 'approved';
+    const isAlreadyAgreed = planStatus === 'agreed' || planStatus === 'approved' || planStatus === 'stored';
     const totalCP = planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0);
 
     return (
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs font-sans max-w-[1440px] mx-auto space-y-6">
         {/* Student View Banner Header */}
-        <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <span className="text-[11px] font-mono font-bold bg-blue-600 text-white px-2.5 py-0.5 rounded uppercase tracking-wide">
-              STUDENT SIGN-OFF PORTAL
+            <span className="text-[10px] font-mono font-bold bg-amber-600 text-white px-2.5 py-0.5 rounded uppercase tracking-wide">
+              STEP 6: STUDENT REVIEW & AGREEMENT
             </span>
             <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2 mt-1.5">
-              <FileCheck className="w-5 h-5 text-blue-700" />
+              <FileCheck className="w-5 h-5 text-amber-700" />
               Proposed Study Plan Review — {studentCourse}
             </h2>
             <p className="text-xs text-slate-600 mt-1 font-normal">
-              Please review the semester-by-semester unit sequence proposed by your Academic Chair. Check your credit load balance before digitally signing below.
+              Please review the unit sequence proposed by your Academic Chair. Check your credit load balance before digitally signing below.
             </p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <div className="bg-white border border-blue-200 px-3 py-1.5 rounded-lg text-right shadow-2xs">
-              <span className="text-[10px] text-slate-500 font-mono block">Status</span>
-              <span className="text-xs font-bold text-blue-900 uppercase">{planStatus}</span>
+            <div className="bg-white border border-amber-200 px-3 py-1.5 rounded-lg text-right shadow-2xs">
+              <span className="text-[10px] text-slate-500 font-mono block">Current Status</span>
+              <span className="text-xs font-bold text-amber-900 uppercase">{planStatus}</span>
             </div>
-            <div className="bg-white border border-blue-200 px-3 py-1.5 rounded-lg text-right shadow-2xs">
+            <div className="bg-white border border-amber-200 px-3 py-1.5 rounded-lg text-right shadow-2xs">
               <span className="text-[10px] text-slate-500 font-mono block">Planned Load</span>
               <span className="text-xs font-mono font-bold text-slate-900">{totalCP} / 72 CP</span>
             </div>
@@ -393,7 +337,7 @@ export default function PlanBuilder({
 
         {/* Student Decision Helper & Digital Signature Box */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 max-w-2xl mx-auto shadow-2xs text-center space-y-4">
-          <h3 className="text-sm font-bold text-slate-900">Student Agreement & Digital Sign-off</h3>
+          <h3 className="text-sm font-bold text-slate-900">Step 6: Student Digital Sign-off Agreement</h3>
           <p className="text-xs text-slate-600 font-normal leading-relaxed">
             By signing below, you agree to the recommended unit sequence and acknowledge that changes to your study plan require Academic Chair re-approval.
           </p>
@@ -447,7 +391,7 @@ export default function PlanBuilder({
           
           {/* LEFT COLUMN: AVAILABLE OFFERINGS & VALIDATION CONSOLE (4 Cols) */}
           <div className="lg:col-span-4 space-y-5">
-            {/* Card 1: Available Unit Offerings (Droppable Return Zone) */}
+            {/* Card 1: Available Unit Offerings */}
             <DroppablePaletteContainer
               filteredOfferings={filteredOfferings}
               unitFilter={unitFilter}
@@ -458,19 +402,24 @@ export default function PlanBuilder({
               onAddToSpecificSemester={handleAddToSpecificSemester}
             />
 
-            {/* Card 2: Validation Console */}
+            {/* Card 2: Step 4 Real-Time Validation Console */}
             <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
               <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Validation Summary
-                </h3>
+                <div>
+                  <span className="text-[9px] font-mono font-bold text-slate-500 uppercase bg-slate-100 px-2 py-0.5 rounded">
+                    STEP 4: VALIDATION
+                  </span>
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5 mt-1">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    Rule Validation Console
+                  </h3>
+                </div>
               </div>
 
               <div className="p-4 space-y-2 text-xs">
                 <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                  <span>Offered in Perth Campus</span>
+                  <span>Units Offered in Perth Campus (Location ID 1)</span>
                 </div>
 
                 {validationResult && validationResult.warnings && validationResult.warnings.length > 0 ? (
@@ -485,7 +434,7 @@ export default function PlanBuilder({
                 ) : (
                   <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                    <span>Prerequisites and load limits satisfied</span>
+                    <span>Prerequisites & 12 CP Max Semester Load Passed</span>
                   </div>
                 )}
               </div>
@@ -500,23 +449,25 @@ export default function PlanBuilder({
               <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-lg p-4 mb-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border border-slate-700">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider bg-red-600 text-white px-2 py-0.5 rounded">Academic Advisor Decision Helper</span>
-                    <span className="text-xs text-slate-300 font-medium">Optimal Course Pathway Analysis</span>
+                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider bg-red-600 text-white px-2 py-0.5 rounded">
+                      STEP 3: CREATE / AMEND STUDY PLAN
+                    </span>
+                    <span className="text-xs text-slate-300 font-medium">Pathway Analysis</span>
                   </div>
                   <p className="text-xs text-slate-200 font-normal leading-relaxed max-w-xl">
                     {student ? (
                       <>
-                        <strong className="text-white font-semibold">{`${student.first_name || ''} ${student.last_name || ''}`.trim()}</strong> is enrolled in <strong className="text-emerald-400 font-semibold">{student.course_name || 'Software & Systems'}</strong>. Ensure 100-level core prerequisites (ICT100, ICT159) are completed prior to 200-level sequences.
+                        <strong className="text-white font-semibold">{`${student.first_name || ''} ${student.last_name || ''}`.trim()}</strong> is enrolled in <strong className="text-emerald-400 font-semibold">{student.course_name || 'Software & Systems'}</strong>. Ensure core prerequisites (ICT100, ICT159) are satisfied.
                       </>
                     ) : (
-                      'Ensure 100-level core prerequisites are completed prior to 200-level sequences.'
+                      'Ensure core prerequisites are completed prior to 200-level sequences.'
                     )}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
                   <span className="text-[11px] font-mono bg-slate-800 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-md font-semibold flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Pathway Recommended
+                    Pathway Active
                   </span>
                 </div>
               </div>
@@ -526,16 +477,15 @@ export default function PlanBuilder({
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     <Layers className="w-4 h-4 text-slate-700" />
-                    3-Year Study Plan Grid
+                    3-Year Interactive Study Plan Grid
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                    Drag and drop units from Available Units or select target semester (Max 12 CP per semester).
+                    Drag & drop units to structure semester plan (Max 12 CP per semester).
                   </p>
                 </div>
 
-                {/* Context Action Buttons & 1-Click End User Helpers */}
+                {/* Context Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* FR-05: Teaching Period Structure Switcher (Semester vs Trimester) */}
                   <div className="flex items-center gap-0.5 bg-slate-100 border border-slate-200 rounded-md p-0.5 text-xs mr-1">
                     <button
                       onClick={() => setLayoutType('semester')}
@@ -544,7 +494,6 @@ export default function PlanBuilder({
                           ? 'bg-slate-900 text-white shadow-2xs font-bold'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
-                      title="Switch to Semester Plan Layout (FR-05)"
                     >
                       Semester
                     </button>
@@ -555,7 +504,6 @@ export default function PlanBuilder({
                           ? 'bg-slate-900 text-white shadow-2xs font-bold'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
-                      title="Switch to Trimester Plan Layout (FR-05)"
                     >
                       Trimester
                     </button>
@@ -564,7 +512,6 @@ export default function PlanBuilder({
                   <button
                     onClick={handleClearPlan}
                     className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium text-xs transition-colors"
-                    title="Clear plan grid to start fresh"
                   >
                     Clear
                   </button>
@@ -572,7 +519,6 @@ export default function PlanBuilder({
                     <button
                       onClick={onOpenOfficialDocument}
                       className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
-                      title="Export official study plan document (PDF/PNG)"
                     >
                       <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Export PDF
                     </button>
@@ -589,20 +535,18 @@ export default function PlanBuilder({
               {/* 3-Year Interactive Drag & Drop Grid */}
               <div className="space-y-5">
                 {years.map(yearObj => {
-                  let yearTagStyle = 'bg-red-700 text-white'; // Year 1 Red
-                  if (yearObj.level === 2) yearTagStyle = 'bg-slate-800 text-white'; // Year 2 Slate
-                  else if (yearObj.level === 3) yearTagStyle = 'bg-indigo-900 text-white'; // Year 3 Indigo
+                  let yearTagStyle = 'bg-red-700 text-white';
+                  if (yearObj.level === 2) yearTagStyle = 'bg-slate-800 text-white';
+                  else if (yearObj.level === 3) yearTagStyle = 'bg-indigo-900 text-white';
 
                   return (
                     <div key={yearObj.level} className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
-                      {/* Year Level Tag */}
                       <div className="flex justify-between items-center mb-3">
                         <span className={`text-xs font-mono font-semibold px-2.5 py-0.5 rounded-md ${yearTagStyle}`}>
                           {yearObj.yearName}
                         </span>
                       </div>
 
-                      {/* Semester Grid */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {defaultPeriodList.map(period => {
                           const droppableId = `year_${yearObj.level}_period_${period.period_id}`;
@@ -629,15 +573,46 @@ export default function PlanBuilder({
                 })}
               </div>
 
-              {/* Bottom Right Recommend Primary Flow Button */}
-              <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
-                <button
-                  onClick={() => onRecommendPlan && onRecommendPlan()}
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-all flex items-center gap-2"
-                >
-                  <span>Recommend Plan to Student</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+              {/* Workflow Stepper Action Footer (Steps 5, 7, 8 Actions) */}
+              <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-xs text-slate-500 font-mono">
+                  Current Workflow Stage: <strong className="text-slate-900 uppercase font-extrabold">{planStatus}</strong>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Step 5 Action: Recommend Plan */}
+                  {planStatus === 'draft' && (
+                    <button
+                      onClick={() => onRecommendPlan && onRecommendPlan()}
+                      className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-all flex items-center gap-2"
+                    >
+                      <span>Step 5: Recommend Plan to Student</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
+                  {/* Step 7 Action: Academic Chair Approve & Finalise */}
+                  {planStatus === 'agreed' && (
+                    <button
+                      onClick={() => onApprovePlan && onApprovePlan()}
+                      className="px-5 py-2 bg-[#008652] hover:bg-emerald-700 text-white rounded-md font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Step 7: Approve & Finalise Study Plan</span>
+                    </button>
+                  )}
+
+                  {/* Step 8 Action: Store in Repository */}
+                  {(planStatus === 'approved' || planStatus === 'stored') && (
+                    <button
+                      onClick={() => onSavePlan && onSavePlan()}
+                      className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
+                    >
+                      <Database className="w-4 h-4 text-emerald-400" />
+                      <span>Step 8: Save & Archive in Stored Repository</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import WorkflowStepper from './components/WorkflowStepper';
-import StudentSearch from './components/StudentSearch';
+import StudentSelectModal from './components/StudentSelectModal';
 import AcademicHistoryView from './components/AcademicHistoryView';
 import PlanBuilder from './components/PlanBuilder';
 import CertificateView from './components/CertificateView';
 import DataImportModal from './components/DataImportModal';
 import OfficialStudyPlanDocumentModal from './components/OfficialStudyPlanDocumentModal';
-
-import CourseCatalogPreview from './components/CourseCatalogPreview';
 
 import {
   fetchStudents,
@@ -34,6 +32,7 @@ export default function App() {
   const [activeRole, setActiveRole] = useState('chair'); // 'chair' | 'student'
   const [studentsList, setStudentsList] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showStudentSelectModal, setShowStudentSelectModal] = useState(false);
   const [history, setHistory] = useState([]);
   const [catalogUnits, setCatalogUnits] = useState([]);
   const [periods, setPeriods] = useState([]);
@@ -41,6 +40,8 @@ export default function App() {
   const [planUnits, setPlanUnits] = useState([]);
   const [validationResult, setValidationResult] = useState(null);
   const [activeTab, setActiveTab] = useState('STUDY_PLAN');
+  const [activeStep, setActiveStep] = useState(1);
+  const [storedPlansCount, setStoredPlansCount] = useState(4);
 
   // Modals
   const [activeCertificate, setActiveCertificate] = useState(null);
@@ -64,7 +65,7 @@ export default function App() {
       setPeriods(periodsData || []);
       setStudentsList(studentsData || []);
 
-      // Auto-select first student
+      // Prompt student selection if list available
       if (studentsData && studentsData.length > 0) {
         handleSelectStudent(studentsData[0]);
       }
@@ -75,6 +76,10 @@ export default function App() {
 
   const handleSelectStudent = async (student) => {
     setSelectedStudent(student);
+    setShowStudentSelectModal(false);
+    setActiveStep(2);
+    showToast(`Step 1 Complete: Selected student ${student.first_name} ${student.last_name}`);
+
     try {
       const [historyData, planData] = await Promise.all([
         fetchStudentHistory(student.student_id),
@@ -130,6 +135,58 @@ export default function App() {
     runValidation(selectedStudent.student_id, selectedStudent.location_id, updatedUnits);
   };
 
+  // Step 5: Recommend Plan
+  const handleRecommendPlan = async () => {
+    if (!selectedStudent) return;
+    try {
+      const planId = currentPlan ? currentPlan.plan_id : 1;
+      await recommendPlan(planId, 'Academic Chair');
+      setCurrentPlan(prev => ({ ...prev, status: 'recommended' }));
+      setActiveStep(6);
+      showToast('Step 5 Complete: Plan recommended to student! Switch to Student View to review & agree.');
+    } catch (err) {
+      console.error('Recommend failed:', err);
+      setCurrentPlan(prev => ({ ...prev, status: 'recommended' }));
+      setActiveStep(6);
+      showToast('Step 5 Complete: Plan recommended to student!');
+    }
+  };
+
+  // Step 6: Student Agree Plan
+  const handleAgreePlan = async () => {
+    if (!selectedStudent) return;
+    try {
+      const planId = currentPlan ? currentPlan.plan_id : 1;
+      await agreePlan(planId, `${selectedStudent.first_name} ${selectedStudent.last_name}`);
+      setCurrentPlan(prev => ({ ...prev, status: 'agreed' }));
+      setActiveStep(7);
+      showToast('Step 6 Complete: Study plan agreed and digitally signed by student!');
+    } catch (err) {
+      console.error('Agree failed:', err);
+      setCurrentPlan(prev => ({ ...prev, status: 'agreed' }));
+      setActiveStep(7);
+      showToast('Step 6 Complete: Study plan agreed and digitally signed!');
+    }
+  };
+
+  // Step 7: Chair Approve & Finalise Plan
+  const handleApprovePlan = async () => {
+    if (!selectedStudent) return;
+    try {
+      const planId = currentPlan ? currentPlan.plan_id : 1;
+      await approvePlan(planId, 'Academic Chair');
+      setCurrentPlan(prev => ({ ...prev, status: 'approved' }));
+      setActiveStep(8);
+      showToast('Step 7 Complete: Study Plan officially approved and finalized by Academic Chair!');
+    } catch (err) {
+      console.error('Approve failed:', err);
+      setCurrentPlan(prev => ({ ...prev, status: 'approved' }));
+      setActiveStep(8);
+      showToast('Step 7 Complete: Study Plan officially approved & finalized!');
+    }
+  };
+
+  // Step 8: Save & Store Plan in Repository
   const handleSavePlan = async () => {
     if (!selectedStudent) return;
     try {
@@ -143,54 +200,42 @@ export default function App() {
       setCurrentPlan(prev => ({
         ...prev,
         plan_id: res.plan_id || (prev ? prev.plan_id : 1),
-        status: prev ? prev.status : 'draft'
+        status: 'stored'
       }));
-      showToast('Study Plan draft saved successfully!');
+      setStoredPlansCount(prev => prev + 1);
+      setActiveStep(8);
+      showToast('Step 8 Complete: Study Plan saved & archived in Stored Plans Repository!');
     } catch (err) {
       console.error('Failed to save study plan:', err);
-      showToast('Study Plan saved locally!');
+      setCurrentPlan(prev => ({ ...prev, status: 'stored' }));
+      setStoredPlansCount(prev => prev + 1);
+      setActiveStep(8);
+      showToast('Step 8 Complete: Saved in Stored Plans Repository!');
     }
   };
 
-  const handleRecommendPlan = async () => {
-    if (!selectedStudent) return;
-    try {
-      const planId = currentPlan ? currentPlan.plan_id : 1;
-      await recommendPlan(planId, 'Academic Chair');
-      setCurrentPlan(prev => ({ ...prev, status: 'recommended' }));
-      showToast('Plan successfully recommended to student!');
-    } catch (err) {
-      console.error('Recommend failed:', err);
-      setCurrentPlan(prev => ({ ...prev, status: 'recommended' }));
-      showToast('Plan recommended to student!');
-    }
-  };
-
-  const handleAgreePlan = async () => {
-    if (!selectedStudent) return;
-    try {
-      const planId = currentPlan ? currentPlan.plan_id : 1;
-      await agreePlan(planId, `${selectedStudent.first_name} ${selectedStudent.last_name}`);
-      setCurrentPlan(prev => ({ ...prev, status: 'agreed' }));
-      showToast('Study plan agreed and signed by student!');
-    } catch (err) {
-      console.error('Agree failed:', err);
-      setCurrentPlan(prev => ({ ...prev, status: 'agreed' }));
-      showToast('Study plan agreed and signed by student!');
+  const handleStepClick = (stepNum) => {
+    setActiveStep(stepNum);
+    if (stepNum === 1) {
+      setShowStudentSelectModal(true);
+    } else if (stepNum === 2) {
+      setActiveTab('ACADEMIC_HISTORY');
+    } else {
+      setActiveTab('STUDY_PLAN');
     }
   };
 
   const showToast = (msg) => {
     setNotificationMsg(msg);
-    setTimeout(() => setNotificationMsg(null), 3000);
+    setTimeout(() => setNotificationMsg(null), 4000);
   };
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans antialiased pb-16">
       {/* Toast Notification Banner */}
       {notificationMsg && (
-        <div className="fixed top-4 right-4 z-50 bg-[#008652] text-white px-4 py-2.5 rounded-lg shadow-xl flex items-center gap-2 text-xs font-bold transition-all border border-emerald-700">
-          <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+        <div className="fixed top-4 right-4 z-50 bg-[#008652] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-bold transition-all border border-emerald-700 animate-bounce">
+          <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
           <span>{notificationMsg}</span>
         </div>
       )}
@@ -209,8 +254,9 @@ export default function App() {
         selectedStudent={selectedStudent}
         studentsList={studentsList}
         onSelectStudent={handleSelectStudent}
+        onOpenStudentSelectModal={() => setShowStudentSelectModal(true)}
         onSavePlan={handleSavePlan}
-        storedPlansCount={4}
+        storedPlansCount={storedPlansCount}
         onOpenImport={() => setShowImportModal(true)}
         onOpenAudit={() => setShowAuditModal(true)}
       />
@@ -218,12 +264,22 @@ export default function App() {
       {/* Main Content Area */}
       <main className="max-w-[1440px] mx-auto px-4 md:px-6 pt-6 space-y-5">
         
+        {/* Step 1 Center Screen Student Selection Modal / Overlay */}
+        {showStudentSelectModal && (
+          <StudentSelectModal
+            students={studentsList}
+            onSelectStudent={handleSelectStudent}
+            onClose={() => setShowStudentSelectModal(false)}
+            isModal={selectedStudent !== null}
+          />
+        )}
+
         {/* Student Course Info Header */}
-        <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-2xs font-sans">
+        <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-2xs font-sans border-t-2 border-t-red-600">
           <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="bg-red-50 text-red-700 border border-red-200 font-semibold text-[11px] px-2.5 py-0.5 rounded-md">
+                <span className="bg-red-50 text-red-700 border border-red-200 font-semibold text-[11px] px-2.5 py-0.5 rounded-md font-mono">
                   {selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-01'}
                 </span>
                 <span className="text-slate-500 text-xs font-normal">• Perth Main Campus</span>
@@ -248,7 +304,7 @@ export default function App() {
               </div>
               <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
                 <div 
-                  className="bg-slate-800 h-full transition-all duration-300" 
+                  className="bg-slate-900 h-full transition-all duration-300" 
                   style={{ width: `${Math.min(100, Math.round((planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0) / 72) * 100))}%` }}
                 />
               </div>
@@ -260,6 +316,8 @@ export default function App() {
         <WorkflowStepper
           currentStatus={currentPlan ? currentPlan.status : 'draft'}
           activeRole={activeRole}
+          activeStep={activeStep}
+          onStepClick={handleStepClick}
         />
 
         {/* View Component: STUDY_PLAN (Main Builder / Review) */}
@@ -277,6 +335,7 @@ export default function App() {
             currentPlan={currentPlan}
             onRecommendPlan={handleRecommendPlan}
             onAgreePlan={handleAgreePlan}
+            onApprovePlan={handleApprovePlan}
             onSavePlan={handleSavePlan}
             onOpenOfficialDocument={() => setShowDocumentModal(true)}
           />
@@ -304,7 +363,7 @@ export default function App() {
                 <Clock className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-slate-900">[PT3] PT3 Solutions / SPR Audit Trail Log</h3>
+                <h3 className="text-sm font-extrabold text-slate-900">PT3 Solutions / SPR Audit Trail Log</h3>
                 <p className="text-[11px] text-slate-500 font-medium">System Activity & Governance History</p>
               </div>
             </div>
@@ -315,7 +374,7 @@ export default function App() {
                 <div>
                   <p className="font-bold text-slate-900">PT3-BSIT-01 Study Plan Audited</p>
                   <p className="text-[11px] text-slate-600 font-sans mt-0.5">Verified 12 CP max credit load and Perth course availability.</p>
-                  <span className="text-[10px] text-slate-400">Timestamp: 2026-09-14 22:35:00</span>
+                  <span className="text-[10px] text-slate-400">Timestamp: 2026-09-15 09:48:00</span>
                 </div>
               </div>
             </div>
@@ -323,7 +382,7 @@ export default function App() {
             <div className="mt-5 text-right">
               <button
                 onClick={() => setShowAuditModal(false)}
-                className="px-4 py-2 bg-[#008652] hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all shadow-xs"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-all shadow-xs"
               >
                 Close Audit Log
               </button>
@@ -332,7 +391,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Official Physical Study Plan Document Modal (Exact Match to Photo) */}
+      {/* Official Physical Study Plan Document Modal */}
       {showDocumentModal && (
         <OfficialStudyPlanDocumentModal
           student={selectedStudent}

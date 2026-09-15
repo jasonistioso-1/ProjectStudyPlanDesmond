@@ -2,8 +2,8 @@ import React from 'react';
 import {
   GraduationCap,
   Clock,
-  Database,
-  UserCheck
+  UserCheck,
+  Search
 } from 'lucide-react';
 
 export default function Navbar({
@@ -14,6 +14,7 @@ export default function Navbar({
   selectedStudent,
   studentsList = [],
   onSelectStudent,
+  onOpenStudentSelectModal,
   storedPlansCount = 4,
   onOpenImport,
   onOpenAudit
@@ -74,30 +75,20 @@ export default function Navbar({
 
         {/* Right: Active Context & Role Switcher */}
         <div className="flex items-center gap-3">
-          {/* Active Student Picker */}
+          {/* Active Student Selector Trigger */}
           {isChair && (
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500 font-medium hidden lg:inline">Student:</span>
-              {studentsList.length > 0 ? (
-                <select
-                  value={selectedStudent ? selectedStudent.student_id : ''}
-                  onChange={(e) => {
-                    const st = studentsList.find(s => String(s.student_id) === String(e.target.value));
-                    if (st) onSelectStudent(st);
-                  }}
-                  className="bg-white border border-slate-200 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-900 shadow-2xs focus:outline-none focus:border-slate-400 cursor-pointer hover:bg-slate-50 transition-colors max-w-[200px] truncate"
-                >
-                  {studentsList.map(st => (
-                    <option key={st.student_id} value={st.student_id}>
-                      {st.first_name} {st.last_name} ({st.student_number})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="font-semibold text-slate-900 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
-                  {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
+              <button
+                onClick={onOpenStudentSelectModal}
+                className="bg-white hover:bg-slate-50 border border-slate-200 rounded-md px-3 py-1 text-xs font-semibold text-slate-900 shadow-2xs flex items-center gap-1.5 transition-colors"
+                title="Click to select another student record (Step 1)"
+              >
+                <UserCheck className="w-3.5 h-3.5 text-red-600" />
+                <span className="truncate max-w-[140px]">
+                  {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Select Student'}
                 </span>
-              )}
+                <span className="text-[10px] text-slate-400 font-mono">({selectedStudent ? selectedStudent.student_number : 'Step 1'})</span>
+              </button>
             </div>
           )}
 
