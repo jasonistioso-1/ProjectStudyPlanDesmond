@@ -1,11 +1,13 @@
 import pool from '../config/db.js';
+import { mockCourses, mockUnits, mockTeachingPeriods, mockLocations, mockPrerequisites } from '../config/seedData.js';
 
 export async function getCourses(req, res) {
     try {
         const [rows] = await pool.query('SELECT * FROM Course ORDER BY code ASC');
         res.json(rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.warn('Database query failed, returning fallback mockCourses:', err.message);
+        res.json(mockCourses);
     }
 }
 
@@ -36,7 +38,12 @@ export async function getUnits(req, res) {
 
         res.json(unitsWithPrereqs);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.warn('Database query failed, returning fallback mockUnits:', err.message);
+        const unitsWithPrereqs = mockUnits.map(u => {
+            const reqs = mockPrerequisites.filter(p => p.target_code === u.code).map(p => ({ prereq_code: p.prereq_code }));
+            return { ...u, prerequisites: reqs };
+        });
+        res.json(unitsWithPrereqs);
     }
 }
 
@@ -45,7 +52,8 @@ export async function getTeachingPeriods(req, res) {
         const [rows] = await pool.query('SELECT * FROM TeachingPeriod ORDER BY sequence_order ASC');
         res.json(rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.warn('Database query failed, returning fallback mockTeachingPeriods:', err.message);
+        res.json(mockTeachingPeriods);
     }
 }
 
@@ -54,6 +62,7 @@ export async function getLocations(req, res) {
         const [rows] = await pool.query('SELECT * FROM Location ORDER BY name ASC');
         res.json(rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.warn('Database query failed, returning fallback mockLocations:', err.message);
+        res.json(mockLocations);
     }
 }

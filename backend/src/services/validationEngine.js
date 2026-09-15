@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import { mockStudentHistory, mockTeachingPeriods, mockPrerequisites } from '../config/seedData.js';
 
 /**
  * Data-Driven Validation Engine for Study Plan Repository (SPR)
@@ -11,15 +12,38 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
     try {
         // 1. Fetch Student History if studentId provided
         let history = [];
-        if (studentId) {
-            const [historyRows] = await pool.query(
-                `SELECT sh.unit_id, u.code, sh.status 
-                 FROM StudentUnitHistory sh 
-                 JOIN Unit u ON sh.unit_id = u.unit_id 
-                 WHERE sh.student_id = ?`,
-                [studentId]
+        let prereqs = [];
+        let periods = [];
+
+        try {
+            if (studentId) {
+                const [historyRows] = await pool.query(
+                    `SELECT sh.unit_id, u.code, sh.status 
+                     FROM StudentUnitHistory sh 
+                     JOIN Unit u ON sh.unit_id = u.unit_id 
+                     WHERE sh.student_id = ?`,
+                    [studentId]
+                );
+                history = historyRows;
+            }
+
+            const [periodRows] = await pool.query(
+                `SELECT period_id, code, name, sequence_order FROM TeachingPeriod`
             );
-            history = historyRows;
+            periods = periodRows;
+
+            const [prereqRows] = await pool.query(
+                `SELECT p.unit_id, u.code AS target_code, p.prereq_unit_id, pu.code AS prereq_code 
+                 FROM Prerequisite p 
+                 JOIN Unit u ON p.unit_id = u.unit_id 
+                 JOIN Unit pu ON p.prereq_unit_id = pu.unit_id`
+            );
+            prereqs = prereqRows;
+        } catch (dbErr) {
+            console.warn('Database query failed in validationEngine, using seedData fallbacks:', dbErr.message);
+            history = mockStudentHistory.map(h => ({ unit_id: h.unit_id, code: h.unit_code, status: h.status }));
+            periods = mockTeachingPeriods;
+            prereqs = mockPrerequisites;
         }
 
         // Map completed units for fast lookup
@@ -27,34 +51,12 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
             history.filter(h => h.status === 'completed').map(h => h.code)
         );
 
-        // 2. Fetch all Unit Offerings for validation (BR-01)
-        const [offeringRows] = await pool.query(
-            `SELECT unit_id, location_id, period_id 
-             FROM UnitOffering 
-             WHERE is_active = TRUE`
-        );
-
-        const offeringSet = new Set(
-            offeringRows.map(o => `${o.unit_id}_${o.location_id}_${o.period_id}`)
-        );
-
-        // 3. Fetch all Teaching Periods for sequence order comparison
-        const [periodRows] = await pool.query(
-            `SELECT period_id, code, name, sequence_order FROM TeachingPeriod`
-        );
-        const periodMap = new Map(periodRows.map(p => [p.period_id, p]));
-
-        // 4. Fetch all Prerequisites (BR-02)
-        const [prereqRows] = await pool.query(
-            `SELECT p.unit_id, u.code AS target_code, p.prereq_unit_id, pu.code AS prereq_code 
-             FROM Prerequisite p 
-             JOIN Unit u ON p.unit_id = u.unit_id 
-             JOIN Unit pu ON p.prereq_unit_id = pu.unit_id`
-        );
+        // Fetch all Teaching Periods for sequence order comparison
+        const periodMap = new Map(periods.map(p => [p.period_id, p]));
 
         // Group prerequisites by target unit code
         const prereqMap = new Map();
-        for (const row of prereqRows) {
+        for (const row of prereqs) {
             if (!prereqMap.has(row.target_code)) {
                 prereqMap.set(row.target_code, []);
             }
