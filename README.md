@@ -13,6 +13,7 @@
 5. [Business Rules & Validation Engine](#-business-rules--validation-engine)
 6. [API Endpoints Reference](#-api-endpoints-reference)
 7. [Acceptance Test Matrix](#-acceptance-test-matrix)
+8. [Change Log & Approval Log](#-change-log--approval-log)
 
 ---
 
@@ -27,7 +28,7 @@
 
 ## 🚀 Running on Localhost (Standard Ports)
 
-### Method 1: Running via Docker Compose (Recommended)
+### Running via Docker Compose (Recommended)
 
 1. Open project directory:
    ```bash
@@ -52,10 +53,23 @@ Search & Select Student  ──>  Check Prerequisites  ──>  Review & Sign  �
 Build/Edit Study Plan         & Unit Offerings        Digital Agreement    Issue Certificate
 ```
 
-1. **Select Student**: Search student (e.g. `Alex Johnson` or `34001001`) at **PT3 Solutions**.
+1. **Select Student**: Search student (e.g. `Alex Mercer` or `PT3-2026-001`) at **PT3 Solutions**.
 2. **Review Academic History**: View passed units (green), enrolled units (amber), and failed units (red).
 3. **Build Plan**: Drag units from palette into Year 1, 2, 3 semester slots (S1/S2 or T1/T2/T3).
 4. **Real-time Validation**: Check `ValidationPanel` for BR-01 (offering mismatch), BR-02 (prerequisite violation), or CP overload (>12 CP).
-5. **Recommend Plan**: Switch role to Academic Chair and click **Recommend Plan for Student Review**.
-6. **Student Sign**: Switch role to Student and click **Review & Sign Student Agreement**.
-7. **Final Approval & Certificate**: Switch role back to Academic Chair and click **Final Approve & Issue Certificate**. Official **Certificate of Entitlement** issued by PT3 Solutions displays with print support.
+5. **Recommend Plan**: Switch role to Academic Chair and click **Step 5: Recommend Plan**.
+6. **Student Sign**: Switch role to Student View and click **Step 6: Sign & Agree to Study Plan**.
+7. **Final Approval & Certificate**: Switch role back to Academic Chair and click **Step 7: Approve & Finalise**.
+8. **Stored Plan Repository**: Plan saved to database and retrieved in **Stored Plans Repository (FR-16, FR-17)**.
+
+---
+
+## 📜 Change Log & Approval Log (Log Perubahan & Persetujuan)
+
+| Version | Date | Description / Summary of Changes | Author / Stakeholder |
+|---|---|---|---|
+| **v0.1** | 9 Sep 2026 | Initial outsourced development requirements based on first client meeting with PT03 team. | PT3 Solutions & Peter |
+| **v1.0** | 14 Sep 2026 | Full-stack core release: 11 MySQL tables, Express API endpoints, validation engine (BR-01, BR-02), and React drag & drop plan builder. | Development Team |
+| **v1.1** | 15 Sep 2026 | **ICT302 Workflow Alignment Release**: Added Step 1 center screen student selector, 8-step workflow progress bar, Stored Plans Repository table (`StoredPlansView.jsx`), PDF export, and version audit trail log. | PT3 Solutions Dev Team |
+
+---
