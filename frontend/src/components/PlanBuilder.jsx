@@ -18,7 +18,9 @@ import {
   GripVertical,
   ShieldCheck,
   Database,
-  FileCheck
+  FileCheck,
+  AlertTriangle,
+  Plus
 } from 'lucide-react';
 
 export default function PlanBuilder({
@@ -39,6 +41,7 @@ export default function PlanBuilder({
   onOpenOfficialDocument
 }) {
   const isChair = activeRole === 'chair';
+  const [builderTab, setBuilderTab] = useState('GRID'); // 'GRID' | 'PALETTE' | 'VALIDATION'
   const [unitFilter, setUnitFilter] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('ALL');
   const [layoutType, setLayoutType] = useState('semester'); // 'semester' | 'trimester' (FR-05)
@@ -74,13 +77,12 @@ export default function PlanBuilder({
 
   // Warnings mapping
   const warningsByUnit = {};
-  if (validationResult && validationResult.warnings) {
-    validationResult.warnings.forEach(w => {
-      if (w.unitCode && !warningsByUnit[w.unitCode]) {
-        warningsByUnit[w.unitCode] = w.message;
-      }
-    });
-  }
+  const warningsList = (validationResult && validationResult.warnings) ? validationResult.warnings : [];
+  warningsList.forEach(w => {
+    if (w.unitCode && !warningsByUnit[w.unitCode]) {
+      warningsByUnit[w.unitCode] = w.message;
+    }
+  });
 
   // Handle Drag Start
   const handleDragStart = (event) => {
@@ -250,6 +252,7 @@ export default function PlanBuilder({
   };
 
   const planStatus = currentPlan ? currentPlan.status : 'draft';
+  const totalCP = planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0);
 
   // =========================================================================
   // RENDER: STUDENT VIEW (READ-ONLY REVIEW & SIGN-OFF)
@@ -257,7 +260,6 @@ export default function PlanBuilder({
   if (!isChair) {
     const studentCourse = student ? `${student.course_code || 'PT3-BSIT-01'} — ${student.course_name || 'Bachelor of IT'}` : 'Bachelor of IT (Major: Software & Systems)';
     const isAlreadyAgreed = planStatus === 'agreed' || planStatus === 'approved' || planStatus === 'stored';
-    const totalCP = planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0);
 
     return (
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs font-sans max-w-[1440px] mx-auto space-y-6">
@@ -377,21 +379,234 @@ export default function PlanBuilder({
   }
 
   // =========================================================================
-  // RENDER: ACADEMIC CHAIR VIEW (AVAILABLE OFFERINGS + 3-YEAR GRID)
+  // RENDER: ACADEMIC CHAIR VIEW (TAB-BASED FOCUS VIEW: GRID / PALETTE / VALIDATION)
   // =========================================================================
   return (
-    <div className="font-sans max-w-[1440px] mx-auto">
+    <div className="font-sans max-w-[1440px] mx-auto space-y-4">
+      {/* Sub-tab Focus View Selector Header */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-2xs flex flex-col sm:flex-row justify-between items-center gap-3">
+        {/* Sub-tab Buttons */}
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+          <button
+            onClick={() => setBuilderTab('GRID')}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              builderTab === 'GRID'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }`}
+          >
+            <Layers className={`w-4 h-4 ${builderTab === 'GRID' ? 'text-emerald-400' : 'text-slate-500'}`} />
+            <span>3-Year Plan Canvas</span>
+            <span className="text-[10px] font-mono font-bold bg-white/20 px-2 py-0.5 rounded-full">
+              {totalCP}/72 CP
+            </span>
+          </button>
+
+          <button
+            onClick={() => setBuilderTab('PALETTE')}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              builderTab === 'PALETTE'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }`}
+          >
+            <BookOpen className={`w-4 h-4 ${builderTab === 'PALETTE' ? 'text-emerald-400' : 'text-slate-500'}`} />
+            <span>Available Units Catalog</span>
+            <span className="text-[10px] font-mono font-bold bg-white/20 px-2 py-0.5 rounded-full">
+              {filteredOfferings.length} Units
+            </span>
+          </button>
+
+          <button
+            onClick={() => setBuilderTab('VALIDATION')}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              builderTab === 'VALIDATION'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }`}
+          >
+            {warningsList.length > 0 ? (
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            ) : (
+              <CheckCircle2 className={`w-4 h-4 ${builderTab === 'VALIDATION' ? 'text-emerald-400' : 'text-emerald-600'}`} />
+            )}
+            <span>Rule Validation Console</span>
+            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+              warningsList.length > 0 ? 'bg-amber-500 text-white' : 'bg-emerald-600 text-white'
+            }`}>
+              {warningsList.length > 0 ? `${warningsList.length} Warnings` : 'Passed'}
+            </span>
+          </button>
+        </div>
+
+        {/* Global Action Tools */}
+        <div className="flex items-center gap-2 shrink-0">
+          {onOpenOfficialDocument && (
+            <button
+              onClick={onOpenOfficialDocument}
+              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Export PDF
+            </button>
+          )}
+
+          <button
+            onClick={onSavePlan}
+            className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+          >
+            <Save className="w-3.5 h-3.5 text-slate-500" /> Save Draft
+          </button>
+        </div>
+      </div>
+
       <DndContext
         sensors={sensors}
         collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* LEFT COLUMN: AVAILABLE OFFERINGS & VALIDATION CONSOLE (4 Cols) */}
-          <div className="lg:col-span-4 space-y-5">
-            {/* Card 1: Available Unit Offerings */}
+        {/* SUB-TAB 1: 100% FULL-WIDTH 3-YEAR PLAN CANVAS */}
+        {builderTab === 'GRID' && (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-5">
+            {/* Header Action Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900 tracking-tight flex items-center gap-2 font-heading">
+                  <Layers className="w-4 h-4 text-slate-700" />
+                  3-Year Interactive Study Plan Canvas
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5 font-normal">
+                  Structure your degree units across semesters. Max 12 Credit Points per semester.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Teaching Period Switcher */}
+                <div className="flex items-center gap-0.5 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
+                  <button
+                    onClick={() => setLayoutType('semester')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      layoutType === 'semester'
+                        ? 'bg-slate-900 text-white shadow-2xs font-bold'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Semester
+                  </button>
+                  <button
+                    onClick={() => setLayoutType('trimester')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      layoutType === 'trimester'
+                        ? 'bg-slate-900 text-white shadow-2xs font-bold'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Trimester
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setBuilderTab('PALETTE')}
+                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl font-bold text-xs transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5 text-emerald-600" /> Add Units from Catalog
+                </button>
+
+                <button
+                  onClick={handleClearPlan}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs transition-colors"
+                >
+                  Clear Grid
+                </button>
+              </div>
+            </div>
+
+            {/* 3-Year Grid */}
+            <div className="space-y-6">
+              {years.map(yearObj => {
+                let yearTagStyle = 'bg-red-700 text-white';
+                if (yearObj.level === 2) yearTagStyle = 'bg-slate-800 text-white';
+                else if (yearObj.level === 3) yearTagStyle = 'bg-indigo-900 text-white';
+
+                return (
+                  <div key={yearObj.level} className="bg-slate-50/60 border border-slate-200 rounded-2xl p-5">
+                    <div className="flex justify-between items-center mb-3.5">
+                      <span className={`text-xs font-mono font-bold px-3 py-1 rounded-lg ${yearTagStyle}`}>
+                        {yearObj.yearName}
+                      </span>
+                      <span className="text-xs font-mono text-slate-500">Max 12 CP / Period</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {defaultPeriodList.map(period => {
+                        const droppableId = `year_${yearObj.level}_period_${period.period_id}`;
+                        const unitsInPeriod = planUnits.filter(
+                          u => u.year_level === yearObj.level && u.period_id === period.period_id
+                        );
+
+                        return (
+                          <DroppablePeriod
+                            key={droppableId}
+                            id={droppableId}
+                            yearLevel={yearObj.level}
+                            period={period}
+                            units={unitsInPeriod}
+                            onRemoveUnit={handleRemoveUnit}
+                            warningsByUnit={warningsByUnit}
+                            completedUnitCodes={completedUnitCodes}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer Workflow Action Controls */}
+            <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+              <div className="text-xs text-slate-500 font-mono">
+                Current Plan Status: <strong className="text-slate-900 uppercase font-extrabold">{planStatus}</strong>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {planStatus === 'draft' && (
+                  <button
+                    onClick={() => onRecommendPlan && onRecommendPlan()}
+                    className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
+                  >
+                    <span>Recommend Plan to Student</span>
+                    <ArrowRight className="w-4 h-4 text-emerald-400" />
+                  </button>
+                )}
+
+                {planStatus === 'agreed' && (
+                  <button
+                    onClick={() => onApprovePlan && onApprovePlan()}
+                    className="px-6 py-2.5 bg-[#008652] hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Approve & Finalise Study Plan</span>
+                  </button>
+                )}
+
+                {(planStatus === 'approved' || planStatus === 'stored') && (
+                  <button
+                    onClick={() => onSavePlan && onSavePlan()}
+                    className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
+                  >
+                    <Database className="w-4 h-4 text-emerald-400" />
+                    <span>Save & Archive in Stored Repository</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SUB-TAB 2: 100% FULL-WIDTH AVAILABLE UNITS CATALOG */}
+        {builderTab === 'PALETTE' && (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs">
             <DroppablePaletteContainer
               filteredOfferings={filteredOfferings}
               unitFilter={unitFilter}
@@ -401,200 +616,57 @@ export default function PlanBuilder({
               onAddUnit={handleAddUnitFromPalette}
               onAddToSpecificSemester={handleAddToSpecificSemester}
             />
+          </div>
+        )}
 
-            {/* Card 2: Real-Time Rule Validation Console */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
-              <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-                <div>
-                  <span className="text-[9px] font-mono font-bold text-slate-500 uppercase bg-slate-100 px-2 py-0.5 rounded">
-                    RULE ENGINE
-                  </span>
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5 mt-1">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    Rule Validation Console
-                  </h3>
-                </div>
+        {/* SUB-TAB 3: 100% FULL-WIDTH RULE VALIDATION CONSOLE */}
+        {builderTab === 'VALIDATION' && (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <span className="text-[10px] font-mono font-bold text-slate-500 uppercase bg-slate-100 px-2 py-0.5 rounded">
+                  DATA-DRIVEN VALIDATION ENGINE
+                </span>
+                <h3 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2 mt-1">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  System Rule Validation Console
+                </h3>
               </div>
 
-              <div className="p-4 space-y-2 text-xs">
-                <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                  <span>Units Offered in Perth Campus (Location ID 1)</span>
-                </div>
+              <span className="text-xs font-mono font-bold bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-200">
+                Campus: Perth Main Campus
+              </span>
+            </div>
 
-                {validationResult && validationResult.warnings && validationResult.warnings.length > 0 ? (
-                  validationResult.warnings.map((w, idx) => (
-                    <div key={idx} className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded-md text-amber-900 text-xs font-medium">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 inline-block mt-1 shrink-0"></span>
-                      <div>
-                        <span className="font-semibold">{w.unitCode || 'Rule'}:</span> {w.message}
-                      </div>
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>BR-01 Check: All scheduled units are offered at Perth Campus for 2026.</span>
+              </div>
+
+              {warningsList && warningsList.length > 0 ? (
+                warningsList.map((w, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs font-semibold">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-amber-950 font-mono">{w.unitCode || 'Rule Warning'}:</span> {w.message}
                     </div>
-                  ))
-                ) : (
-                  <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                    <span>Prerequisites & 12 CP Max Semester Load Passed</span>
                   </div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>BR-02 Check: All prerequisite dependencies and 12 CP maximum semester credit load limits passed cleanly.</span>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* RIGHT COLUMN: 3-YEAR STUDY PLAN GRID (8 Cols) */}
-          <div className="lg:col-span-8 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
-
-              {/* Action Bar Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 mb-5">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-slate-700" />
-                    3-Year Interactive Study Plan Grid
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                    Drag & drop units to structure semester plan (Max 12 CP per semester).
-                  </p>
-                </div>
-
-                {/* Context Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-0.5 bg-slate-100 border border-slate-200 rounded-md p-0.5 text-xs mr-1">
-                    <button
-                      onClick={() => setLayoutType('semester')}
-                      className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
-                        layoutType === 'semester'
-                          ? 'bg-slate-900 text-white shadow-2xs font-bold'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Semester
-                    </button>
-                    <button
-                      onClick={() => setLayoutType('trimester')}
-                      className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
-                        layoutType === 'trimester'
-                          ? 'bg-slate-900 text-white shadow-2xs font-bold'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Trimester
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={handleClearPlan}
-                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium text-xs transition-colors"
-                  >
-                    Clear
-                  </button>
-                  {onOpenOfficialDocument && (
-                    <button
-                      onClick={onOpenOfficialDocument}
-                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
-                    >
-                      <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Export PDF
-                    </button>
-                  )}
-                  <button
-                    onClick={onSavePlan}
-                    className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
-                  >
-                    <Save className="w-3.5 h-3.5 text-slate-500" /> Save Draft
-                  </button>
-                </div>
-              </div>
-
-              {/* 3-Year Interactive Drag & Drop Grid */}
-              <div className="space-y-5">
-                {years.map(yearObj => {
-                  let yearTagStyle = 'bg-red-700 text-white';
-                  if (yearObj.level === 2) yearTagStyle = 'bg-slate-800 text-white';
-                  else if (yearObj.level === 3) yearTagStyle = 'bg-indigo-900 text-white';
-
-                  return (
-                    <div key={yearObj.level} className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <span className={`text-xs font-mono font-semibold px-2.5 py-0.5 rounded-md ${yearTagStyle}`}>
-                          {yearObj.yearName}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {defaultPeriodList.map(period => {
-                          const droppableId = `year_${yearObj.level}_period_${period.period_id}`;
-                          const unitsInPeriod = planUnits.filter(
-                            u => u.year_level === yearObj.level && u.period_id === period.period_id
-                          );
-
-                          return (
-                            <DroppablePeriod
-                              key={droppableId}
-                              id={droppableId}
-                              yearLevel={yearObj.level}
-                              period={period}
-                              units={unitsInPeriod}
-                              onRemoveUnit={handleRemoveUnit}
-                              warningsByUnit={warningsByUnit}
-                              completedUnitCodes={completedUnitCodes}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Action Footer */}
-              <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                <div className="text-xs text-slate-500 font-mono">
-                  Current Status: <strong className="text-slate-900 uppercase font-extrabold">{planStatus}</strong>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {/* Action: Recommend Plan */}
-                  {planStatus === 'draft' && (
-                    <button
-                      onClick={() => onRecommendPlan && onRecommendPlan()}
-                      className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-all flex items-center gap-2"
-                    >
-                      <span>Recommend Plan to Student</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-
-                  {/* Action: Academic Chair Approve & Finalise */}
-                  {planStatus === 'agreed' && (
-                    <button
-                      onClick={() => onApprovePlan && onApprovePlan()}
-                      className="px-5 py-2 bg-[#008652] hover:bg-emerald-700 text-white rounded-md font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
-                    >
-                      <ShieldCheck className="w-4 h-4" />
-                      <span>Approve & Finalise Study Plan</span>
-                    </button>
-                  )}
-
-                  {/* Action: Store in Repository */}
-                  {(planStatus === 'approved' || planStatus === 'stored') && (
-                    <button
-                      onClick={() => onSavePlan && onSavePlan()}
-                      className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
-                    >
-                      <Database className="w-4 h-4 text-emerald-400" />
-                      <span>Save & Archive in Stored Repository</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Drag Overlay Floating Drag Card Preview */}
         <DragOverlay>
           {activeDragItem ? (
-            <div className="bg-white border-2 border-slate-900 shadow-xl p-3 rounded-lg text-xs font-sans opacity-90 cursor-grabbing flex items-center justify-between w-64 select-none">
+            <div className="bg-white border-2 border-slate-900 shadow-xl p-3 rounded-xl text-xs font-sans opacity-90 cursor-grabbing flex items-center justify-between w-64 select-none">
               <div className="flex items-center gap-2">
                 <GripVertical className="w-4 h-4 text-slate-500" />
                 <div>
