@@ -422,24 +422,6 @@ export default function PlanBuilder({
               )}
             </div>
           </div>
-
-              {validationResult && validationResult.warnings && validationResult.warnings.length > 0 ? (
-                validationResult.warnings.map((w, idx) => (
-                  <div key={idx} className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded-md text-amber-900 text-xs font-medium">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 inline-block mt-1 shrink-0"></span>
-                    <div>
-                      <span className="font-semibold">{w.unitCode || 'Rule'}:</span> {w.message}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                  <span>Prerequisite requirements met</span>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* RIGHT COLUMN: 3-YEAR STUDY PLAN GRID (8 Cols) */}
