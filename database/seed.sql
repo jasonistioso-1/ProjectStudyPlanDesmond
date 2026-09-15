@@ -89,7 +89,11 @@ INSERT INTO Prerequisite (unit_id, prereq_unit_id, min_grade, is_concurrent_allo
 -- 7. Seed Students
 INSERT INTO Student (student_id, student_number, first_name, last_name, email, course_id, location_id, commencement_year, study_status) VALUES
 (1, 'PT3-2026-001', 'Alex', 'Mercer', 'alex.mercer@student.pt3solutions.edu.au', 1, 1, 2026, 'active'),
-(2, 'PT3-2026-002', 'Sarah', 'Chen', 's.chen@student.pt3solutions.edu.au', 1, 2, 2026, 'active');
+(2, 'PT3-2026-002', 'Sarah', 'Chen', 's.chen@student.pt3solutions.edu.au', 2, 2, 2026, 'active'),
+(3, 'PT3-2025-003', 'David', 'Tan', 'd.tan@student.pt3solutions.edu.au', 1, 1, 2025, 'at-risk'),
+(4, 'PT3-2026-004', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.au', 3, 3, 2026, 'part-time'),
+(5, 'PT3-2024-005', 'Michael', 'Rahardjo', 'm.rahardjo@student.pt3solutions.edu.au', 1, 1, 2024, 'graduating'),
+(6, 'PT3-2026-006', 'Jessica', 'Taylor', 'j.taylor@student.pt3solutions.edu.au', 2, 1, 2026, 'active');
 
 -- 8. Seed Student Unit History
 INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period_id, year_taken) VALUES
@@ -97,7 +101,16 @@ INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period
 (1, (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'completed', 'C', 68.00, 1, 2026),
 (1, (SELECT unit_id FROM Unit WHERE code = 'ICT169'), 'attempted', 'F', 42.00, 1, 2026),
 (1, (SELECT unit_id FROM Unit WHERE code = 'ICT164'), 'current', NULL, NULL, 2, 2026),
-(1, (SELECT unit_id FROM Unit WHERE code = 'ICT111'), 'current', NULL, NULL, 2, 2026);
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT111'), 'current', NULL, NULL, 2, 2026),
+
+(3, (SELECT unit_id FROM Unit WHERE code = 'ICT100'), 'completed', 'P', 55.00, 1, 2025),
+(3, (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'completed', 'P', 52.00, 1, 2025),
+(3, (SELECT unit_id FROM Unit WHERE code = 'ICT167'), 'attempted', 'F', 38.00, 2, 2025),
+
+(5, (SELECT unit_id FROM Unit WHERE code = 'ICT100'), 'completed', 'HD', 86.00, 1, 2024),
+(5, (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'completed', 'D', 81.00, 1, 2024),
+(5, (SELECT unit_id FROM Unit WHERE code = 'ICT167'), 'completed', 'D', 79.00, 2, 2024),
+(5, (SELECT unit_id FROM Unit WHERE code = 'ICT202'), 'completed', 'HD', 89.00, 1, 2025);
 
 -- 9. Seed Sample Study Plan
 INSERT INTO StudyPlan (plan_id, student_id, title, status, total_credit_points, created_by, recommended_at, agreed_at, approved_at) VALUES

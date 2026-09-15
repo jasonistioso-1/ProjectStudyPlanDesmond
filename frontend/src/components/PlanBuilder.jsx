@@ -168,37 +168,49 @@ export default function PlanBuilder({
   // RENDER: STUDENT VIEW (READ-ONLY REVIEW & SIGN-OFF)
   // =========================================================================
   if (!isChair) {
-    const studentCourse = student ? `${student.course_code || 'Bachelor of IT'} - ${student.major || 'IT Major'}` : 'Bachelor of IT - IT Major';
+    const studentCourse = student ? `${student.course_code || 'PT3-BSIT-01'} — ${student.course_name || 'Bachelor of IT'}` : 'Bachelor of IT (Major: Software & Systems)';
     const planStatus = currentPlan ? currentPlan.status : 'recommended';
     const isAlreadyAgreed = planStatus === 'agreed' || planStatus === 'approved';
+    const totalCP = planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0);
 
     return (
-      <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-2xs font-sans max-w-[1440px] mx-auto">
-        {/* Title Header */}
-        <div className="border-b border-slate-100 pb-4 mb-6 flex items-center justify-between">
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs font-sans max-w-[1440px] mx-auto space-y-6">
+        {/* Student View Banner Header */}
+        <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <FileCheck className="w-4 h-4 text-emerald-600" />
+            <span className="text-[11px] font-mono font-bold bg-blue-600 text-white px-2.5 py-0.5 rounded uppercase tracking-wide">
+              STUDENT SIGN-OFF PORTAL
+            </span>
+            <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2 mt-1.5">
+              <FileCheck className="w-5 h-5 text-blue-700" />
               Proposed Study Plan Review — {studentCourse}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5 font-normal">
-              Review your Academic Chair's proposed unit sequence and credit load before signing.
+            <p className="text-xs text-slate-600 mt-1 font-normal">
+              Please review the semester-by-semester unit sequence proposed by your Academic Chair. Check your credit load balance before digitally signing below.
             </p>
           </div>
-          <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">
-            {planStatus.toUpperCase()}
-          </span>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="bg-white border border-blue-200 px-3 py-1.5 rounded-lg text-right shadow-2xs">
+              <span className="text-[10px] text-slate-500 font-mono block">Status</span>
+              <span className="text-xs font-bold text-blue-900 uppercase">{planStatus}</span>
+            </div>
+            <div className="bg-white border border-blue-200 px-3 py-1.5 rounded-lg text-right shadow-2xs">
+              <span className="text-[10px] text-slate-500 font-mono block">Planned Load</span>
+              <span className="text-xs font-mono font-bold text-slate-900">{totalCP} / 72 CP</span>
+            </div>
+          </div>
         </div>
 
-        {/* Read-Only Grid Breakdown */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Read-Only 3-Year Grid Breakdown */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {years.map(y => (
-            <div key={y.level} className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-xs font-semibold text-slate-900 font-mono">
+            <div key={y.level} className="bg-slate-50/70 border border-slate-200 rounded-xl p-4">
+              <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-200">
+                <span className="text-xs font-bold text-slate-900 font-mono">
                   {y.yearName}
                 </span>
-                <span className="text-[11px] font-mono text-slate-400">Max 12 CP / Sem</span>
+                <span className="text-[11px] font-mono text-slate-500">Max 12 CP / Sem</span>
               </div>
 
               {defaultPeriodList.map(p => {
@@ -206,10 +218,10 @@ export default function PlanBuilder({
                 const semCP = sUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0);
 
                 return (
-                  <div key={p.period_id} className="mb-3 last:mb-0 bg-white border border-slate-200/80 rounded-lg p-3 shadow-2xs">
+                  <div key={p.period_id} className="mb-3 last:mb-0 bg-white border border-slate-200 rounded-lg p-3 shadow-2xs">
                     <div className="flex justify-between items-center pb-2 mb-2 border-b border-slate-100 text-xs">
-                      <span className="font-semibold text-slate-800">{p.name}</span>
-                      <span className="font-mono text-xs tabular-nums text-slate-500 font-medium">
+                      <span className="font-bold text-slate-800">{p.name}</span>
+                      <span className="font-mono text-xs tabular-nums text-slate-600 font-semibold bg-slate-100 px-2 py-0.5 rounded">
                         {semCP} / 12 CP
                       </span>
                     </div>
@@ -221,11 +233,11 @@ export default function PlanBuilder({
                         {sUnits.map(u => (
                           <div
                             key={u.unit_id || u.code}
-                            className="flex items-center justify-between text-xs bg-slate-50 border border-slate-200/60 px-2.5 py-1.5 rounded-md font-medium text-slate-800"
+                            className="flex items-center justify-between text-xs bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-md font-medium text-slate-800"
                           >
-                            <span className="font-mono font-semibold text-slate-900">{u.code}</span>
-                            <span className="text-slate-600 text-xs truncate max-w-[140px] ml-2 mr-auto">{u.title}</span>
-                            <span className="text-xs font-mono text-slate-500 tabular-nums shrink-0">{u.credit_points || 3} CP</span>
+                            <span className="font-mono font-extrabold text-slate-900">{u.code}</span>
+                            <span className="text-slate-700 text-xs truncate max-w-[140px] ml-2 mr-auto">{u.title}</span>
+                            <span className="text-xs font-mono text-slate-600 tabular-nums shrink-0 font-semibold">{u.credit_points || 3} CP</span>
                           </div>
                         ))}
                       </div>
@@ -237,9 +249,14 @@ export default function PlanBuilder({
           ))}
         </div>
 
-        {/* Confirmation Checkbox & Signature Action */}
-        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-5 text-center max-w-xl mx-auto shadow-2xs">
-          <label className="flex items-start justify-center gap-3 cursor-pointer text-xs font-medium text-slate-700 mb-5 select-none text-left">
+        {/* Student Decision Helper & Digital Signature Box */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 max-w-2xl mx-auto shadow-2xs text-center space-y-4">
+          <h3 className="text-sm font-bold text-slate-900">Student Agreement & Digital Sign-off</h3>
+          <p className="text-xs text-slate-600 font-normal leading-relaxed">
+            By signing below, you agree to the recommended unit sequence and acknowledge that changes to your study plan require Academic Chair re-approval.
+          </p>
+
+          <label className="flex items-start justify-center gap-3 cursor-pointer text-xs font-medium text-slate-800 select-none text-left bg-white p-3.5 rounded-lg border border-slate-200">
             <input
               type="checkbox"
               checked={agreedConfirmed || isAlreadyAgreed}
@@ -248,23 +265,23 @@ export default function PlanBuilder({
               className="mt-0.5 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
             />
             <span>
-              I confirm that I have reviewed the credit load (maximum 12 CP per semester) and unit progression requirements.
+              I confirm that I have reviewed the credit load (maximum 12 CP per semester) and prerequisite progression sequence for my degree program.
             </span>
           </label>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center pt-2">
             <button
               onClick={() => onAgreePlan && onAgreePlan()}
               disabled={(!agreedConfirmed && !isAlreadyAgreed) || isAlreadyAgreed}
-              className={`px-6 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 shadow-2xs ${
+              className={`px-6 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-2xs ${
                 isAlreadyAgreed
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default'
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 cursor-default'
                   : agreedConfirmed
                   ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-sm'
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed'
               }`}
             >
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               {isAlreadyAgreed ? 'Study Plan Agreed & Digitally Signed' : 'Sign & Agree to Study Plan'}
             </button>
           </div>
@@ -423,15 +440,34 @@ export default function PlanBuilder({
         <div className="lg:col-span-8 space-y-4">
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
             
+            {/* Academic Advisor Decision Helper Box */}
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-lg p-4 mb-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border border-slate-700">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-mono font-bold tracking-wider bg-red-600 text-white px-2 py-0.5 rounded">Academic Advisor Decision Helper</span>
+                  <span className="text-xs text-slate-300 font-medium">Optimal Course Pathway Analysis</span>
+                </div>
+                <p className="text-xs text-slate-200 font-normal leading-relaxed max-w-xl">
+                  {student ? `${student.name} is on track for ${student.major || 'Software & Systems'}. Ensure 100-level core prerequisites (ICT100, ICT159) are completed prior to 200-level sequences.` : 'Ensure 100-level core prerequisites are completed prior to 200-level sequences.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                <span className="text-[11px] font-mono bg-slate-800 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-md font-semibold flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Pathway Recommended
+                </span>
+              </div>
+            </div>
+
             {/* Action Bar Header */}
             <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   <Layers className="w-4 h-4 text-slate-700" />
-                  3-Year Study Plan
+                  3-Year Study Plan Grid
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                  Maximum 12 CP per semester limit.
+                  Drag and drop units between semesters or use '+ Add' from available list. (Max 12 CP per semester).
                 </p>
               </div>
 

@@ -1,5 +1,5 @@
 // Central Seed Dataset for PT3 Solutions Study Plan Repository (SPR)
-// Acts as primary database & graceful fallback when MySQL is disconnected
+// Rich 6-student dataset across multiple campuses, majors, and study statuses
 
 export const mockLocations = [
     { location_id: 1, code: 'PT3-MAIN', name: 'PT3 Solutions Main Campus (Perth)' },
@@ -61,11 +61,67 @@ export const mockStudents = [
         first_name: 'Sarah',
         last_name: 'Chen',
         email: 's.chen@student.pt3solutions.edu.au',
+        course_id: 2,
+        course_code: 'PT3-BSIT-DS02',
+        course_name: 'Bachelor of Data Analytics & Business Intelligence',
+        location_id: 2,
+        location_name: 'PT3 Solutions Singapore Campus',
+        commencement_year: 2026,
+        study_status: 'active'
+    },
+    {
+        student_id: 3,
+        student_number: 'PT3-2025-003',
+        first_name: 'David',
+        last_name: 'Tan',
+        email: 'd.tan@student.pt3solutions.edu.au',
         course_id: 1,
         course_code: 'PT3-BSIT-01',
         course_name: 'Bachelor of Information Technology (Major: Software & Systems)',
-        location_id: 2,
-        location_name: 'PT3 Solutions Singapore Campus',
+        location_id: 1,
+        location_name: 'PT3 Solutions Main Campus (Perth)',
+        commencement_year: 2025,
+        study_status: 'at-risk'
+    },
+    {
+        student_id: 4,
+        student_number: 'PT3-2026-004',
+        first_name: 'Emily',
+        last_name: 'Watson',
+        email: 'e.watson@student.pt3solutions.edu.au',
+        course_id: 3,
+        course_code: 'PT3-MSIT-03',
+        course_name: 'Master of Information Technology (Data Analytics & Cloud)',
+        location_id: 3,
+        location_name: 'PT3 Solutions Dubai Campus',
+        commencement_year: 2026,
+        study_status: 'part-time'
+    },
+    {
+        student_id: 5,
+        student_number: 'PT3-2024-005',
+        first_name: 'Michael',
+        last_name: 'Rahardjo',
+        email: 'm.rahardjo@student.pt3solutions.edu.au',
+        course_id: 1,
+        course_code: 'PT3-BSIT-01',
+        course_name: 'Bachelor of Information Technology (Major: Software & Systems)',
+        location_id: 1,
+        location_name: 'PT3 Solutions Main Campus (Perth)',
+        commencement_year: 2024,
+        study_status: 'graduating'
+    },
+    {
+        student_id: 6,
+        student_number: 'PT3-2026-006',
+        first_name: 'Jessica',
+        last_name: 'Taylor',
+        email: 'j.taylor@student.pt3solutions.edu.au',
+        course_id: 2,
+        course_code: 'PT3-BSIT-DS02',
+        course_name: 'Bachelor of Data Analytics & Business Intelligence',
+        location_id: 1,
+        location_name: 'PT3 Solutions Main Campus (Perth)',
         commencement_year: 2026,
         study_status: 'active'
     }
@@ -76,7 +132,18 @@ export const mockStudentHistory = [
     { history_id: 2, student_id: 1, unit_id: 2, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'C', mark: 68.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
     { history_id: 3, student_id: 1, unit_id: 5, unit_code: 'ICT169', unit_title: 'Data Communications & Networks', status: 'attempted', grade: 'F', mark: 42.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
     { history_id: 4, student_id: 1, unit_id: 3, unit_code: 'ICT164', unit_title: 'Discrete Mathematics & Logic', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 },
-    { history_id: 5, student_id: 1, unit_id: 4, unit_code: 'ICT111', unit_title: 'Cybersecurity Principles', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 }
+    { history_id: 5, student_id: 1, unit_id: 4, unit_code: 'ICT111', unit_title: 'Cybersecurity Principles', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 },
+
+    // David Tan (At-Risk student history)
+    { history_id: 6, student_id: 3, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to Computing', status: 'completed', grade: 'P', mark: 55.0, period_id: 1, period_code: 'S1', year_taken: 2025 },
+    { history_id: 7, student_id: 3, unit_id: 2, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'P', mark: 52.0, period_id: 1, period_code: 'S1', year_taken: 2025 },
+    { history_id: 8, student_id: 3, unit_id: 7, unit_code: 'ICT167', unit_title: 'Data Structures & Algorithms', status: 'attempted', grade: 'F', mark: 38.0, period_id: 2, period_code: 'S2', year_taken: 2025 },
+
+    // Michael Rahardjo (Graduating senior history)
+    { history_id: 9, student_id: 5, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to Computing', status: 'completed', grade: 'HD', mark: 86.0, period_id: 1, period_code: 'S1', year_taken: 2024 },
+    { history_id: 10, student_id: 5, unit_id: 2, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'D', mark: 81.0, period_id: 1, period_code: 'S1', year_taken: 2024 },
+    { history_id: 11, student_id: 5, unit_id: 7, unit_code: 'ICT167', unit_title: 'Data Structures & Algorithms', status: 'completed', grade: 'D', mark: 79.0, period_id: 2, period_code: 'S2', year_taken: 2024 },
+    { history_id: 12, student_id: 5, unit_id: 10, unit_code: 'ICT202', unit_title: 'Advanced Programming & Software Architecture', status: 'completed', grade: 'HD', mark: 89.0, period_id: 1, period_code: 'S1', year_taken: 2025 }
 ];
 
 export const mockPrerequisites = [
