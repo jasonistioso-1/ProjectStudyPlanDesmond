@@ -19,17 +19,13 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
 
   const uLvl = Number(unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : 100));
   let lvlBadge = 'bg-slate-100 text-slate-700 border-slate-200';
-  let cardBorder = 'border-l-4 border-l-slate-800';
 
   if (uLvl >= 300) {
-    lvlBadge = 'bg-purple-50 text-purple-700 border-purple-200 font-bold';
-    cardBorder = 'border-l-4 border-l-purple-600';
+    lvlBadge = 'bg-purple-50 text-purple-700 border-purple-200/80 font-semibold';
   } else if (uLvl >= 200) {
-    lvlBadge = 'bg-teal-50 text-teal-700 border-teal-200 font-bold';
-    cardBorder = 'border-l-4 border-l-teal-600';
+    lvlBadge = 'bg-indigo-50 text-indigo-700 border-indigo-200/80 font-semibold';
   } else {
-    lvlBadge = 'bg-blue-50 text-blue-700 border-blue-200 font-bold';
-    cardBorder = 'border-l-4 border-l-blue-600';
+    lvlBadge = 'bg-slate-100 text-slate-700 border-slate-200/80 font-semibold';
   }
 
   const semesterOptions = [
@@ -45,7 +41,7 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white border border-slate-200/90 hover:border-slate-300 p-3 rounded-xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative ${cardBorder}`}
+      className="bg-white border border-slate-200 hover:border-slate-300 p-3 rounded-xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative"
     >
       <div className="flex items-center gap-2.5 min-w-0 pr-2">
         <button
@@ -59,15 +55,15 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-mono font-extrabold text-slate-900 text-xs tracking-tight">{unit.code}</span>
-            <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded border font-semibold ${lvlBadge}`}>
-              L{uLvl}
+            <span className="font-heading font-bold text-slate-900 text-xs tracking-tight bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/80 shadow-2xs">{unit.code}</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${lvlBadge}`}>
+              Level {uLvl}
             </span>
           </div>
-          <div className="text-slate-800 text-xs font-semibold truncate mt-0.5">
+          <div className="text-slate-800 text-xs font-medium truncate mt-1">
             {unit.title}
           </div>
-          <div className="text-[11px] text-slate-500 font-mono mt-0.5 flex items-center gap-2">
+          <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-2">
             <span className="tabular-nums font-semibold text-slate-700">{unit.credit_points || 3} CP</span>
             <span className="text-slate-300">•</span>
             <span className="text-slate-500 font-normal">Perth Campus</span>
