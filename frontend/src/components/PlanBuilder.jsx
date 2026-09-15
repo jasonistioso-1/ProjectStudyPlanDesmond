@@ -6,10 +6,12 @@ import {
   useSensors,
   rectIntersection,
   pointerWithin,
-  closestCenter
+  closestCenter,
+  DragOverlay
 } from '@dnd-kit/core';
 import DroppablePeriod from './DroppablePeriod';
 import DraggablePaletteUnitCard from './DraggablePaletteUnitCard';
+import DroppablePaletteContainer from './DroppablePaletteContainer';
 import {
   Search,
   Plus,
@@ -20,7 +22,8 @@ import {
   BookOpen,
   Layers,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  GripVertical
 } from 'lucide-react';
 import { recalculatePlan } from '../services/api';
 
@@ -45,6 +48,7 @@ export default function PlanBuilder({
   const [selectedLevel, setSelectedLevel] = useState('ALL');
   const [agreedConfirmed, setAgreedConfirmed] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
+  const [activeDragItem, setActiveDragItem] = useState(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -76,13 +80,41 @@ export default function PlanBuilder({
     });
   }
 
-  // Handle Drag End event (Supports both Palette -> Semester and Semester -> Semester moves)
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over) return;
+  // Handle Drag Start
+  const handleDragStart = (event) => {
+    const activeId = String(event.active.id);
+    if (activeId.startsWith('palette_')) {
+      const code = activeId.replace('palette_', '');
+      const unit = catalogUnits.find(u => String(u.unit_id || u.code) === code || u.code === code);
+      setActiveDragItem(unit);
+    } else {
+      const unit = planUnits.find(u => String(u.unit_id || u.code) === activeId || u.code === activeId);
+      setActiveDragItem(unit);
+    }
+  };
 
+  // Handle Drag End event (Supports Palette -> Semester, Semester -> Semester, and Semester -> Palette return)
+  const handleDragEnd = (event) => {
+    setActiveDragItem(null);
+    const { active, over } = event;
     const activeId = String(active.id);
+
+    if (!over) {
+      if (!activeId.startsWith('palette_')) {
+        handleRemoveUnit(activeId);
+      }
+      return;
+    }
+
     const overId = String(over.id);
+
+    // If dropped back on Available Units sidebar -> remove from plan!
+    if (overId === 'available_units_dropzone') {
+      if (!activeId.startsWith('palette_')) {
+        handleRemoveUnit(activeId);
+      }
+      return;
+    }
 
     let targetYear = 1;
     let targetPeriodId = 1;
@@ -321,76 +353,25 @@ export default function PlanBuilder({
   // =========================================================================
   return (
     <div className="font-sans max-w-[1440px] mx-auto">
-      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={pointerWithin}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* LEFT COLUMN: AVAILABLE OFFERINGS & VALIDATION CONSOLE (4 Cols) */}
           <div className="lg:col-span-4 space-y-5">
-            {/* Card 1: Available Unit Offerings */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
-              <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-slate-700" />
-                  Available Units
-                </h3>
-                <span className="text-xs font-mono font-semibold bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-700">
-                  {filteredOfferings.length} units
-                </span>
-              </div>
-
-              <div className="p-4 space-y-3">
-                {/* Filter Search Box & Level Selector */}
-                <div className="space-y-2">
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
-                    <input
-                      type="text"
-                      value={unitFilter}
-                      onChange={(e) => setUnitFilter(e.target.value)}
-                      placeholder="Search code or title..."
-                      className="w-full bg-slate-50 border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 font-normal"
-                    />
-                  </div>
-
-                  {/* Level Filter Pills */}
-                  <div className="flex items-center gap-1 text-[11px] font-mono">
-                    {[
-                      { key: 'ALL', label: 'All' },
-                      { key: '100', label: '100 Level' },
-                      { key: '200', label: '200 Level' },
-                      { key: '300', label: '300 Level' }
-                    ].map(lvl => (
-                      <button
-                        key={lvl.key}
-                        onClick={() => setSelectedLevel(lvl.key)}
-                        className={`px-2 py-0.5 rounded border transition-all ${
-                          selectedLevel === lvl.key
-                            ? 'bg-slate-900 text-white border-slate-900 font-bold'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        {lvl.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Offerings Scrollable List (Draggable Palette Cards) */}
-                <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
-                  {filteredOfferings.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic text-center py-6">No matching unit offerings found</p>
-                  ) : (
-                    filteredOfferings.map(unit => (
-                      <DraggablePaletteUnitCard
-                        key={unit.unit_id || unit.code}
-                        unit={unit}
-                        onAdd={handleAddUnitFromPalette}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Card 1: Available Unit Offerings (Droppable Return Zone) */}
+            <DroppablePaletteContainer
+              filteredOfferings={filteredOfferings}
+              unitFilter={unitFilter}
+              setUnitFilter={setUnitFilter}
+              selectedLevel={selectedLevel}
+              setSelectedLevel={setSelectedLevel}
+              onAddUnit={handleAddUnitFromPalette}
+            />
 
             {/* Card 2: Validation Console */}
             <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
@@ -537,6 +518,22 @@ export default function PlanBuilder({
             </div>
           </div>
         </div>
+
+        {/* Drag Overlay Floating Drag Card Preview */}
+        <DragOverlay>
+          {activeDragItem ? (
+            <div className="bg-white border-2 border-slate-900 shadow-xl p-3 rounded-lg text-xs font-sans opacity-90 cursor-grabbing flex items-center justify-between w-64 select-none">
+              <div className="flex items-center gap-2">
+                <GripVertical className="w-4 h-4 text-slate-500" />
+                <div>
+                  <div className="font-mono font-bold text-slate-900">{activeDragItem.code}</div>
+                  <div className="text-slate-700 font-medium truncate max-w-[150px]">{activeDragItem.title}</div>
+                </div>
+              </div>
+              <span className="font-mono text-slate-600 font-semibold">{activeDragItem.credit_points || 3} CP</span>
+            </div>
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </div>
   );
