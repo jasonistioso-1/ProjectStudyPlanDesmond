@@ -4,6 +4,7 @@ import WorkflowStepper from './components/WorkflowStepper';
 import StudentSelectModal from './components/StudentSelectModal';
 import AcademicHistoryView from './components/AcademicHistoryView';
 import PlanBuilder from './components/PlanBuilder';
+import StoredPlansView from './components/StoredPlansView';
 import CertificateView from './components/CertificateView';
 import DataImportModal from './components/DataImportModal';
 import OfficialStudyPlanDocumentModal from './components/OfficialStudyPlanDocumentModal';
@@ -220,6 +221,8 @@ export default function App() {
       setShowStudentSelectModal(true);
     } else if (stepNum === 2) {
       setActiveTab('ACADEMIC_HISTORY');
+    } else if (stepNum === 8) {
+      setActiveTab('STORED');
     } else {
       setActiveTab('STUDY_PLAN');
     }
@@ -321,7 +324,7 @@ export default function App() {
         />
 
         {/* View Component: STUDY_PLAN (Main Builder / Review) */}
-        {(activeTab === 'STUDY_PLAN' || activeTab === 'STORED') && (
+        {activeTab === 'STUDY_PLAN' && (
           <PlanBuilder
             student={selectedStudent}
             planUnits={planUnits}
@@ -344,6 +347,18 @@ export default function App() {
         {/* View Component: ACADEMIC_HISTORY (Academic History) */}
         {activeTab === 'ACADEMIC_HISTORY' && (
           <AcademicHistoryView history={history} />
+        )}
+
+        {/* View Component: STORED (Stored Plans Repository Table) */}
+        {activeTab === 'STORED' && (
+          <StoredPlansView
+            students={studentsList}
+            onSelectStudentAndRetrievePlan={(st) => {
+              handleSelectStudent(st);
+              setActiveTab('STUDY_PLAN');
+            }}
+            onTabChange={setActiveTab}
+          />
         )}
       </main>
 
@@ -374,7 +389,7 @@ export default function App() {
                 <div>
                   <p className="font-bold text-slate-900">PT3-BSIT-01 Study Plan Audited</p>
                   <p className="text-[11px] text-slate-600 font-sans mt-0.5">Verified 12 CP max credit load and Perth course availability.</p>
-                  <span className="text-[10px] text-slate-400">Timestamp: 2026-09-15 09:48:00</span>
+                  <span className="text-[10px] text-slate-400">Timestamp: 2026-09-15 09:54:00</span>
                 </div>
               </div>
             </div>
