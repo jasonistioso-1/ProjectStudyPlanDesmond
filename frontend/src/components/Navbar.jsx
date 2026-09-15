@@ -131,16 +131,9 @@ export default function Navbar({
               <button
                 onClick={onOpenAudit}
                 title="System Audit Log"
-                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-1 text-xs"
               >
                 <Clock className="w-4 h-4" />
-              </button>
-              <button
-                onClick={onOpenImport}
-                title="Data Importer"
-                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
-              >
-                <Database className="w-4 h-4" />
               </button>
             </div>
           )}
