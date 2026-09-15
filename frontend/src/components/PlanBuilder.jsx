@@ -18,7 +18,8 @@ import {
   GripVertical,
   ShieldCheck,
   Database,
-  FileCheck
+  FileCheck,
+  UserCheck
 } from 'lucide-react';
 
 export default function PlanBuilder({
@@ -265,7 +266,7 @@ export default function PlanBuilder({
         <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <span className="text-[10px] font-mono font-bold bg-amber-600 text-white px-2.5 py-0.5 rounded uppercase tracking-wide">
-              STEP 6: STUDENT REVIEW & AGREEMENT
+              STUDENT AGREEMENT & SIGN-OFF PORTAL
             </span>
             <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2 mt-1.5">
               <FileCheck className="w-5 h-5 text-amber-700" />
@@ -337,7 +338,7 @@ export default function PlanBuilder({
 
         {/* Student Decision Helper & Digital Signature Box */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 max-w-2xl mx-auto shadow-2xs text-center space-y-4">
-          <h3 className="text-sm font-bold text-slate-900">Step 6: Student Digital Sign-off Agreement</h3>
+          <h3 className="text-sm font-bold text-slate-900">Student Digital Sign-off Agreement</h3>
           <p className="text-xs text-slate-600 font-normal leading-relaxed">
             By signing below, you agree to the recommended unit sequence and acknowledge that changes to your study plan require Academic Chair re-approval.
           </p>
@@ -402,12 +403,12 @@ export default function PlanBuilder({
               onAddToSpecificSemester={handleAddToSpecificSemester}
             />
 
-            {/* Card 2: Step 4 Real-Time Validation Console */}
+            {/* Card 2: Real-Time Rule Validation Console */}
             <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
               <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
                 <div>
                   <span className="text-[9px] font-mono font-bold text-slate-500 uppercase bg-slate-100 px-2 py-0.5 rounded">
-                    STEP 4: VALIDATION
+                    RULE ENGINE
                   </span>
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5 mt-1">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -450,9 +451,9 @@ export default function PlanBuilder({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] uppercase font-mono font-bold tracking-wider bg-red-600 text-white px-2 py-0.5 rounded">
-                      STEP 3: CREATE / AMEND STUDY PLAN
+                      ACADEMIC DECISION SUPPORT
                     </span>
-                    <span className="text-xs text-slate-300 font-medium">Pathway Analysis</span>
+                    <span className="text-xs text-slate-300 font-medium">Degree Progression Analysis</span>
                   </div>
                   <p className="text-xs text-slate-200 font-normal leading-relaxed max-w-xl">
                     {student ? (
@@ -573,43 +574,43 @@ export default function PlanBuilder({
                 })}
               </div>
 
-              {/* Workflow Stepper Action Footer (Steps 5, 7, 8 Actions) */}
+              {/* Action Footer */}
               <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
                 <div className="text-xs text-slate-500 font-mono">
-                  Current Workflow Stage: <strong className="text-slate-900 uppercase font-extrabold">{planStatus}</strong>
+                  Current Status: <strong className="text-slate-900 uppercase font-extrabold">{planStatus}</strong>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* Step 5 Action: Recommend Plan */}
+                  {/* Action: Recommend Plan */}
                   {planStatus === 'draft' && (
                     <button
                       onClick={() => onRecommendPlan && onRecommendPlan()}
                       className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-all flex items-center gap-2"
                     >
-                      <span>Step 5: Recommend Plan to Student</span>
+                      <span>Recommend Plan to Student</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   )}
 
-                  {/* Step 7 Action: Academic Chair Approve & Finalise */}
+                  {/* Action: Academic Chair Approve & Finalise */}
                   {planStatus === 'agreed' && (
                     <button
                       onClick={() => onApprovePlan && onApprovePlan()}
                       className="px-5 py-2 bg-[#008652] hover:bg-emerald-700 text-white rounded-md font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
                     >
                       <ShieldCheck className="w-4 h-4" />
-                      <span>Step 7: Approve & Finalise Study Plan</span>
+                      <span>Approve & Finalise Study Plan</span>
                     </button>
                   )}
 
-                  {/* Step 8 Action: Store in Repository */}
+                  {/* Action: Store in Repository */}
                   {(planStatus === 'approved' || planStatus === 'stored') && (
                     <button
                       onClick={() => onSavePlan && onSavePlan()}
                       className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
                     >
                       <Database className="w-4 h-4 text-emerald-400" />
-                      <span>Step 8: Save & Archive in Stored Repository</span>
+                      <span>Save & Archive in Stored Repository</span>
                     </button>
                   )}
                 </div>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
-import WorkflowStepper from './components/WorkflowStepper';
 import StudentSelectModal from './components/StudentSelectModal';
 import AcademicHistoryView from './components/AcademicHistoryView';
 import PlanBuilder from './components/PlanBuilder';
 import StoredPlansView from './components/StoredPlansView';
+import CourseCatalogPreview from './components/CourseCatalogPreview';
 import CertificateView from './components/CertificateView';
 import DataImportModal from './components/DataImportModal';
 import OfficialStudyPlanDocumentModal from './components/OfficialStudyPlanDocumentModal';
@@ -42,7 +42,6 @@ export default function App() {
   const [planUnits, setPlanUnits] = useState([]);
   const [validationResult, setValidationResult] = useState(null);
   const [activeTab, setActiveTab] = useState('STUDY_PLAN');
-  const [activeStep, setActiveStep] = useState(1);
   const [storedPlansCount, setStoredPlansCount] = useState(4);
 
   // Modals
@@ -79,8 +78,7 @@ export default function App() {
   const handleSelectStudent = async (student) => {
     setSelectedStudent(student);
     setShowStudentSelectModal(false);
-    setActiveStep(2);
-    showToast(`Step 1 Complete: Selected student ${student.first_name} ${student.last_name}`);
+    showToast(`Selected student ${student.first_name} ${student.last_name}`);
 
     try {
       const [historyData, planData] = await Promise.all([
@@ -137,58 +135,52 @@ export default function App() {
     runValidation(selectedStudent.student_id, selectedStudent.location_id, updatedUnits);
   };
 
-  // Step 5: Recommend Plan
+  // Recommend Plan
   const handleRecommendPlan = async () => {
     if (!selectedStudent) return;
     try {
       const planId = currentPlan ? currentPlan.plan_id : 1;
       await recommendPlan(planId, 'Academic Chair');
       setCurrentPlan(prev => ({ ...prev, status: 'recommended' }));
-      setActiveStep(6);
-      showToast('Step 5 Complete: Plan recommended to student! Switch to Student View to review & agree.');
+      showToast('Plan recommended to student! Switch to Student View to review & agree.');
     } catch (err) {
       console.error('Recommend failed:', err);
       setCurrentPlan(prev => ({ ...prev, status: 'recommended' }));
-      setActiveStep(6);
-      showToast('Step 5 Complete: Plan recommended to student!');
+      showToast('Plan recommended to student!');
     }
   };
 
-  // Step 6: Student Agree Plan
+  // Student Agree Plan
   const handleAgreePlan = async () => {
     if (!selectedStudent) return;
     try {
       const planId = currentPlan ? currentPlan.plan_id : 1;
       await agreePlan(planId, `${selectedStudent.first_name} ${selectedStudent.last_name}`);
       setCurrentPlan(prev => ({ ...prev, status: 'agreed' }));
-      setActiveStep(7);
-      showToast('Step 6 Complete: Study plan agreed and digitally signed by student!');
+      showToast('Study plan agreed and digitally signed by student!');
     } catch (err) {
       console.error('Agree failed:', err);
       setCurrentPlan(prev => ({ ...prev, status: 'agreed' }));
-      setActiveStep(7);
-      showToast('Step 6 Complete: Study plan agreed and digitally signed!');
+      showToast('Study plan agreed and digitally signed!');
     }
   };
 
-  // Step 7: Chair Approve & Finalise Plan
+  // Chair Approve & Finalise Plan
   const handleApprovePlan = async () => {
     if (!selectedStudent) return;
     try {
       const planId = currentPlan ? currentPlan.plan_id : 1;
       await approvePlan(planId, 'Academic Chair');
       setCurrentPlan(prev => ({ ...prev, status: 'approved' }));
-      setActiveStep(8);
-      showToast('Step 7 Complete: Study Plan officially approved and finalized by Academic Chair!');
+      showToast('Study Plan officially approved and finalized by Academic Chair!');
     } catch (err) {
       console.error('Approve failed:', err);
       setCurrentPlan(prev => ({ ...prev, status: 'approved' }));
-      setActiveStep(8);
-      showToast('Step 7 Complete: Study Plan officially approved & finalized!');
+      showToast('Study Plan officially approved & finalized!');
     }
   };
 
-  // Step 8: Save & Store Plan in Repository
+  // Save & Store Plan in Repository
   const handleSavePlan = async () => {
     if (!selectedStudent) return;
     try {
@@ -205,27 +197,12 @@ export default function App() {
         status: 'stored'
       }));
       setStoredPlansCount(prev => prev + 1);
-      setActiveStep(8);
-      showToast('Step 8 Complete: Study Plan saved & archived in Stored Plans Repository!');
+      showToast('Study Plan saved & archived in Stored Plans Repository!');
     } catch (err) {
       console.error('Failed to save study plan:', err);
       setCurrentPlan(prev => ({ ...prev, status: 'stored' }));
       setStoredPlansCount(prev => prev + 1);
-      setActiveStep(8);
-      showToast('Step 8 Complete: Saved in Stored Plans Repository!');
-    }
-  };
-
-  const handleStepClick = (stepNum) => {
-    setActiveStep(stepNum);
-    if (stepNum === 1) {
-      setShowStudentSelectModal(true);
-    } else if (stepNum === 2) {
-      setActiveTab('ACADEMIC_HISTORY');
-    } else if (stepNum === 8) {
-      setActiveTab('STORED');
-    } else {
-      setActiveTab('STUDY_PLAN');
+      showToast('Saved in Stored Plans Repository!');
     }
   };
 
@@ -250,17 +227,14 @@ export default function App() {
           activeRole={activeRole}
           onRoleChange={(newRole) => {
             setActiveRole(newRole);
-            if (newRole === 'student' && activeTab === 'STORED') {
+            if (newRole === 'student' && (activeTab === 'STORED' || activeTab === 'CATALOG')) {
               setActiveTab('STUDY_PLAN');
             }
           }}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           selectedStudent={selectedStudent}
-          studentsList={studentsList}
-          onSelectStudent={handleSelectStudent}
           onOpenStudentSelectModal={() => setShowStudentSelectModal(true)}
-          onSavePlan={handleSavePlan}
           storedPlansCount={storedPlansCount}
           onOpenImport={() => setShowImportModal(true)}
           onOpenAudit={() => setShowAuditModal(true)}
@@ -269,7 +243,7 @@ export default function App() {
         {/* Main Content Area */}
         <main className="max-w-[1440px] mx-auto px-4 md:px-6 pt-6 space-y-5">
           
-          {/* Step 1 Center Screen Student Selection Modal / Overlay */}
+          {/* Student Selection Modal */}
           {showStudentSelectModal && (
             <StudentSelectModal
               students={studentsList}
@@ -317,14 +291,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Workflow Stepper / Status Banner */}
-          <WorkflowStepper
-            currentStatus={currentPlan ? currentPlan.status : 'draft'}
-            activeRole={activeRole}
-            activeStep={activeStep}
-            onStepClick={handleStepClick}
-          />
-
           {/* View Component: STUDY_PLAN (Main Builder / Review) */}
           {activeTab === 'STUDY_PLAN' && (
             <PlanBuilder
@@ -362,6 +328,11 @@ export default function App() {
               onTabChange={setActiveTab}
             />
           )}
+
+          {/* View Component: CATALOG (Course Catalog Preview) */}
+          {activeTab === 'CATALOG' && (
+            <CourseCatalogPreview />
+          )}
         </main>
       </div>
 
@@ -396,9 +367,9 @@ export default function App() {
                   <span className="bg-red-600 text-white px-2 py-0.5 rounded">v1.1 — 15 SEP 2026</span>
                   <span className="text-slate-400">STATUS: ACTIVE RELEASE</span>
                 </div>
-                <p className="font-bold text-slate-900">ICT302 8-Step Workflow & Center Student Selector</p>
+                <p className="font-bold text-slate-900">Executive Navigation & Clean Layout Update</p>
                 <p className="text-[11px] text-slate-600 mt-1">
-                  Implemented Step 1 center screen student selector modal, 8-step workflow progress bar, Stored Plans Repository table (`StoredPlansView.jsx`), and PDF export.
+                  Removed cluttered workflow stepper bar. Integrated direct executive tab navigation (Plan Builder, Academic History, Stored Plans, Course Catalog) for Academic Chair.
                 </p>
               </div>
 

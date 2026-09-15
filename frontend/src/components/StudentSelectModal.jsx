@@ -30,7 +30,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
           <GraduationCap className="w-6 h-6" />
         </div>
         <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
-          Step 1: Select Student Record
+          MURDOCH UNIVERSITY STUDENT DIRECTORY
         </span>
         <h2 className="text-xl font-extrabold text-slate-900 tracking-tight mt-2">
           Academic Chair Student Selector
@@ -100,7 +100,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
                   }}
                   className="px-3 py-1.5 bg-slate-900 group-hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
                 >
-                  <span>Select</span>
+                  <span>Select Student</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>

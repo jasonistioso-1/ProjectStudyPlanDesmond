@@ -3,10 +3,11 @@ import {
   GraduationCap,
   Clock,
   UserCheck,
-  Download,
   FileSpreadsheet,
-  History,
-  ShieldCheck
+  BookOpen,
+  Layers,
+  Database,
+  History
 } from 'lucide-react';
 
 export default function Navbar({
@@ -15,8 +16,6 @@ export default function Navbar({
   activeTab,
   onTabChange,
   selectedStudent,
-  studentsList = [],
-  onSelectStudent,
   onOpenStudentSelectModal,
   storedPlansCount = 4,
   onOpenImport,
@@ -25,14 +24,15 @@ export default function Navbar({
   const isChair = activeRole === 'chair';
 
   const chairNavItems = [
-    { id: 'STUDY_PLAN', label: 'Plan Builder' },
-    { id: 'ACADEMIC_HISTORY', label: 'Academic History' },
-    { id: 'STORED', label: `Stored Plans (${storedPlansCount})` }
+    { id: 'STUDY_PLAN', label: 'Plan Builder', icon: Layers },
+    { id: 'ACADEMIC_HISTORY', label: 'Academic History', icon: History },
+    { id: 'STORED', label: `Stored Plans (${storedPlansCount})`, icon: Database },
+    { id: 'CATALOG', label: 'Course Catalog', icon: BookOpen }
   ];
 
   const studentNavItems = [
-    { id: 'STUDY_PLAN', label: 'My Study Plan' },
-    { id: 'ACADEMIC_HISTORY', label: 'Academic History' }
+    { id: 'STUDY_PLAN', label: 'My Study Plan', icon: Layers },
+    { id: 'ACADEMIC_HISTORY', label: 'Academic History', icon: History }
   ];
 
   const navItems = isChair ? chairNavItems : studentNavItems;
@@ -56,21 +56,24 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Middle: Clean Navigation Tabs */}
+        {/* Middle: Executive Navigation Tabs */}
         <nav className="flex items-center gap-1">
           {navItems.map(tab => {
             const isActive = activeTab === tab.id;
+            const IconComp = tab.icon;
+
             return (
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-slate-100 text-slate-900 font-bold shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                 }`}
               >
-                {tab.label}
+                {IconComp && <IconComp className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400' : 'text-slate-500'}`} />}
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -83,7 +86,7 @@ export default function Navbar({
             <button
               onClick={onOpenStudentSelectModal}
               className="bg-white hover:bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-900 shadow-2xs flex items-center gap-1.5 transition-colors"
-              title="Click to select student (Step 1)"
+              title="Click to select student"
             >
               <UserCheck className="w-3.5 h-3.5 text-red-600" />
               <span className="truncate max-w-[120px]">
