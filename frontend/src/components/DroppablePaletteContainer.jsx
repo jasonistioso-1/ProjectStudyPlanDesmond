@@ -9,7 +9,8 @@ export default function DroppablePaletteContainer({
   setUnitFilter,
   selectedLevel,
   setSelectedLevel,
-  onAddUnit
+  onAddUnit,
+  onAddToSpecificSemester
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'available_units_dropzone'
@@ -88,6 +89,7 @@ export default function DroppablePaletteContainer({
                 key={unit.unit_id || unit.code}
                 unit={unit}
                 onAdd={onAddUnit}
+                onAddToSpecificSemester={onAddToSpecificSemester}
               />
             ))
           )}

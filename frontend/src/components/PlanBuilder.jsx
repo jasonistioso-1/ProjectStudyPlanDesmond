@@ -191,6 +191,82 @@ export default function PlanBuilder({
     if (onValidate) onValidate(updated);
   };
 
+  // Add unit from palette to a specific target semester
+  const handleAddToSpecificSemester = (unit, yearLevel, periodId) => {
+    if (planUnits.some(u => u.code === unit.code)) return;
+
+    const newPlanUnit = {
+      unit_id: unit.unit_id,
+      code: unit.code,
+      title: unit.title,
+      credit_points: unit.credit_points || 3,
+      period_id: periodId,
+      year_level: yearLevel,
+      sequence_order: planUnits.length + 1
+    };
+
+    const updated = [...planUnits, newPlanUnit];
+    setPlanUnits(updated);
+    if (onValidate) onValidate(updated);
+  };
+
+  // 1-Click Auto-Fill Recommended Murdoch Pathway
+  const handleAutoFillMurdochPathway = () => {
+    const standardPathway = [
+      { code: 'ICT100', year_level: 1, period_id: 1 },
+      { code: 'ICT159', year_level: 1, period_id: 1 },
+      { code: 'ICT164', year_level: 1, period_id: 1 },
+      { code: 'BSC100', year_level: 1, period_id: 1 },
+
+      { code: 'ICT169', year_level: 1, period_id: 2 },
+      { code: 'ICT170', year_level: 1, period_id: 2 },
+      { code: 'ICT167', year_level: 1, period_id: 2 },
+      { code: 'ICT111', year_level: 1, period_id: 2 },
+
+      { code: 'ICT201', year_level: 2, period_id: 1 },
+      { code: 'ICT202', year_level: 2, period_id: 1 },
+      { code: 'ICT284', year_level: 2, period_id: 1 },
+      { code: 'ICT285', year_level: 2, period_id: 1 },
+
+      { code: 'ICT203', year_level: 2, period_id: 2 },
+      { code: 'ICT206', year_level: 2, period_id: 2 },
+      { code: 'ICT209', year_level: 2, period_id: 2 },
+      { code: 'BSC203', year_level: 2, period_id: 2 },
+
+      { code: 'ICT304', year_level: 3, period_id: 1 },
+      { code: 'ICT303', year_level: 3, period_id: 1 },
+      { code: 'ICT310', year_level: 3, period_id: 1 },
+      { code: 'ICT311', year_level: 3, period_id: 1 },
+
+      { code: 'ICT302', year_level: 3, period_id: 2 },
+      { code: 'ICT373', year_level: 3, period_id: 2 },
+      { code: 'ICT308', year_level: 3, period_id: 2 },
+      { code: 'ICT218', year_level: 3, period_id: 2 }
+    ];
+
+    const newUnits = standardPathway.map((item, idx) => {
+      const match = catalogUnits.find(u => u.code === item.code);
+      return {
+        unit_id: match ? match.unit_id : idx + 1,
+        code: item.code,
+        title: match ? match.title : item.code,
+        credit_points: match ? match.credit_points : 3,
+        period_id: item.period_id,
+        year_level: item.year_level,
+        sequence_order: idx + 1
+      };
+    });
+
+    setPlanUnits(newUnits);
+    if (onValidate) onValidate(newUnits);
+  };
+
+  // Clear all units from plan
+  const handleClearPlan = () => {
+    setPlanUnits([]);
+    if (onValidate) onValidate([]);
+  };
+
   // Remove unit from Plan
   const handleRemoveUnit = (unitIdOrCode) => {
     const updated = planUnits.filter(u => String(u.unit_id || u.code) !== String(unitIdOrCode));
@@ -371,6 +447,7 @@ export default function PlanBuilder({
               selectedLevel={selectedLevel}
               setSelectedLevel={setSelectedLevel}
               onAddUnit={handleAddUnitFromPalette}
+              onAddToSpecificSemester={handleAddToSpecificSemester}
             />
 
             {/* Card 2: Validation Console */}
@@ -431,31 +508,45 @@ export default function PlanBuilder({
               </div>
 
               {/* Action Bar Header */}
-              <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 mb-5">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     <Layers className="w-4 h-4 text-slate-700" />
                     3-Year Study Plan Grid
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                    Drag and drop units between semesters or use '+ Add' from available list. (Max 12 CP per semester).
+                    Drag and drop units or use 1-click auto-fill shortcuts (Max 12 CP per semester).
                   </p>
                 </div>
 
-                {/* Context Action Button Flow */}
-                <div className="flex items-center gap-2">
+                {/* Context Action Buttons & 1-Click End User Helpers */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleAutoFillMurdochPathway}
+                    className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                    title="1-Click Auto-Fill Recommended Murdoch 3-Year Plan"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-yellow-300" /> Auto-Fill Murdoch Plan
+                  </button>
+                  <button
+                    onClick={handleClearPlan}
+                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium text-xs transition-colors"
+                    title="Clear plan grid to start fresh"
+                  >
+                    Clear
+                  </button>
                   {onOpenOfficialDocument && (
                     <button
                       onClick={onOpenOfficialDocument}
-                      className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
-                      title="Export official physical study plan document (PDF / PNG)"
+                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                      title="Export official study plan document (PDF/PNG)"
                     >
-                      <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Export Document (PDF/PNG)
+                      <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Export PDF
                     </button>
                   )}
                   <button
                     onClick={onSavePlan}
-                    className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                    className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
                   >
                     <Save className="w-3.5 h-3.5 text-slate-500" /> Save Draft
                   </button>
