@@ -504,7 +504,13 @@ export default function PlanBuilder({
                     <span className="text-xs text-slate-300 font-medium">Optimal Course Pathway Analysis</span>
                   </div>
                   <p className="text-xs text-slate-200 font-normal leading-relaxed max-w-xl">
-                    {student ? `${student.name} is on track for ${student.major || 'Software & Systems'}. Ensure 100-level core prerequisites (ICT100, ICT159) are completed prior to 200-level sequences.` : 'Ensure 100-level core prerequisites are completed prior to 200-level sequences.'}
+                    {student ? (
+                      <>
+                        <strong className="text-white font-semibold">{`${student.first_name || ''} ${student.last_name || ''}`.trim()}</strong> is enrolled in <strong className="text-emerald-400 font-semibold">{student.course_name || 'Software & Systems'}</strong>. Ensure 100-level core prerequisites (ICT100, ICT159) are completed prior to 200-level sequences.
+                      </>
+                    ) : (
+                      'Ensure 100-level core prerequisites are completed prior to 200-level sequences.'
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
@@ -523,7 +529,7 @@ export default function PlanBuilder({
                     3-Year Study Plan Grid
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                    Drag and drop units or use 1-click auto-fill shortcuts (Max 12 CP per semester).
+                    Drag and drop units from Available Units or select target semester (Max 12 CP per semester).
                   </p>
                 </div>
 
@@ -555,13 +561,6 @@ export default function PlanBuilder({
                     </button>
                   </div>
 
-                  <button
-                    onClick={handleAutoFillMurdochPathway}
-                    className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
-                    title="1-Click Auto-Fill Recommended Murdoch 3-Year Plan"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-yellow-300" /> Auto-Fill Murdoch Plan
-                  </button>
                   <button
                     onClick={handleClearPlan}
                     className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium text-xs transition-colors"

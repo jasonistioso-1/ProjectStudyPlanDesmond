@@ -35,11 +35,14 @@ INSERT INTO TeachingPeriod (period_id, code, name, period_type, sequence_order) 
 (6, 'WINT', 'Winter Term', 'winter', 4),
 (7, 'SUMM', 'Summer Term', 'summer', 5);
 
--- 3. Seed Courses
+-- 3. Seed Courses (6 Distinct Murdoch IT Degree Programs & Majors)
 INSERT INTO Course (course_id, code, name, degree_level, total_credit_points) VALUES
 (1, 'PT3-BSIT-01', 'Bachelor of Information Technology (Major: Software & Systems)', 'Bachelor', 72),
-(2, 'PT3-BSIT-DS02', 'Bachelor of Data Analytics & Business Intelligence', 'Bachelor', 72),
-(3, 'PT3-MSIT-03', 'Master of Information Technology (Data Analytics & Cloud)', 'Master', 48);
+(2, 'PT3-BSIT-CS02', 'Bachelor of Information Technology (Major: Cyber Security & Forensics)', 'Bachelor', 72),
+(3, 'PT3-BSIT-BIS03', 'Bachelor of Information Technology (Major: Business Information Systems)', 'Bachelor', 72),
+(4, 'PT3-BSIT-DS04', 'Bachelor of Data Analytics & Artificial Intelligence', 'Bachelor', 72),
+(5, 'PT3-BSIT-GT05', 'Bachelor of Information Technology (Major: Games Technology & Web)', 'Bachelor', 72),
+(6, 'PT3-MSIT-CC06', 'Master of Information Technology (Cloud Computing & DevOps)', 'Master', 48);
 
 -- 4. Seed Units (Standard Curriculum Dataset)
 INSERT INTO Unit (unit_id, code, title, credit_points, level) VALUES
@@ -101,14 +104,14 @@ INSERT INTO Prerequisite (unit_id, prereq_unit_id, min_grade, is_concurrent_allo
 ((SELECT unit_id FROM Unit WHERE code = 'ICT284'), (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'P', FALSE),
 ((SELECT unit_id FROM Unit WHERE code = 'ICT285'), (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'P', FALSE);
 
--- 7. Seed Students
+-- 7. Seed Students (6 Students across 6 Distinct Majors)
 INSERT INTO Student (student_id, student_number, first_name, last_name, email, course_id, location_id, commencement_year, study_status) VALUES
 (1, 'PT3-2026-001', 'Alex', 'Mercer', 'alex.mercer@student.pt3solutions.edu.au', 1, 1, 2026, 'active'),
 (2, 'PT3-2026-002', 'Sarah', 'Chen', 's.chen@student.pt3solutions.edu.au', 2, 2, 2026, 'active'),
-(3, 'PT3-2025-003', 'David', 'Tan', 'd.tan@student.pt3solutions.edu.au', 1, 1, 2025, 'at-risk'),
-(4, 'PT3-2026-004', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.au', 3, 3, 2026, 'part-time'),
-(5, 'PT3-2024-005', 'Michael', 'Rahardjo', 'm.rahardjo@student.pt3solutions.edu.au', 1, 1, 2024, 'graduating'),
-(6, 'PT3-2026-006', 'Jessica', 'Taylor', 'j.taylor@student.pt3solutions.edu.au', 2, 1, 2026, 'active');
+(3, 'PT3-2025-003', 'David', 'Tan', 'd.tan@student.pt3solutions.edu.au', 3, 1, 2025, 'at-risk'),
+(4, 'PT3-2026-004', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.au', 4, 3, 2026, 'part-time'),
+(5, 'PT3-2024-005', 'Michael', 'Rahardjo', 'm.rahardjo@student.pt3solutions.edu.au', 5, 1, 2024, 'graduating'),
+(6, 'PT3-2026-006', 'Jessica', 'Taylor', 'j.taylor@student.pt3solutions.edu.au', 6, 4, 2026, 'active');
 
 -- 8. Seed Student Unit History
 INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period_id, year_taken) VALUES
