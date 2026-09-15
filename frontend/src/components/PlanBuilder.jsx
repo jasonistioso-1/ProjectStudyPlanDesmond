@@ -18,8 +18,7 @@ import {
   GripVertical,
   ShieldCheck,
   Database,
-  FileCheck,
-  UserCheck
+  FileCheck
 } from 'lucide-react';
 
 export default function PlanBuilder({
@@ -445,33 +444,6 @@ export default function PlanBuilder({
           {/* RIGHT COLUMN: 3-YEAR STUDY PLAN GRID (8 Cols) */}
           <div className="lg:col-span-8 space-y-4">
             <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
-              
-              {/* Academic Advisor Decision Helper Box */}
-              <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-lg p-4 mb-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border border-slate-700">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider bg-red-600 text-white px-2 py-0.5 rounded">
-                      ACADEMIC DECISION SUPPORT
-                    </span>
-                    <span className="text-xs text-slate-300 font-medium">Degree Progression Analysis</span>
-                  </div>
-                  <p className="text-xs text-slate-200 font-normal leading-relaxed max-w-xl">
-                    {student ? (
-                      <>
-                        <strong className="text-white font-semibold">{`${student.first_name || ''} ${student.last_name || ''}`.trim()}</strong> is enrolled in <strong className="text-emerald-400 font-semibold">{student.course_name || 'Software & Systems'}</strong>. Ensure core prerequisites (ICT100, ICT159) are satisfied.
-                      </>
-                    ) : (
-                      'Ensure core prerequisites are completed prior to 200-level sequences.'
-                    )}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                  <span className="text-[11px] font-mono bg-slate-800 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-md font-semibold flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Pathway Active
-                  </span>
-                </div>
-              </div>
 
               {/* Action Bar Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 mb-5">
