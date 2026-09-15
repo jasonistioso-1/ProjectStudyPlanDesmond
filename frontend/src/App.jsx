@@ -282,8 +282,8 @@ export default function App() {
           />
         )}
 
-        {/* View Component: RIWAYAT (Academic History) */}
-        {activeTab === 'RIWAYAT' && (
+        {/* View Component: ACADEMIC_HISTORY (Academic History) */}
+        {activeTab === 'ACADEMIC_HISTORY' && (
           <AcademicHistoryView history={history} />
         )}
       </main>

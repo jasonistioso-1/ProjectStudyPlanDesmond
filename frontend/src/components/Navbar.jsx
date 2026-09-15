@@ -22,13 +22,13 @@ export default function Navbar({
 
   const chairNavItems = [
     { id: 'STUDY_PLAN', label: 'Plan Builder' },
-    { id: 'RIWAYAT', label: 'Academic History' },
+    { id: 'ACADEMIC_HISTORY', label: 'Academic History' },
     { id: 'STORED', label: `Stored Plans (${storedPlansCount})` }
   ];
 
   const studentNavItems = [
     { id: 'STUDY_PLAN', label: 'My Study Plan' },
-    { id: 'RIWAYAT', label: 'Academic History' }
+    { id: 'ACADEMIC_HISTORY', label: 'Academic History' }
   ];
 
   const navItems = isChair ? chairNavItems : studentNavItems;
