@@ -254,36 +254,54 @@ export default function App() {
           )}
 
           {/* Student Course Info Header */}
-          <div className="bg-white border border-slate-200 p-4.5 rounded-xl shadow-2xs font-sans border-t-2 border-t-red-600">
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="bg-red-50 text-red-700 border border-red-200 font-bold text-[11px] px-2.5 py-0.5 rounded-md font-mono">
+          <div className="bg-gradient-to-r from-white via-slate-50/60 to-red-50/20 border border-slate-200/90 p-5 rounded-2xl shadow-xs font-sans relative overflow-hidden">
+            {/* Top Accent Gradient Line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-red-500 to-slate-900" />
+            
+            <div className="flex flex-col md:flex-row justify-between md:items-center gap-5 pt-0.5">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="bg-red-700 text-white font-semibold text-[11px] px-3 py-0.5 rounded-full shadow-2xs tracking-wide">
                     {selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-01'}
                   </span>
-                  <span className="text-slate-500 text-xs font-normal">• Perth Main Campus</span>
+                  <span className="text-slate-500 text-xs font-medium flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                    Perth Main Campus
+                  </span>
                 </div>
-                <h1 className="text-base md:text-lg font-extrabold tracking-tight text-slate-900">
-                  Bachelor of Information Technology (Major: Software & Systems)
+
+                <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 font-heading">
+                  Bachelor of Information Technology
+                  <span className="text-slate-500 font-normal text-sm md:text-base ml-2 inline-block">(Major: Software & Systems)</span>
                 </h1>
-                <p className="text-xs text-slate-600 mt-1 font-normal flex items-center gap-3">
-                  <span>Student: <strong className="text-slate-900 font-semibold">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong></span>
+
+                <div className="text-xs text-slate-500 font-medium flex items-center gap-3 pt-0.5">
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-slate-400">Student:</span>
+                    <strong className="text-slate-900 font-semibold">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong>
+                  </span>
                   <span className="text-slate-300">•</span>
-                  <span>ID: <strong className="font-mono text-slate-800">{selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}</strong></span>
-                </p>
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-slate-400">ID:</span>
+                    <strong className="text-slate-800 font-medium tracking-tight bg-slate-100 px-2 py-0.5 rounded text-[11px] border border-slate-200/80">
+                      {selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}
+                    </strong>
+                  </span>
+                </div>
               </div>
 
               {/* Total Degree Credit Meter */}
-              <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-right shrink-0 min-w-[200px]">
-                <div className="text-[11px] font-mono font-medium text-slate-500">
+              <div className="bg-white/90 border border-slate-200/90 p-4 rounded-xl text-right shrink-0 min-w-[210px] shadow-2xs">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Planned Credit Load
                 </div>
-                <div className="text-base font-mono font-bold text-slate-900 my-0.5 tabular-nums">
-                  {planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)} / 72 CP
+                <div className="text-lg font-bold text-slate-900 my-0.5 tracking-tight tabular-nums flex items-baseline justify-end gap-1">
+                  <span className="text-slate-900 text-xl font-extrabold">{planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)}</span>
+                  <span className="text-slate-400 font-semibold text-xs">/ 72 CP</span>
                 </div>
-                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-1.5 p-0.5 border border-slate-100">
                   <div 
-                    className="bg-slate-900 h-full transition-all duration-300" 
+                    className="bg-gradient-to-r from-red-600 to-slate-900 h-full rounded-full transition-all duration-500" 
                     style={{ width: `${Math.min(100, Math.round((planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0) / 72) * 100))}%` }}
                   />
                 </div>

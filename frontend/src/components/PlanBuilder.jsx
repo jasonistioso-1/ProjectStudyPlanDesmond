@@ -663,23 +663,25 @@ export default function PlanBuilder({
           {/* RIGHT SIDEBAR COLUMN: 1/3 WIDTH (4 COLS) - STUDENT PROFILE & SCHEDULED STUDY PLAN */}
           <div className="lg:col-span-4 space-y-5">
             {/* Card 1: Student Profile Information */}
-            <div className="bg-white border-t-4 border-t-red-600 border border-slate-200 rounded-2xl p-5 shadow-2xs font-sans">
-              <div className="flex items-center gap-2 pb-3 mb-4 border-b border-slate-100">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs font-sans relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-red-500 to-slate-900" />
+
+              <div className="flex items-center gap-2 pb-3 mb-4 border-b border-slate-100 pt-1">
                 <User className="w-4 h-4 text-red-600" />
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 font-heading">
                   Student Profile Information
                 </h3>
               </div>
 
-              <div className="space-y-2.5 text-xs">
+              <div className="space-y-3 text-xs">
                 <div className="flex justify-between items-baseline">
                   <span className="text-slate-400 font-medium">Student ID</span>
-                  <span className="font-mono font-bold text-slate-900">{stNumber}</span>
+                  <span className="font-semibold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px] border border-slate-200/70">{stNumber}</span>
                 </div>
 
                 <div className="flex justify-between items-baseline">
                   <span className="text-slate-400 font-medium">Student Name</span>
-                  <span className="font-extrabold text-slate-900 text-right">{stName}</span>
+                  <span className="font-bold text-slate-900 text-right">{stName}</span>
                 </div>
 
                 <div className="flex justify-between items-baseline">
@@ -694,7 +696,7 @@ export default function PlanBuilder({
 
                 <div className="flex justify-between items-baseline">
                   <span className="text-slate-400 font-medium">Major / Concentration</span>
-                  <span className="bg-red-50 text-red-700 font-mono font-bold text-[10px] px-2 py-0.5 rounded border border-red-200">
+                  <span className="bg-red-50 text-red-700 font-semibold text-[10px] px-2.5 py-0.5 rounded-full border border-red-200">
                     Software & Systems
                   </span>
                 </div>
@@ -706,26 +708,26 @@ export default function PlanBuilder({
 
                 <div className="flex justify-between items-baseline">
                   <span className="text-slate-400 font-medium">Academic Status</span>
-                  <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  <span className="font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-[10px]">
                     Active (Commenced 2026)
                   </span>
                 </div>
 
-                <div className="flex justify-between items-baseline pt-1 border-t border-slate-100">
+                <div className="flex justify-between items-baseline pt-2 border-t border-slate-100">
                   <span className="text-slate-400 font-medium">Max CP per Semester</span>
-                  <span className="font-mono font-bold text-slate-900">12 CP (4 Units)</span>
+                  <span className="font-semibold text-slate-900">12 CP (4 Units)</span>
                 </div>
               </div>
 
               {/* Planned Credit Progress Bar */}
-              <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
-                <div className="flex justify-between items-center text-[11px] font-mono">
+              <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+                <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-500 font-medium">Total Planned Load</span>
-                  <span className="font-extrabold text-slate-900">{totalCP} / 72 CP</span>
+                  <span className="font-extrabold text-slate-900 tabular-nums">{totalCP} / 72 CP</span>
                 </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden p-0.5 border border-slate-100">
                   <div
-                    className="bg-slate-900 h-full transition-all duration-300"
+                    className="bg-gradient-to-r from-red-600 to-slate-900 h-full rounded-full transition-all duration-500"
                     style={{ width: `${Math.min(100, Math.round((totalCP / 72) * 100))}%` }}
                   />
                 </div>
@@ -733,15 +735,15 @@ export default function PlanBuilder({
             </div>
 
             {/* Card 2: Scheduled Study Plan Summary */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs font-sans space-y-3">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs font-sans space-y-3">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <FileCheck className="w-4 h-4 text-emerald-600" />
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 font-heading">
                     Scheduled Study Plan Summary
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
+                <span className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200/80">
                   {planUnits.length} Units
                 </span>
               </div>
@@ -755,23 +757,23 @@ export default function PlanBuilder({
                   {planUnits.map(unit => (
                     <div
                       key={unit.unit_id || unit.code}
-                      className="bg-slate-50/80 hover:bg-slate-100/80 border border-slate-200/90 rounded-xl p-2.5 transition-colors text-xs flex items-center justify-between gap-2"
+                      className="bg-slate-50/70 hover:bg-slate-100/90 border border-slate-200/80 rounded-xl p-2.5 transition-colors text-xs flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 font-bold" />
                         <div className="min-w-0">
-                          <div className="font-mono font-bold text-slate-900 text-xs">{unit.code}</div>
+                          <div className="font-bold text-slate-900 text-xs tracking-tight">{unit.code}</div>
                           <div className="text-slate-600 text-[11px] truncate max-w-[160px] font-medium">
                             {unit.title}
                           </div>
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0 font-mono text-[10px]">
-                        <span className="bg-white text-slate-700 border border-slate-200 px-1.5 py-0.5 rounded font-bold block mb-0.5">
+                      <div className="text-right shrink-0 text-[10px]">
+                        <span className="bg-white text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md font-semibold block mb-0.5 shadow-2xs">
                           Yr{unit.year_level} S{unit.period_id}
                         </span>
-                        <span className="text-slate-500 font-semibold">{unit.credit_points || 3} CP</span>
+                        <span className="text-slate-500 font-medium tabular-nums">{unit.credit_points || 3} CP</span>
                       </div>
                     </div>
                   ))}
