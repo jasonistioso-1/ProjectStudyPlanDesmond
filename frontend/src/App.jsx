@@ -8,6 +8,7 @@ import StoredPlansView from './components/StoredPlansView';
 import CertificateView from './components/CertificateView';
 import DataImportModal from './components/DataImportModal';
 import OfficialStudyPlanDocumentModal from './components/OfficialStudyPlanDocumentModal';
+import Footer from './components/Footer';
 
 import {
   fetchStudents,
@@ -26,9 +27,7 @@ import {
   CheckCircle2,
   X,
   Clock,
-  FileText,
-  History,
-  ShieldCheck
+  FileText
 } from 'lucide-react';
 
 export default function App() {
@@ -236,133 +235,138 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans antialiased pb-16">
-      {/* Toast Notification Banner */}
-      {notificationMsg && (
-        <div className="fixed top-4 right-4 z-50 bg-[#008652] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-bold transition-all border border-emerald-700 animate-bounce">
-          <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
-          <span>{notificationMsg}</span>
-        </div>
-      )}
-
-      {/* Header Bar */}
-      <Navbar
-        activeRole={activeRole}
-        onRoleChange={(newRole) => {
-          setActiveRole(newRole);
-          if (newRole === 'student' && activeTab === 'STORED') {
-            setActiveTab('STUDY_PLAN');
-          }
-        }}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        selectedStudent={selectedStudent}
-        studentsList={studentsList}
-        onSelectStudent={handleSelectStudent}
-        onOpenStudentSelectModal={() => setShowStudentSelectModal(true)}
-        onSavePlan={handleSavePlan}
-        storedPlansCount={storedPlansCount}
-        onOpenImport={() => setShowImportModal(true)}
-        onOpenAudit={() => setShowAuditModal(true)}
-      />
-
-      {/* Main Content Area */}
-      <main className="max-w-[1440px] mx-auto px-4 md:px-6 pt-6 space-y-5">
-        
-        {/* Step 1 Center Screen Student Selection Modal / Overlay */}
-        {showStudentSelectModal && (
-          <StudentSelectModal
-            students={studentsList}
-            onSelectStudent={handleSelectStudent}
-            onClose={() => setShowStudentSelectModal(false)}
-            isModal={selectedStudent !== null}
-          />
+    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans antialiased flex flex-col justify-between">
+      <div>
+        {/* Toast Notification Banner */}
+        {notificationMsg && (
+          <div className="fixed top-4 right-4 z-50 bg-[#008652] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-bold transition-all border border-emerald-700 animate-bounce">
+            <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
+            <span>{notificationMsg}</span>
+          </div>
         )}
 
-        {/* Student Course Info Header */}
-        <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-2xs font-sans border-t-2 border-t-red-600">
-          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="bg-red-50 text-red-700 border border-red-200 font-semibold text-[11px] px-2.5 py-0.5 rounded-md font-mono">
-                  {selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-01'}
-                </span>
-                <span className="text-slate-500 text-xs font-normal">• Perth Main Campus</span>
-              </div>
-              <h1 className="text-base md:text-lg font-extrabold tracking-tight text-slate-900">
-                Bachelor of Information Technology (Major: Software & Systems)
-              </h1>
-              <p className="text-xs text-slate-600 mt-1 font-normal flex items-center gap-3">
-                <span>Student: <strong className="text-slate-900 font-semibold">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong></span>
-                <span className="text-slate-300">•</span>
-                <span>ID: <strong className="font-mono text-slate-800">{selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}</strong></span>
-              </p>
-            </div>
+        {/* Header Bar */}
+        <Navbar
+          activeRole={activeRole}
+          onRoleChange={(newRole) => {
+            setActiveRole(newRole);
+            if (newRole === 'student' && activeTab === 'STORED') {
+              setActiveTab('STUDY_PLAN');
+            }
+          }}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          selectedStudent={selectedStudent}
+          studentsList={studentsList}
+          onSelectStudent={handleSelectStudent}
+          onOpenStudentSelectModal={() => setShowStudentSelectModal(true)}
+          onSavePlan={handleSavePlan}
+          storedPlansCount={storedPlansCount}
+          onOpenImport={() => setShowImportModal(true)}
+          onOpenAudit={() => setShowAuditModal(true)}
+        />
 
-            {/* Total Degree Credit Meter */}
-            <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-right shrink-0 min-w-[200px]">
-              <div className="text-[11px] font-mono font-medium text-slate-500">
-                Planned Credit Load
+        {/* Main Content Area */}
+        <main className="max-w-[1440px] mx-auto px-4 md:px-6 pt-6 space-y-5">
+          
+          {/* Step 1 Center Screen Student Selection Modal / Overlay */}
+          {showStudentSelectModal && (
+            <StudentSelectModal
+              students={studentsList}
+              onSelectStudent={handleSelectStudent}
+              onClose={() => setShowStudentSelectModal(false)}
+              isModal={selectedStudent !== null}
+            />
+          )}
+
+          {/* Student Course Info Header */}
+          <div className="bg-white border border-slate-200 p-4.5 rounded-xl shadow-2xs font-sans border-t-2 border-t-red-600">
+            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="bg-red-50 text-red-700 border border-red-200 font-bold text-[11px] px-2.5 py-0.5 rounded-md font-mono">
+                    {selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-01'}
+                  </span>
+                  <span className="text-slate-500 text-xs font-normal">• Perth Main Campus</span>
+                </div>
+                <h1 className="text-base md:text-lg font-extrabold tracking-tight text-slate-900">
+                  Bachelor of Information Technology (Major: Software & Systems)
+                </h1>
+                <p className="text-xs text-slate-600 mt-1 font-normal flex items-center gap-3">
+                  <span>Student: <strong className="text-slate-900 font-semibold">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong></span>
+                  <span className="text-slate-300">•</span>
+                  <span>ID: <strong className="font-mono text-slate-800">{selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}</strong></span>
+                </p>
               </div>
-              <div className="text-base font-mono font-bold text-slate-900 my-0.5 tabular-nums">
-                {planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)} / 72 CP
-              </div>
-              <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
-                <div 
-                  className="bg-slate-900 h-full transition-all duration-300" 
-                  style={{ width: `${Math.min(100, Math.round((planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0) / 72) * 100))}%` }}
-                />
+
+              {/* Total Degree Credit Meter */}
+              <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-right shrink-0 min-w-[200px]">
+                <div className="text-[11px] font-mono font-medium text-slate-500">
+                  Planned Credit Load
+                </div>
+                <div className="text-base font-mono font-bold text-slate-900 my-0.5 tabular-nums">
+                  {planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)} / 72 CP
+                </div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
+                  <div 
+                    className="bg-slate-900 h-full transition-all duration-300" 
+                    style={{ width: `${Math.min(100, Math.round((planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0) / 72) * 100))}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Workflow Stepper / Status Banner */}
-        <WorkflowStepper
-          currentStatus={currentPlan ? currentPlan.status : 'draft'}
-          activeRole={activeRole}
-          activeStep={activeStep}
-          onStepClick={handleStepClick}
-        />
-
-        {/* View Component: STUDY_PLAN (Main Builder / Review) */}
-        {activeTab === 'STUDY_PLAN' && (
-          <PlanBuilder
-            student={selectedStudent}
-            planUnits={planUnits}
-            setPlanUnits={setPlanUnits}
-            catalogUnits={catalogUnits}
-            periods={periods}
-            validationResult={validationResult}
-            history={history}
-            onValidate={handleValidateCurrentPlan}
+          {/* Workflow Stepper / Status Banner */}
+          <WorkflowStepper
+            currentStatus={currentPlan ? currentPlan.status : 'draft'}
             activeRole={activeRole}
-            currentPlan={currentPlan}
-            onRecommendPlan={handleRecommendPlan}
-            onAgreePlan={handleAgreePlan}
-            onApprovePlan={handleApprovePlan}
-            onSavePlan={handleSavePlan}
-            onOpenOfficialDocument={() => setShowDocumentModal(true)}
+            activeStep={activeStep}
+            onStepClick={handleStepClick}
           />
-        )}
 
-        {/* View Component: ACADEMIC_HISTORY (Academic History) */}
-        {activeTab === 'ACADEMIC_HISTORY' && (
-          <AcademicHistoryView history={history} />
-        )}
+          {/* View Component: STUDY_PLAN (Main Builder / Review) */}
+          {activeTab === 'STUDY_PLAN' && (
+            <PlanBuilder
+              student={selectedStudent}
+              planUnits={planUnits}
+              setPlanUnits={setPlanUnits}
+              catalogUnits={catalogUnits}
+              periods={periods}
+              validationResult={validationResult}
+              history={history}
+              onValidate={handleValidateCurrentPlan}
+              activeRole={activeRole}
+              currentPlan={currentPlan}
+              onRecommendPlan={handleRecommendPlan}
+              onAgreePlan={handleAgreePlan}
+              onApprovePlan={handleApprovePlan}
+              onSavePlan={handleSavePlan}
+              onOpenOfficialDocument={() => setShowDocumentModal(true)}
+            />
+          )}
 
-        {/* View Component: STORED (Stored Plans Repository Table) */}
-        {activeTab === 'STORED' && (
-          <StoredPlansView
-            students={studentsList}
-            onSelectStudentAndRetrievePlan={(st) => {
-              handleSelectStudent(st);
-              setActiveTab('STUDY_PLAN');
-            }}
-            onTabChange={setActiveTab}
-          />
-        )}
-      </main>
+          {/* View Component: ACADEMIC_HISTORY (Academic History) */}
+          {activeTab === 'ACADEMIC_HISTORY' && (
+            <AcademicHistoryView history={history} />
+          )}
+
+          {/* View Component: STORED (Stored Plans Repository Table) */}
+          {activeTab === 'STORED' && (
+            <StoredPlansView
+              students={studentsList}
+              onSelectStudentAndRetrievePlan={(st) => {
+                handleSelectStudent(st);
+                setActiveTab('STUDY_PLAN');
+              }}
+              onTabChange={setActiveTab}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* Footer */}
+      <Footer />
 
       {/* Audit Log / Change Log Modal */}
       {showAuditModal && (
