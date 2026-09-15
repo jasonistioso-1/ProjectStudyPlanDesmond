@@ -424,7 +424,7 @@ export default function PlanBuilder({
                   }`}
                 >
                   <BookOpen className={`w-3.5 h-3.5 ${builderTab === 'OFFERINGS' ? 'text-emerald-400' : 'text-slate-500'}`} />
-                  <span>Daftar & Penawaran Matakuliah ({filteredOfferings.length})</span>
+                  <span>Course Offerings Directory ({filteredOfferings.length})</span>
                 </button>
 
                 <button
@@ -601,7 +601,7 @@ export default function PlanBuilder({
               </div>
             )}
 
-            {/* TAB CONTENT 2: DAFTAR & PENAWARAN MATAKULIAH (DATATABLE PORTAL STYLE) */}
+            {/* TAB CONTENT 2: COURSE OFFERINGS DIRECTORY (DATATABLE PORTAL STYLE) */}
             {builderTab === 'OFFERINGS' && (
               <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
                 <DroppablePaletteContainer
@@ -660,47 +660,47 @@ export default function PlanBuilder({
             )}
           </div>
 
-          {/* RIGHT SIDEBAR COLUMN: 1/3 WIDTH (4 COLS) - INFORMASI MAHASISWA & RENCANA TERJADWAL */}
+          {/* RIGHT SIDEBAR COLUMN: 1/3 WIDTH (4 COLS) - STUDENT PROFILE & SCHEDULED STUDY PLAN */}
           <div className="lg:col-span-4 space-y-5">
-            {/* Card 1: Informasi Mahasiswa (Identical to Screenshot Structure) */}
+            {/* Card 1: Student Profile Information */}
             <div className="bg-white border-t-4 border-t-red-600 border border-slate-200 rounded-2xl p-5 shadow-2xs font-sans">
               <div className="flex items-center gap-2 pb-3 mb-4 border-b border-slate-100">
                 <User className="w-4 h-4 text-red-600" />
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
-                  Informasi Mahasiswa
+                  Student Profile Information
                 </h3>
               </div>
 
               <div className="space-y-2.5 text-xs">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-slate-400 font-medium">NIM / Student ID</span>
+                  <span className="text-slate-400 font-medium">Student ID</span>
                   <span className="font-mono font-bold text-slate-900">{stNumber}</span>
                 </div>
 
                 <div className="flex justify-between items-baseline">
-                  <span className="text-slate-400 font-medium">Nama Mahasiswa</span>
+                  <span className="text-slate-400 font-medium">Student Name</span>
                   <span className="font-extrabold text-slate-900 text-right">{stName}</span>
                 </div>
 
                 <div className="flex justify-between items-baseline">
-                  <span className="text-slate-400 font-medium">Jenjang</span>
-                  <span className="font-semibold text-slate-800">S1 (Bachelor Degree)</span>
+                  <span className="text-slate-400 font-medium">Degree Level</span>
+                  <span className="font-semibold text-slate-800">Bachelor Degree (S1)</span>
                 </div>
 
                 <div className="flex justify-between items-baseline">
-                  <span className="text-slate-400 font-medium">Program Studi</span>
+                  <span className="text-slate-400 font-medium">Degree Program</span>
                   <span className="font-bold text-slate-900 text-right max-w-[170px] truncate">{stDegree}</span>
                 </div>
 
                 <div className="flex justify-between items-baseline">
-                  <span className="text-slate-400 font-medium">Major / Konsentrasi</span>
+                  <span className="text-slate-400 font-medium">Major / Concentration</span>
                   <span className="bg-red-50 text-red-700 font-mono font-bold text-[10px] px-2 py-0.5 rounded border border-red-200">
                     Software & Systems
                   </span>
                 </div>
 
                 <div className="flex justify-between items-baseline">
-                  <span className="text-slate-400 font-medium">Perkuliahan</span>
+                  <span className="text-slate-400 font-medium">Campus Location</span>
                   <span className="font-semibold text-slate-800">Perth Main Campus</span>
                 </div>
 
@@ -732,13 +732,13 @@ export default function PlanBuilder({
               </div>
             </div>
 
-            {/* Card 2: Rencana Studi Terjadwal (KRS Terjadwal Summary) */}
+            {/* Card 2: Scheduled Study Plan Summary */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs font-sans space-y-3">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <FileCheck className="w-4 h-4 text-emerald-600" />
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
-                    Rencana Studi Terjadwal
+                    Scheduled Study Plan Summary
                   </h3>
                 </div>
                 <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
@@ -748,7 +748,7 @@ export default function PlanBuilder({
 
               {planUnits.length === 0 ? (
                 <div className="text-center py-6 text-slate-400 text-xs italic">
-                  Belum ada matakuliah yang dijadwalkan dalam rencana studi.
+                  No units scheduled in the study plan yet.
                 </div>
               ) : (
                 <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
