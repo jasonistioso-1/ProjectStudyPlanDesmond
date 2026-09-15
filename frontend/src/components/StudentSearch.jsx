@@ -6,6 +6,7 @@ export default function StudentSearch({ selectedStudent, onSelectStudent }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [students, setStudents] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('name'); // 'name' | 'id' | 'course'
 
   useEffect(() => {
     loadStudents('');
@@ -27,11 +28,57 @@ export default function StudentSearch({ selectedStudent, onSelectStudent }) {
     loadStudents(value);
   };
 
+  const sortedStudents = [...students].sort((a, b) => {
+    if (sortBy === 'name') {
+      const nameA = `${a.first_name || ''} ${a.last_name || ''}`.toLowerCase();
+      const nameB = `${b.first_name || ''} ${b.last_name || ''}`.toLowerCase();
+      return nameA.localeCompare(nameB);
+    } else if (sortBy === 'id') {
+      const idA = (a.student_number || '').toLowerCase();
+      const idB = (b.student_number || '').toLowerCase();
+      return idA.localeCompare(idB, undefined, { numeric: true });
+    } else if (sortBy === 'course') {
+      const courseA = (a.course_code || a.course_name || '').toLowerCase();
+      const courseB = (b.course_code || b.course_name || '').toLowerCase();
+      return courseA.localeCompare(courseB);
+    }
+    return 0;
+  });
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-      <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2 tracking-tight">
-        <UserCheck className="w-4 h-4 text-blue-700" /> Student Directory & Academic Search
-      </h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 tracking-tight">
+          <UserCheck className="w-4 h-4 text-slate-900" /> Student Directory & Academic Search
+        </h2>
+        <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
+          <span className="text-[10px] font-bold text-slate-400 uppercase px-1.5">Sort:</span>
+          <button
+            onClick={() => setSortBy('name')}
+            className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all ${
+              sortBy === 'name' ? 'bg-slate-900 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Name
+          </button>
+          <button
+            onClick={() => setSortBy('id')}
+            className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all ${
+              sortBy === 'id' ? 'bg-slate-900 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            ID
+          </button>
+          <button
+            onClick={() => setSortBy('course')}
+            className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all ${
+              sortBy === 'course' ? 'bg-slate-900 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Major
+          </button>
+        </div>
+      </div>
 
       <div className="relative">
         <div className="relative">
@@ -47,9 +94,9 @@ export default function StudentSearch({ selectedStudent, onSelectStudent }) {
         </div>
 
         {/* Dropdown Menu */}
-        {isOpen && students.length > 0 && (
+        {isOpen && sortedStudents.length > 0 && (
           <div className="absolute z-20 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
-            {students.map((student) => (
+            {sortedStudents.map((student) => (
               <div
                 key={student.student_id}
                 onClick={() => {
