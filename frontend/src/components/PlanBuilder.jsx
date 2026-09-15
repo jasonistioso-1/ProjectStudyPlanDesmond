@@ -46,6 +46,7 @@ export default function PlanBuilder({
   const isChair = activeRole === 'chair';
   const [unitFilter, setUnitFilter] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('ALL');
+  const [layoutType, setLayoutType] = useState('semester'); // 'semester' | 'trimester' (FR-05)
   const [agreedConfirmed, setAgreedConfirmed] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState(null);
@@ -63,12 +64,19 @@ export default function PlanBuilder({
     (history || []).filter(h => h.status === 'completed').map(h => h.unit_code)
   );
 
-  // Semesters list
-  const activePeriods = periods.filter(p => p.code === 'S1' || p.code === 'S2');
-  const defaultPeriodList = activePeriods.length > 0 ? activePeriods : [
+  // Teaching Periods list according to layoutType (FR-05 Semester vs Trimester)
+  const semesterPeriods = [
     { period_id: 1, name: 'Semester 1', code: 'S1' },
     { period_id: 2, name: 'Semester 2', code: 'S2' }
   ];
+
+  const trimesterPeriods = [
+    { period_id: 3, name: 'Trimester 1', code: 'T1' },
+    { period_id: 4, name: 'Trimester 2', code: 'T2' },
+    { period_id: 5, name: 'Trimester 3', code: 'T3' }
+  ];
+
+  const defaultPeriodList = layoutType === 'trimester' ? trimesterPeriods : semesterPeriods;
 
   // Warnings mapping
   const warningsByUnit = {};
@@ -521,6 +529,32 @@ export default function PlanBuilder({
 
                 {/* Context Action Buttons & 1-Click End User Helpers */}
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* FR-05: Teaching Period Structure Switcher (Semester vs Trimester) */}
+                  <div className="flex items-center gap-0.5 bg-slate-100 border border-slate-200 rounded-md p-0.5 text-xs mr-1">
+                    <button
+                      onClick={() => setLayoutType('semester')}
+                      className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
+                        layoutType === 'semester'
+                          ? 'bg-slate-900 text-white shadow-2xs font-bold'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                      title="Switch to Semester Plan Layout (FR-05)"
+                    >
+                      Semester
+                    </button>
+                    <button
+                      onClick={() => setLayoutType('trimester')}
+                      className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
+                        layoutType === 'trimester'
+                          ? 'bg-slate-900 text-white shadow-2xs font-bold'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                      title="Switch to Trimester Plan Layout (FR-05)"
+                    >
+                      Trimester
+                    </button>
+                  </div>
+
                   <button
                     onClick={handleAutoFillMurdochPathway}
                     className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
