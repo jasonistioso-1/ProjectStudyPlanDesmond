@@ -51,13 +51,21 @@ INSERT INTO Unit (unit_id, code, title, credit_points, level) VALUES
 (6, 'ICT170', 'Computer Systems Architecture', 3, 100),
 (7, 'ICT167', 'Data Structures & Algorithms', 3, 100),
 (8, 'ICT162', 'Applied Linear Algebra & Statistics', 3, 100),
-(9, 'ICT201', 'IT Project Management', 3, 200),
-(10, 'ICT202', 'Advanced Programming & Software Architecture', 3, 200),
-(11, 'ICT284', 'Systems Analysis & Design', 3, 200),
-(12, 'ICT203', 'Distributed Systems & Network Security', 3, 200),
-(13, 'ICT285', 'Database Systems', 3, 200),
-(14, 'ICT304', 'Software Systems Architecture & Design', 3, 300),
-(15, 'ICT302', 'Capstone IT Practice Project', 3, 300);
+(9, 'ICT171', 'Web & Mobile Computing Basics', 3, 100),
+(10, 'ICT172', 'Fundamentals of Game Design', 3, 100),
+(11, 'ICT201', 'IT Project Management', 3, 200),
+(12, 'ICT202', 'Advanced Programming & Software Architecture', 3, 200),
+(13, 'ICT284', 'Systems Analysis & Design', 3, 200),
+(14, 'ICT203', 'Distributed Systems & Network Security', 3, 200),
+(15, 'ICT285', 'Database Systems', 3, 200),
+(16, 'ICT206', 'Web Programming & Frameworks', 3, 200),
+(17, 'ICT209', 'Artificial Intelligence Foundations', 3, 200),
+(18, 'ICT218', 'Cyber Forensics & IT', 3, 200),
+(19, 'ICT304', 'Software Systems Architecture & Design', 3, 300),
+(20, 'ICT302', 'Capstone IT Practice Project', 3, 300),
+(21, 'ICT303', 'Advanced Database Applications', 3, 300),
+(22, 'ICT310', 'Mobile Application Development', 3, 300),
+(23, 'ICT311', 'Cloud Computing & DevOps', 3, 300);
 
 -- 5. Seed Unit Offerings (Year 2026 PT3 Main Campus offerings)
 INSERT INTO UnitOffering (unit_id, location_id, period_id, year_version, delivery_mode, is_active) VALUES

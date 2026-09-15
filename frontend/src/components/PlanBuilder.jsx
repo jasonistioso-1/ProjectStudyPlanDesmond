@@ -4,9 +4,12 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  rectIntersection,
+  pointerWithin,
   closestCenter
 } from '@dnd-kit/core';
 import DroppablePeriod from './DroppablePeriod';
+import DraggablePaletteUnitCard from './DraggablePaletteUnitCard';
 import {
   Search,
   Plus,
@@ -46,7 +49,7 @@ export default function PlanBuilder({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5
+        distance: 3
       }
     })
   );
@@ -73,44 +76,67 @@ export default function PlanBuilder({
     });
   }
 
-  // Handle Drag End event
+  // Handle Drag End event (Supports both Palette -> Semester and Semester -> Semester moves)
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (!over) return;
 
-    const activeId = active.id;
-    const overId = over.id;
+    const activeId = String(active.id);
+    const overId = String(over.id);
 
     let targetYear = 1;
     let targetPeriodId = 1;
 
-    if (String(overId).startsWith('year_')) {
-      const parts = String(overId).split('_');
+    if (overId.startsWith('year_')) {
+      const parts = overId.split('_');
       targetYear = Number(parts[1]);
       targetPeriodId = Number(parts[3]);
     } else {
-      const overUnit = planUnits.find(u => String(u.unit_id || u.code) === String(overId));
+      const overUnit = planUnits.find(u => String(u.unit_id || u.code) === overId);
       if (overUnit) {
         targetYear = overUnit.year_level;
         targetPeriodId = overUnit.period_id;
       }
     }
 
-    setPlanUnits(prevUnits => {
-      const updated = prevUnits.map(unit => {
-        if (String(unit.unit_id || unit.code) === String(activeId)) {
-          return {
-            ...unit,
-            year_level: targetYear,
-            period_id: targetPeriodId
-          };
-        }
-        return unit;
-      });
+    if (activeId.startsWith('palette_')) {
+      // Dragged from Available Units palette into a target semester
+      const paletteCode = activeId.replace('palette_', '');
+      const catalogUnit = catalogUnits.find(u => String(u.unit_id || u.code) === paletteCode || u.code === paletteCode);
 
-      if (onValidate) onValidate(updated);
-      return updated;
-    });
+      if (catalogUnit && !planUnits.some(u => String(u.code) === String(catalogUnit.code))) {
+        const newPlanUnit = {
+          unit_id: catalogUnit.unit_id,
+          code: catalogUnit.code,
+          title: catalogUnit.title,
+          credit_points: catalogUnit.credit_points || 3,
+          period_id: targetPeriodId,
+          year_level: targetYear,
+          sequence_order: planUnits.length + 1
+        };
+
+        const updated = [...planUnits, newPlanUnit];
+        setPlanUnits(updated);
+        if (onValidate) onValidate(updated);
+      }
+    } else {
+      // Dragged between semesters
+      setPlanUnits(prevUnits => {
+        const updated = prevUnits.map(unit => {
+          if (String(unit.unit_id || unit.code) === activeId) {
+            return {
+              ...unit,
+              year_level: targetYear,
+              period_id: targetPeriodId
+            };
+          }
+          return unit;
+        });
+
+        if (onValidate) onValidate(updated);
+        return updated;
+      });
+    }
   };
 
   // Add unit from palette to Plan
@@ -295,204 +321,167 @@ export default function PlanBuilder({
   // =========================================================================
   return (
     <div className="font-sans max-w-[1440px] mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* LEFT COLUMN: AVAILABLE OFFERINGS & VALIDATION CONSOLE (4 Cols) */}
-        <div className="lg:col-span-4 space-y-5">
-          {/* Card 1: Available Unit Offerings */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
-            <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-slate-700" />
-                Available Units
-              </h3>
-              <span className="text-xs font-mono font-semibold bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-700">
-                {filteredOfferings.length} units
-              </span>
-            </div>
-
-            <div className="p-4 space-y-3">
-              {/* Filter Search Box & Level Selector */}
-              <div className="space-y-2">
-                <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
-                  <input
-                    type="text"
-                    value={unitFilter}
-                    onChange={(e) => setUnitFilter(e.target.value)}
-                    placeholder="Search code or title..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 font-normal"
-                  />
-                </div>
-
-                {/* Level Filter Pills */}
-                <div className="flex items-center gap-1 text-[11px] font-mono">
-                  {[
-                    { key: 'ALL', label: 'All' },
-                    { key: '100', label: '100 Level' },
-                    { key: '200', label: '200 Level' },
-                    { key: '300', label: '300 Level' }
-                  ].map(lvl => (
-                    <button
-                      key={lvl.key}
-                      onClick={() => setSelectedLevel(lvl.key)}
-                      className={`px-2 py-0.5 rounded border transition-all ${
-                        selectedLevel === lvl.key
-                          ? 'bg-slate-900 text-white border-slate-900 font-bold'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {lvl.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Offerings Scrollable List */}
-              <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
-                {filteredOfferings.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic text-center py-6">No matching unit offerings found</p>
-                ) : (
-                  filteredOfferings.map(unit => {
-                    const uLvl = Number(unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : 100));
-                    let lvlBadge = 'bg-blue-50 text-blue-700 border-blue-200';
-                    let cardBorder = 'border-l-4 border-l-blue-500';
-
-                    if (uLvl >= 300) {
-                      lvlBadge = 'bg-purple-50 text-purple-700 border-purple-200';
-                      cardBorder = 'border-l-4 border-l-purple-500';
-                    } else if (uLvl >= 200) {
-                      lvlBadge = 'bg-teal-50 text-teal-700 border-teal-200';
-                      cardBorder = 'border-l-4 border-l-teal-500';
-                    }
-
-                    return (
-                      <div
-                        key={unit.unit_id || unit.code}
-                        className={`bg-white border border-slate-200 hover:border-slate-300 p-2.5 rounded-lg text-xs transition-all shadow-2xs group flex items-center justify-between ${cardBorder}`}
-                      >
-                        <div className="min-w-0 pr-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-slate-900 text-xs">{unit.code}</span>
-                            <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded border font-medium ${lvlBadge}`}>
-                              L{uLvl}
-                            </span>
-                          </div>
-                          <div className="text-slate-800 text-xs font-medium truncate mt-0.5">
-                            {unit.title}
-                          </div>
-                          <div className="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-2">
-                            <span className="tabular-nums font-medium">{unit.credit_points || 3} CP</span>
-                            <span>•</span>
-                            <span>Perth Campus</span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleAddUnitFromPalette(unit)}
-                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1 shrink-0 shadow-2xs"
-                        >
-                          <Plus className="w-3 h-3" /> Add
-                        </button>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Validation Console */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
-            <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Validation Summary
-              </h3>
-            </div>
-
-            <div className="p-4 space-y-2 text-xs">
-              <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                <span>Offered in Perth Campus</span>
-              </div>
-
-              {validationResult && validationResult.warnings && validationResult.warnings.length > 0 ? (
-                validationResult.warnings.map((w, idx) => (
-                  <div key={idx} className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded-md text-amber-900 text-xs font-medium">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 inline-block mt-1 shrink-0"></span>
-                    <div>
-                      <span className="font-semibold">{w.unitCode || 'Rule'}:</span> {w.message}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                  <span>Prerequisites and load limits satisfied</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: 3-YEAR STUDY PLAN GRID (8 Cols) */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
-            
-            {/* Academic Advisor Decision Helper Box */}
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-lg p-4 mb-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border border-slate-700">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase font-mono font-bold tracking-wider bg-red-600 text-white px-2 py-0.5 rounded">Academic Advisor Decision Helper</span>
-                  <span className="text-xs text-slate-300 font-medium">Optimal Course Pathway Analysis</span>
-                </div>
-                <p className="text-xs text-slate-200 font-normal leading-relaxed max-w-xl">
-                  {student ? `${student.name} is on track for ${student.major || 'Software & Systems'}. Ensure 100-level core prerequisites (ICT100, ICT159) are completed prior to 200-level sequences.` : 'Ensure 100-level core prerequisites are completed prior to 200-level sequences.'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                <span className="text-[11px] font-mono bg-slate-800 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-md font-semibold flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Pathway Recommended
+      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* LEFT COLUMN: AVAILABLE OFFERINGS & VALIDATION CONSOLE (4 Cols) */}
+          <div className="lg:col-span-4 space-y-5">
+            {/* Card 1: Available Unit Offerings */}
+            <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
+              <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-slate-700" />
+                  Available Units
+                </h3>
+                <span className="text-xs font-mono font-semibold bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-700">
+                  {filteredOfferings.length} units
                 </span>
               </div>
+
+              <div className="p-4 space-y-3">
+                {/* Filter Search Box & Level Selector */}
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                    <input
+                      type="text"
+                      value={unitFilter}
+                      onChange={(e) => setUnitFilter(e.target.value)}
+                      placeholder="Search code or title..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 font-normal"
+                    />
+                  </div>
+
+                  {/* Level Filter Pills */}
+                  <div className="flex items-center gap-1 text-[11px] font-mono">
+                    {[
+                      { key: 'ALL', label: 'All' },
+                      { key: '100', label: '100 Level' },
+                      { key: '200', label: '200 Level' },
+                      { key: '300', label: '300 Level' }
+                    ].map(lvl => (
+                      <button
+                        key={lvl.key}
+                        onClick={() => setSelectedLevel(lvl.key)}
+                        className={`px-2 py-0.5 rounded border transition-all ${
+                          selectedLevel === lvl.key
+                            ? 'bg-slate-900 text-white border-slate-900 font-bold'
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {lvl.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Offerings Scrollable List (Draggable Palette Cards) */}
+                <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                  {filteredOfferings.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic text-center py-6">No matching unit offerings found</p>
+                  ) : (
+                    filteredOfferings.map(unit => (
+                      <DraggablePaletteUnitCard
+                        key={unit.unit_id || unit.code}
+                        unit={unit}
+                        onAdd={handleAddUnitFromPalette}
+                      />
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Action Bar Header */}
-            <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-slate-700" />
-                  3-Year Study Plan Grid
+            {/* Card 2: Validation Console */}
+            <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
+              <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  Validation Summary
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                  Drag and drop units between semesters or use '+ Add' from available list. (Max 12 CP per semester).
-                </p>
               </div>
 
-              {/* Context Action Button Flow */}
-              <div className="flex items-center gap-2">
-                {onOpenOfficialDocument && (
-                  <button
-                    onClick={onOpenOfficialDocument}
-                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
-                    title="Export official physical study plan document (PDF / PNG)"
-                  >
-                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Export Document (PDF/PNG)
-                  </button>
+              <div className="p-4 space-y-2 text-xs">
+                <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                  <span>Offered in Perth Campus</span>
+                </div>
+
+                {validationResult && validationResult.warnings && validationResult.warnings.length > 0 ? (
+                  validationResult.warnings.map((w, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded-md text-amber-900 text-xs font-medium">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 inline-block mt-1 shrink-0"></span>
+                      <div>
+                        <span className="font-semibold">{w.unitCode || 'Rule'}:</span> {w.message}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                    <span>Prerequisites and load limits satisfied</span>
+                  </div>
                 )}
-                <button
-                  onClick={onSavePlan}
-                  className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
-                >
-                  <Save className="w-3.5 h-3.5 text-slate-500" /> Save Draft
-                </button>
               </div>
             </div>
+          </div>
 
-            {/* 3-Year Interactive Drag & Drop Grid */}
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          {/* RIGHT COLUMN: 3-YEAR STUDY PLAN GRID (8 Cols) */}
+          <div className="lg:col-span-8 space-y-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
+              
+              {/* Academic Advisor Decision Helper Box */}
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-lg p-4 mb-5 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border border-slate-700">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider bg-red-600 text-white px-2 py-0.5 rounded">Academic Advisor Decision Helper</span>
+                    <span className="text-xs text-slate-300 font-medium">Optimal Course Pathway Analysis</span>
+                  </div>
+                  <p className="text-xs text-slate-200 font-normal leading-relaxed max-w-xl">
+                    {student ? `${student.name} is on track for ${student.major || 'Software & Systems'}. Ensure 100-level core prerequisites (ICT100, ICT159) are completed prior to 200-level sequences.` : 'Ensure 100-level core prerequisites are completed prior to 200-level sequences.'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                  <span className="text-[11px] font-mono bg-slate-800 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-md font-semibold flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Pathway Recommended
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Bar Header */}
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-slate-700" />
+                    3-Year Study Plan Grid
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5 font-normal">
+                    Drag and drop units between semesters or use '+ Add' from available list. (Max 12 CP per semester).
+                  </p>
+                </div>
+
+                {/* Context Action Button Flow */}
+                <div className="flex items-center gap-2">
+                  {onOpenOfficialDocument && (
+                    <button
+                      onClick={onOpenOfficialDocument}
+                      className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                      title="Export official physical study plan document (PDF / PNG)"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Export Document (PDF/PNG)
+                    </button>
+                  )}
+                  <button
+                    onClick={onSavePlan}
+                    className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                  >
+                    <Save className="w-3.5 h-3.5 text-slate-500" /> Save Draft
+                  </button>
+                </div>
+              </div>
+
+              {/* 3-Year Interactive Drag & Drop Grid */}
               <div className="space-y-5">
                 {years.map(yearObj => {
                   let yearTagStyle = 'bg-red-700 text-white'; // Year 1 Red
@@ -534,22 +523,21 @@ export default function PlanBuilder({
                   );
                 })}
               </div>
-            </DndContext>
 
-            {/* Bottom Right Recommend Primary Flow Button */}
-            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
-              <button
-                onClick={() => onRecommendPlan && onRecommendPlan()}
-                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-all flex items-center gap-2"
-              >
-                <span>Recommend Plan to Student</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              {/* Bottom Right Recommend Primary Flow Button */}
+              <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => onRecommendPlan && onRecommendPlan()}
+                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-all flex items-center gap-2"
+                >
+                  <span>Recommend Plan to Student</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
-      </div>
+      </DndContext>
     </div>
   );
 }

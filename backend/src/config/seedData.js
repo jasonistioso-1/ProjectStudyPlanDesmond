@@ -31,13 +31,21 @@ export const mockUnits = [
     { unit_id: 6, code: 'ICT170', title: 'Computer Systems Architecture', credit_points: 3, level: 100 },
     { unit_id: 7, code: 'ICT167', title: 'Data Structures & Algorithms', credit_points: 3, level: 100 },
     { unit_id: 8, code: 'ICT162', title: 'Applied Linear Algebra & Statistics', credit_points: 3, level: 100 },
-    { unit_id: 9, code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200 },
-    { unit_id: 10, code: 'ICT202', title: 'Advanced Programming & Software Architecture', credit_points: 3, level: 200 },
-    { unit_id: 11, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200 },
-    { unit_id: 12, code: 'ICT203', title: 'Distributed Systems & Network Security', credit_points: 3, level: 200 },
-    { unit_id: 13, code: 'ICT285', title: 'Database Systems', credit_points: 3, level: 200 },
-    { unit_id: 14, code: 'ICT304', title: 'Software Systems Architecture & Design', credit_points: 3, level: 300 },
-    { unit_id: 15, code: 'ICT302', title: 'Capstone IT Practice Project', credit_points: 3, level: 300 }
+    { unit_id: 9, code: 'ICT171', title: 'Web & Mobile Computing Basics', credit_points: 3, level: 100 },
+    { unit_id: 10, code: 'ICT172', title: 'Fundamentals of Game Design', credit_points: 3, level: 100 },
+    { unit_id: 11, code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200 },
+    { unit_id: 12, code: 'ICT202', title: 'Advanced Programming & Software Architecture', credit_points: 3, level: 200 },
+    { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200 },
+    { unit_id: 14, code: 'ICT203', title: 'Distributed Systems & Network Security', credit_points: 3, level: 200 },
+    { unit_id: 15, code: 'ICT285', title: 'Database Systems', credit_points: 3, level: 200 },
+    { unit_id: 16, code: 'ICT206', title: 'Web Programming & Frameworks', credit_points: 3, level: 200 },
+    { unit_id: 17, code: 'ICT209', title: 'Artificial Intelligence Foundations', credit_points: 3, level: 200 },
+    { unit_id: 18, code: 'ICT218', title: 'Cyber Forensics & IT', credit_points: 3, level: 200 },
+    { unit_id: 19, code: 'ICT304', title: 'Software Systems Architecture & Design', credit_points: 3, level: 300 },
+    { unit_id: 20, code: 'ICT302', title: 'Capstone IT Practice Project', credit_points: 3, level: 300 },
+    { unit_id: 21, code: 'ICT303', title: 'Advanced Database Applications', credit_points: 3, level: 300 },
+    { unit_id: 22, code: 'ICT310', title: 'Mobile Application Development', credit_points: 3, level: 300 },
+    { unit_id: 23, code: 'ICT311', title: 'Cloud Computing & DevOps', credit_points: 3, level: 300 }
 ];
 
 export const mockStudents = [
