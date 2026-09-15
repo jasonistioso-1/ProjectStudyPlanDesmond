@@ -218,37 +218,37 @@ export default function App() {
       {/* Main Content Area */}
       <main className="max-w-[1440px] mx-auto px-4 md:px-6 pt-6 space-y-5">
         
-        {/* Murdoch Course Visualiser Top Course Banner */}
-        <div className="bg-gradient-to-r from-[#8A0000] via-[#9E1B1B] to-[#700000] text-white p-5 rounded-xl shadow-md border-b-4 border-amber-400 font-sans">
+        {/* Student Course Info Header */}
+        <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-2xs font-sans">
           <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="bg-amber-400 text-red-950 font-extrabold text-[10px] font-mono px-2 py-0.5 rounded uppercase tracking-wider shadow-2xs">
-                  COURSE VISUALISER 2026/2027
+                <span className="bg-red-50 text-red-700 border border-red-200 font-semibold text-[11px] px-2.5 py-0.5 rounded-md">
+                  {selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-01'}
                 </span>
-                <span className="text-red-200 text-xs font-mono">• PT3 Solutions Perth Campus</span>
+                <span className="text-slate-500 text-xs font-normal">• Perth Main Campus</span>
               </div>
-              <h1 className="text-lg md:text-xl font-black tracking-tight text-white">
-                {selectedStudent ? `${selectedStudent.course_code || 'PT3-BSIT-01'} — Bachelor of Information Technology` : 'Bachelor of Information Technology (Major: Software & Systems)'}
+              <h1 className="text-base md:text-lg font-extrabold tracking-tight text-slate-900">
+                Bachelor of Information Technology (Major: Software & Systems)
               </h1>
-              <p className="text-xs text-red-100 mt-1 font-medium flex items-center gap-3">
-                <span>Student: <strong className="text-amber-300 font-mono">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong></span>
-                <span>•</span>
-                <span>ID: <strong className="font-mono text-white">{selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}</strong></span>
+              <p className="text-xs text-slate-600 mt-1 font-normal flex items-center gap-3">
+                <span>Student: <strong className="text-slate-900 font-semibold">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong></span>
+                <span className="text-slate-300">•</span>
+                <span>ID: <strong className="font-mono text-slate-800">{selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}</strong></span>
               </p>
             </div>
 
             {/* Total Degree Credit Meter */}
-            <div className="bg-black/30 border border-white/20 p-3 rounded-lg text-right shrink-0 min-w-[220px]">
-              <div className="text-[11px] font-mono font-bold text-amber-300 uppercase tracking-wider">
-                Total Degree Progress
+            <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-right shrink-0 min-w-[200px]">
+              <div className="text-[11px] font-mono font-medium text-slate-500">
+                Planned Credit Load
               </div>
-              <div className="text-lg font-mono font-black text-white my-0.5">
+              <div className="text-base font-mono font-bold text-slate-900 my-0.5 tabular-nums">
                 {planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)} / 72 CP
               </div>
-              <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden mt-1">
+              <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
                 <div 
-                  className="bg-amber-400 h-full transition-all duration-500" 
+                  className="bg-slate-800 h-full transition-all duration-300" 
                   style={{ width: `${Math.min(100, Math.round((planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0) / 72) * 100))}%` }}
                 />
               </div>

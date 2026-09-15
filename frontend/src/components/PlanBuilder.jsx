@@ -283,20 +283,19 @@ export default function PlanBuilder({
         {/* LEFT COLUMN: AVAILABLE OFFERINGS & VALIDATION CONSOLE (4 Cols) */}
         <div className="lg:col-span-4 space-y-5">
           {/* Card 1: Available Unit Offerings */}
-          <div className="bg-white border border-slate-300 rounded-xl shadow-md overflow-hidden">
-            {/* Murdoch Crimson Header */}
-            <div className="bg-[#8A0000] text-white px-4 py-3 flex justify-between items-center border-b-2 border-amber-500">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-amber-300" />
-                Available Unit Offerings
+          <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
+            <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-slate-700" />
+                Available Units
               </h3>
-              <span className="text-xs font-mono font-bold bg-amber-400 text-red-950 px-2 py-0.5 rounded shadow-2xs">
+              <span className="text-xs font-mono font-semibold bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-700">
                 {filteredOfferings.length} units
               </span>
             </div>
 
             <div className="p-4 space-y-3">
-              {/* Filter Search Box & Murdoch Style Level Selector */}
+              {/* Filter Search Box & Level Selector */}
               <div className="space-y-2">
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
@@ -304,26 +303,26 @@ export default function PlanBuilder({
                     type="text"
                     value={unitFilter}
                     onChange={(e) => setUnitFilter(e.target.value)}
-                    placeholder="Search unit code or title..."
-                    className="w-full bg-slate-50 border border-slate-300 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-red-600 font-semibold"
+                    placeholder="Search code or title..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 font-normal"
                   />
                 </div>
 
-                {/* Vibrant Level Filter Pills */}
-                <div className="flex items-center gap-1.5 text-[11px] font-mono">
+                {/* Level Filter Pills */}
+                <div className="flex items-center gap-1 text-[11px] font-mono">
                   {[
-                    { key: 'ALL', label: 'All', color: 'bg-slate-900' },
-                    { key: '100', label: 'L100 (Core)', color: 'bg-blue-600' },
-                    { key: '200', label: 'L200 (Major)', color: 'bg-teal-600' },
-                    { key: '300', label: 'L300 (Adv)', color: 'bg-purple-600' }
+                    { key: 'ALL', label: 'All' },
+                    { key: '100', label: '100 Level' },
+                    { key: '200', label: '200 Level' },
+                    { key: '300', label: '300 Level' }
                   ].map(lvl => (
                     <button
                       key={lvl.key}
                       onClick={() => setSelectedLevel(lvl.key)}
-                      className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all shadow-2xs ${
+                      className={`px-2 py-0.5 rounded border transition-all ${
                         selectedLevel === lvl.key
-                          ? `${lvl.color} text-white ring-2 ring-amber-400 font-black scale-105`
-                          : 'bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200'
+                          ? 'bg-slate-900 text-white border-slate-900 font-bold'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
                       {lvl.label}
@@ -333,53 +332,50 @@ export default function PlanBuilder({
               </div>
 
               {/* Offerings Scrollable List */}
-              <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
                 {filteredOfferings.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic text-center py-6 font-medium">No matching unit offerings found</p>
+                  <p className="text-xs text-slate-400 italic text-center py-6">No matching unit offerings found</p>
                 ) : (
                   filteredOfferings.map(unit => {
                     const uLvl = Number(unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : 100));
-                    let lvlTagClass = 'bg-blue-600 text-white font-bold';
-                    let lvlName = 'CORE';
-                    let cardBorder = 'border-l-4 border-l-blue-600 bg-blue-50/50';
+                    let lvlBadge = 'bg-blue-50 text-blue-700 border-blue-200';
+                    let cardBorder = 'border-l-4 border-l-blue-500';
 
                     if (uLvl >= 300) {
-                      lvlTagClass = 'bg-purple-700 text-white font-bold';
-                      lvlName = 'CAPSTONE';
-                      cardBorder = 'border-l-4 border-l-purple-600 bg-purple-50/50';
+                      lvlBadge = 'bg-purple-50 text-purple-700 border-purple-200';
+                      cardBorder = 'border-l-4 border-l-purple-500';
                     } else if (uLvl >= 200) {
-                      lvlTagClass = 'bg-teal-700 text-white font-bold';
-                      lvlName = 'MAJOR';
-                      cardBorder = 'border-l-4 border-l-teal-600 bg-teal-50/50';
+                      lvlBadge = 'bg-teal-50 text-teal-700 border-teal-200';
+                      cardBorder = 'border-l-4 border-l-teal-500';
                     }
 
                     return (
                       <div
                         key={unit.unit_id || unit.code}
-                        className={`border border-slate-200 hover:border-slate-300 p-2.5 rounded-lg text-xs transition-all shadow-2xs group flex items-center justify-between ${cardBorder}`}
+                        className={`bg-white border border-slate-200 hover:border-slate-300 p-2.5 rounded-lg text-xs transition-all shadow-2xs group flex items-center justify-between ${cardBorder}`}
                       >
                         <div className="min-w-0 pr-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono font-extrabold text-slate-900 text-xs bg-white px-1.5 py-0.5 rounded border border-slate-200">{unit.code}</span>
-                            <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${lvlTagClass}`}>
-                              {lvlName}
+                            <span className="font-mono font-bold text-slate-900 text-xs">{unit.code}</span>
+                            <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded border font-medium ${lvlBadge}`}>
+                              L{uLvl}
                             </span>
                           </div>
-                          <div className="text-slate-900 text-xs font-bold truncate mt-1">
+                          <div className="text-slate-800 text-xs font-medium truncate mt-0.5">
                             {unit.title}
                           </div>
-                          <div className="text-[11px] text-slate-500 font-mono mt-0.5 flex items-center gap-2">
-                            <span className="tabular-nums font-bold text-slate-700">{unit.credit_points || 3} CP</span>
+                          <div className="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-2">
+                            <span className="tabular-nums font-medium">{unit.credit_points || 3} CP</span>
                             <span>•</span>
-                            <span className="font-medium">Perth Campus</span>
+                            <span>Perth Campus</span>
                           </div>
                         </div>
 
                         <button
                           onClick={() => handleAddUnitFromPalette(unit)}
-                          className="px-3 py-1.5 bg-[#8A0000] hover:bg-red-900 text-white text-xs font-extrabold rounded-md transition-all flex items-center gap-1 shrink-0 shadow-sm border border-red-900 active:scale-95"
+                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1 shrink-0 shadow-2xs"
                         >
-                          <Plus className="w-3.5 h-3.5 text-amber-300" /> Add
+                          <Plus className="w-3 h-3" /> Add
                         </button>
                       </div>
                     );
@@ -390,34 +386,33 @@ export default function PlanBuilder({
           </div>
 
           {/* Card 2: Validation Console */}
-          <div className="bg-white border border-slate-300 rounded-xl shadow-md overflow-hidden">
-            <div className="bg-emerald-800 text-white px-4 py-3 border-b-2 border-emerald-500 flex items-center justify-between">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                Validation Console
+          <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
+            <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                Validation Summary
               </h3>
-              <span className="text-[11px] font-mono font-bold bg-emerald-950 px-2 py-0.5 rounded text-emerald-200">LIVE RULES</span>
             </div>
 
-            <div className="p-4 space-y-2.5 text-xs">
-              <div className="flex items-center gap-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-950 font-bold shadow-2xs">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block animate-pulse"></span>
-                <span>Offered in Perth Campus (BR-01 Validated)</span>
+            <div className="p-4 space-y-2 text-xs">
+              <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                <span>Offered in Perth Campus</span>
               </div>
 
               {validationResult && validationResult.warnings && validationResult.warnings.length > 0 ? (
                 validationResult.warnings.map((w, idx) => (
-                  <div key={idx} className="flex items-start gap-2.5 p-2.5 bg-amber-50 border border-amber-300 rounded-lg text-amber-950 text-xs font-bold shadow-2xs">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-600 inline-block mt-1 shrink-0"></span>
+                  <div key={idx} className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded-md text-amber-900 text-xs font-medium">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 inline-block mt-1 shrink-0"></span>
                     <div>
-                      <span className="font-extrabold text-amber-900 underline">{w.unitCode || 'Rule Warning'}:</span> {w.message}
+                      <span className="font-semibold">{w.unitCode || 'Rule'}:</span> {w.message}
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-blue-950 font-bold shadow-2xs">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span>
-                  <span>Prerequisite requirements met (BR-02 Validated)</span>
+                <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-md text-slate-800 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                  <span>Prerequisites and load limits satisfied</span>
                 </div>
               )}
             </div>
@@ -426,17 +421,17 @@ export default function PlanBuilder({
 
         {/* RIGHT COLUMN: 3-YEAR STUDY PLAN GRID (8 Cols) */}
         <div className="lg:col-span-8 space-y-4">
-          <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-2xs">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
             
             {/* Action Bar Header */}
             <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-5">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   <Layers className="w-4 h-4 text-slate-700" />
-                  3-Year Study Plan Grid
+                  3-Year Study Plan
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                  Maximum 12 CP per semester limit strictly enforced.
+                  Maximum 12 CP per semester limit.
                 </p>
               </div>
 
@@ -445,15 +440,15 @@ export default function PlanBuilder({
                 {onOpenOfficialDocument && (
                   <button
                     onClick={onOpenOfficialDocument}
-                    className="px-3.5 py-1.5 bg-[#8A0000] hover:bg-red-900 text-white rounded-md font-semibold text-xs shadow-sm transition-colors flex items-center gap-1.5 border border-red-800"
+                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
                     title="Export official physical study plan document (PDF / PNG)"
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-amber-300" /> Export Document (PDF/PNG)
+                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" /> Export Document (PDF/PNG)
                   </button>
                 )}
                 <button
                   onClick={onSavePlan}
-                  className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-medium text-xs shadow-2xs transition-colors flex items-center gap-1.5"
                 >
                   <Save className="w-3.5 h-3.5 text-slate-500" /> Save Draft
                 </button>
@@ -462,28 +457,18 @@ export default function PlanBuilder({
 
             {/* 3-Year Interactive Drag & Drop Grid */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {years.map(yearObj => {
-                  let yearHeaderStyle = 'bg-[#8A0000] text-white border-red-900'; // Year 1 Crimson
-                  let containerBg = 'bg-red-50/20 border-red-200/60';
-                  if (yearObj.level === 2) {
-                    yearHeaderStyle = 'bg-[#1E293B] text-white border-slate-900'; // Year 2 Deep Navy
-                    containerBg = 'bg-blue-50/20 border-slate-300';
-                  } else if (yearObj.level === 3) {
-                    yearHeaderStyle = 'bg-[#4C1D95] text-white border-purple-950'; // Year 3 Purple
-                    containerBg = 'bg-purple-50/20 border-purple-200';
-                  }
+                  let yearTagStyle = 'bg-red-700 text-white'; // Year 1 Red
+                  if (yearObj.level === 2) yearTagStyle = 'bg-slate-800 text-white'; // Year 2 Slate
+                  else if (yearObj.level === 3) yearTagStyle = 'bg-indigo-900 text-white'; // Year 3 Indigo
 
                   return (
-                    <div key={yearObj.level} className={`border rounded-xl p-4 shadow-sm ${containerBg}`}>
+                    <div key={yearObj.level} className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
                       {/* Year Level Tag */}
-                      <div className="flex justify-between items-center mb-3.5">
-                        <span className={`text-xs font-mono font-black px-3.5 py-1.5 rounded-lg shadow-sm flex items-center gap-2 border ${yearHeaderStyle}`}>
-                          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                      <div className="flex justify-between items-center mb-3">
+                        <span className={`text-xs font-mono font-semibold px-2.5 py-0.5 rounded-md ${yearTagStyle}`}>
                           {yearObj.yearName}
-                        </span>
-                        <span className="text-xs font-mono font-bold text-slate-600 bg-white px-2.5 py-1 rounded border border-slate-200 shadow-2xs">
-                          Target: 24 CP / Year
                         </span>
                       </div>
 
@@ -519,10 +504,10 @@ export default function PlanBuilder({
             <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => onRecommendPlan && onRecommendPlan()}
-                className="px-5 py-2 bg-[#8A0000] hover:bg-red-900 text-white rounded-md font-extrabold text-xs shadow-md transition-all flex items-center gap-2 border border-red-900"
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-semibold text-xs shadow-2xs transition-all flex items-center gap-2"
               >
                 <span>Recommend Plan to Student</span>
-                <ArrowRight className="w-3.5 h-3.5 text-amber-300" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>

@@ -54,10 +54,10 @@ export default function WorkflowStepper({ currentStatus, activeRole }) {
           </span>
         </div>
       ) : (
-        /* Academic Chair Governance Stepper Bar */
-        <div className="bg-white border border-slate-200/80 rounded-xl px-4 py-3 shadow-2xs flex items-center justify-between gap-4 overflow-x-auto">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 shrink-0">
-            <span>Governance Workflow:</span>
+        /* Academic Chair Workflow Stepper Bar */
+        <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-2xs flex items-center justify-between gap-4 overflow-x-auto">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 shrink-0">
+            <span>Status Workflow:</span>
           </div>
           <div className="flex items-center gap-2 text-xs flex-1">
             {steps.map((step, idx) => {
@@ -67,19 +67,19 @@ export default function WorkflowStepper({ currentStatus, activeRole }) {
               return (
                 <React.Fragment key={step.key}>
                   <div
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 border ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 border ${
                       isCurrent
-                        ? 'bg-[#8A0000] text-white border-red-900 font-bold shadow-sm'
+                        ? 'bg-slate-900 text-white border-slate-900 font-bold shadow-2xs'
                         : isPassed
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium'
-                        : 'bg-slate-50 text-slate-400 border-slate-200'
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold'
+                        : 'bg-slate-50 text-slate-400 border-slate-200 font-normal'
                     }`}
                   >
                     {isPassed ? (
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     ) : (
                       <span className={`w-4 h-4 rounded-full text-[10px] font-mono flex items-center justify-center font-bold ${
-                        isCurrent ? 'bg-amber-400 text-red-950 font-extrabold' : 'bg-slate-200 text-slate-500'
+                        isCurrent ? 'bg-red-600 text-white font-bold' : 'bg-slate-200 text-slate-500'
                       }`}>
                         {idx + 1}
                       </span>
