@@ -35,12 +35,12 @@ INSERT INTO TeachingPeriod (period_id, code, name, period_type, sequence_order) 
 (6, 'WINT', 'Winter Term', 'winter', 4),
 (7, 'SUMM', 'Summer Term', 'summer', 5);
 
--- 3. Seed Courses (Bachelor of Information Technology Majors: Software Engineering, CS, BIS)
+-- 3. Seed Courses (Bachelor of Information Technology Majors: AI, CS, BIS)
 INSERT INTO Course (course_id, code, name, degree_level, total_credit_points) VALUES
-(1, 'PT3-BSIT-SE01', 'Bachelor of Information Technology (Major: Software Engineering)', 'Bachelor', 72),
+(1, 'PT3-BSIT-AI01', 'Bachelor of Information Technology (Major: Artificial Intelligence)', 'Bachelor', 72),
 (2, 'PT3-BSIT-CS02', 'Bachelor of Information Technology (Major: Computer Science)', 'Bachelor', 72),
 (3, 'PT3-BSIT-BIS03', 'Bachelor of Information Technology (Major: Business Information Systems)', 'Bachelor', 72),
-(4, 'PT3-BSIT-CY04', 'Bachelor of Information Technology (Major: Cyber Security)', 'Bachelor', 72);
+(4, 'PT3-BSIT-AI04', 'Bachelor of Information Technology (Major: Artificial Intelligence)', 'Bachelor', 72);
 
 -- 4. Seed Units (Standard Curriculum Dataset)
 INSERT INTO Unit (unit_id, code, title, credit_points, level) VALUES

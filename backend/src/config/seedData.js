@@ -17,10 +17,10 @@ export const mockTeachingPeriods = [
 ];
 
 export const mockCourses = [
-    { course_id: 1, code: 'PT3-BSIT-SE01', name: 'Bachelor of Information Technology (Major: Software Engineering)', degree_level: 'Bachelor', total_credit_points: 72 },
+    { course_id: 1, code: 'PT3-BSIT-AI01', name: 'Bachelor of Information Technology (Major: Artificial Intelligence)', degree_level: 'Bachelor', total_credit_points: 72 },
     { course_id: 2, code: 'PT3-BSIT-CS02', name: 'Bachelor of Information Technology (Major: Computer Science)', degree_level: 'Bachelor', total_credit_points: 72 },
     { course_id: 3, code: 'PT3-BSIT-BIS03', name: 'Bachelor of Information Technology (Major: Business Information Systems)', degree_level: 'Bachelor', total_credit_points: 72 },
-    { course_id: 4, code: 'PT3-BSIT-CY04', name: 'Bachelor of Information Technology (Major: Cyber Security)', degree_level: 'Bachelor', total_credit_points: 72 }
+    { course_id: 4, code: 'PT3-BSIT-AI04', name: 'Bachelor of Information Technology (Major: Artificial Intelligence)', degree_level: 'Bachelor', total_credit_points: 72 }
 ];
 
 export const mockUnits = [
@@ -62,8 +62,8 @@ export const mockStudents = [
         last_name: 'Mercer',
         email: 'alex.mercer@student.pt3solutions.edu.sg',
         course_id: 1,
-        course_code: 'PT3-BSIT-SE01',
-        course_name: 'Bachelor of Information Technology (Major: Software Engineering)',
+        course_code: 'PT3-BSIT-AI01',
+        course_name: 'Bachelor of Information Technology (Major: Artificial Intelligence)',
         location_id: 2,
         location_name: 'PT3 Solutions Singapore Campus',
         commencement_year: 2026,

@@ -463,7 +463,7 @@ export default function App() {
                       <BookOpen className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
                       <span>Major: {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
                         ? selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()
-                        : 'Software Engineering'}</span>
+                        : 'Artificial Intelligence'}</span>
                     </span>
 
                     {currentPlan?.status === 'approved' && (
@@ -507,7 +507,7 @@ export default function App() {
 
                     <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/90 px-3.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 shadow-2xs">
                       <GraduationCap className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
-                      <span>Course Code: <strong className="text-slate-900 dark:text-white font-bold font-mono">{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-SE01'}</strong></span>
+                      <span>Course Code: <strong className="text-slate-900 dark:text-white font-bold font-mono">{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-AI01'}</strong></span>
                     </div>
 
                     <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/90 px-3.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 shadow-2xs">
