@@ -18,7 +18,7 @@ export default function Footer() {
               <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Study Plan Repository (SPR)</span>
             </div>
             <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal mt-0.5">
-              © 2026 PT3 Solutions. Handover Specification for ICT302 Academic Decision Support System.
+              © 2026 PT3 Solutions Singapore. Academic Decision Support System.
             </p>
           </div>
         </div>
@@ -27,7 +27,7 @@ export default function Footer() {
         <div className="flex items-center gap-4 text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 px-3.5 py-2 rounded-lg">
           <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
             <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>BR-01 & BR-02 Compliant</span>
+            <span>Offering & Prerequisite Verified</span>
           </div>
           <span className="text-slate-300 dark:text-slate-600">|</span>
           <span>Version: <strong className="text-slate-800 dark:text-slate-200">v1.1 Stable</strong></span>

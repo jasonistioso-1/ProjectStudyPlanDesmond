@@ -190,7 +190,7 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
 
       <div className="pt-2 text-right">
         <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-          Showing {filteredPlans.length} stored study plans (FR-16 & FR-17 Compliant)
+          Showing {filteredPlans.length} archived student study plans
         </span>
       </div>
     </div>
