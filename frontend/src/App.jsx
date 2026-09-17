@@ -44,6 +44,24 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('STUDY_PLAN');
   const [storedPlansCount, setStoredPlansCount] = useState(4);
 
+  // Theme State
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('spr_theme') || 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('spr_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   // Modals
   const [activeCertificate, setActiveCertificate] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -212,7 +230,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans antialiased flex flex-col justify-between">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased flex flex-col justify-between transition-colors duration-200">
       <div>
         {/* Toast Notification Banner */}
         {notificationMsg && (
@@ -238,6 +256,8 @@ export default function App() {
           storedPlansCount={storedPlansCount}
           onOpenImport={() => setShowImportModal(true)}
           onOpenAudit={() => setShowAuditModal(true)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
 
         {/* Main Content Area */}
@@ -254,7 +274,7 @@ export default function App() {
           )}
 
           {/* Student Course Info Header */}
-          <div className="bg-gradient-to-r from-white via-slate-50/60 to-red-50/20 border border-slate-200/90 p-5 rounded-2xl shadow-xs font-sans relative overflow-hidden">
+          <div className="bg-gradient-to-r from-white via-slate-50/60 to-red-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-red-950/30 border border-slate-200/90 dark:border-slate-800 p-5 rounded-2xl shadow-xs font-sans relative overflow-hidden transition-colors">
             {/* Top Accent Gradient Line */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-red-500 to-slate-900" />
             
@@ -264,26 +284,26 @@ export default function App() {
                   <span className="bg-red-700 text-white font-semibold text-[11px] px-3 py-0.5 rounded-full shadow-2xs tracking-wide">
                     {selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-01'}
                   </span>
-                  <span className="text-slate-500 text-xs font-medium flex items-center gap-1.5">
+                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
                     Perth Main Campus
                   </span>
                 </div>
 
-                <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 font-heading">
+                <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white font-heading">
                   Bachelor of Information Technology
-                  <span className="text-slate-500 font-normal text-sm md:text-base ml-2 inline-block">(Major: Software & Systems)</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-normal text-sm md:text-base ml-2 inline-block">(Major: Software & Systems)</span>
                 </h1>
 
-                <div className="text-xs text-slate-500 font-medium flex items-center gap-3 pt-0.5">
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-3 pt-0.5">
                   <span className="flex items-center gap-1.5">
-                    <span className="text-slate-400">Student:</span>
-                    <strong className="text-slate-900 font-semibold">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong>
+                    <span className="text-slate-400 dark:text-slate-500">Student:</span>
+                    <strong className="text-slate-900 dark:text-slate-200 font-semibold">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong>
                   </span>
-                  <span className="text-slate-300">•</span>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
                   <span className="flex items-center gap-1.5">
-                    <span className="text-slate-400">ID:</span>
-                    <strong className="text-slate-800 font-medium tracking-tight bg-slate-100 px-2 py-0.5 rounded text-[11px] border border-slate-200/80">
+                    <span className="text-slate-400 dark:text-slate-500">ID:</span>
+                    <strong className="text-slate-800 dark:text-slate-200 font-medium tracking-tight bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] border border-slate-200/80 dark:border-slate-700">
                       {selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}
                     </strong>
                   </span>
@@ -291,17 +311,17 @@ export default function App() {
               </div>
 
               {/* Total Degree Credit Meter */}
-              <div className="bg-white/90 border border-slate-200/90 p-4 rounded-xl text-right shrink-0 min-w-[210px] shadow-2xs">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="bg-white/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700 p-4 rounded-xl text-right shrink-0 min-w-[210px] shadow-2xs">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   Planned Credit Load
                 </div>
-                <div className="text-lg font-bold text-slate-900 my-0.5 tracking-tight tabular-nums flex items-baseline justify-end gap-1">
-                  <span className="text-slate-900 text-xl font-extrabold">{planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)}</span>
-                  <span className="text-slate-400 font-semibold text-xs">/ 72 CP</span>
+                <div className="text-lg font-bold text-slate-900 dark:text-white my-0.5 tracking-tight tabular-nums flex items-baseline justify-end gap-1">
+                  <span className="text-slate-900 dark:text-white text-xl font-extrabold">{planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)}</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-semibold text-xs">/ 72 CP</span>
                 </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-1.5 p-0.5 border border-slate-100">
+                <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden mt-1.5 p-0.5 border border-slate-100 dark:border-slate-700">
                   <div 
-                    className="bg-gradient-to-r from-red-600 to-slate-900 h-full rounded-full transition-all duration-500" 
+                    className="bg-gradient-to-r from-red-600 to-slate-900 dark:to-emerald-400 h-full rounded-full transition-all duration-500" 
                     style={{ width: `${Math.min(100, Math.round((planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0) / 72) * 100))}%` }}
                   />
                 </div>

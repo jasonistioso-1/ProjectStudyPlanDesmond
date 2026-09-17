@@ -7,7 +7,9 @@ import {
   BookOpen,
   Layers,
   Database,
-  History
+  History,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function Navbar({
@@ -19,7 +21,9 @@ export default function Navbar({
   onOpenStudentSelectModal,
   storedPlansCount = 4,
   onOpenImport,
-  onOpenAudit
+  onOpenAudit,
+  theme = 'light',
+  onToggleTheme
 }) {
   const isChair = activeRole === 'chair';
 
@@ -38,7 +42,7 @@ export default function Navbar({
   const navItems = isChair ? chairNavItems : studentNavItems;
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40 font-sans shadow-2xs border-t-2 border-t-red-600">
+    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 font-sans shadow-2xs border-t-2 border-t-red-600 transition-colors">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
         
         {/* Left: Brand Identity */}
@@ -50,9 +54,9 @@ export default function Navbar({
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-sm font-extrabold text-slate-900 tracking-tight">PT3 Solutions</span>
-            <span className="text-slate-300 font-light">/</span>
-            <span className="text-xs font-semibold text-slate-600 hidden sm:inline">Study Plan Repository</span>
+            <span className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">PT3 Solutions</span>
+            <span className="text-slate-300 dark:text-slate-700 font-light">/</span>
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 hidden sm:inline">Study Plan Repository</span>
           </div>
         </div>
 
@@ -68,41 +72,57 @@ export default function Navbar({
                 onClick={() => onTabChange(tab.id)}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-slate-900 text-white font-bold shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+                    ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white font-bold shadow-2xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800'
                 }`}
               >
-                {IconComp && <IconComp className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400' : 'text-slate-500'}`} />}
+                {IconComp && <IconComp className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'}`} />}
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Right: Active Context, Tools & Role Switcher */}
+        {/* Right: Active Context, Tools, Theme & Role Switcher */}
         <div className="flex items-center gap-2.5">
           {/* Active Student Selector Trigger */}
           {isChair && (
             <button
               onClick={onOpenStudentSelectModal}
-              className="bg-white hover:bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-900 shadow-2xs flex items-center gap-1.5 transition-colors"
+              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-2xs flex items-center gap-1.5 transition-colors"
               title="Click to select student"
             >
-              <UserCheck className="w-3.5 h-3.5 text-red-600" />
+              <UserCheck className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
               <span className="truncate max-w-[120px]">
                 {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Select Student'}
               </span>
             </button>
           )}
 
+          {/* Theme Switcher Toggle */}
+          <button
+            onClick={onToggleTheme}
+            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1 text-xs font-medium"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-slate-700" />
+            )}
+            <span className="hidden xl:inline text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400">
+              {theme === 'dark' ? 'Light' : 'Dark'}
+            </span>
+          </button>
+
           {/* Role Switcher Pill */}
-          <div className="flex items-center gap-0.5 bg-slate-100 border border-slate-200 rounded-md p-0.5 text-xs">
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-0.5 text-xs">
             <button
               onClick={() => onRoleChange('chair')}
               className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
                 isChair
-                  ? 'bg-white text-slate-900 shadow-2xs border border-slate-200 font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs border border-slate-200 dark:border-slate-700 font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Academic Chair
@@ -111,8 +131,8 @@ export default function Navbar({
               onClick={() => onRoleChange('student')}
               className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
                 !isChair
-                  ? 'bg-white text-slate-900 shadow-2xs border border-slate-200 font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs border border-slate-200 dark:border-slate-700 font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Student View
@@ -121,22 +141,22 @@ export default function Navbar({
 
           {/* Utility Action Buttons */}
           {isChair && (
-            <div className="flex items-center gap-1 border-l border-slate-200 pl-2">
+            <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-700 pl-2">
               <button
                 onClick={onOpenImport}
                 title="Import Unit Offerings & Prerequisites CSV/Seed"
-                className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-colors"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span className="hidden lg:inline">Import CSV</span>
               </button>
 
               <button
                 onClick={onOpenAudit}
                 title="View System Change Log & Audit Trail"
-                className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-colors"
               >
-                <Clock className="w-3.5 h-3.5 text-red-600" />
+                <Clock className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                 <span className="hidden lg:inline">Change Log</span>
               </button>
             </div>
