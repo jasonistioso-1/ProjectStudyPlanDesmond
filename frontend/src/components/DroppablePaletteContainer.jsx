@@ -55,33 +55,12 @@ export default function DroppablePaletteContainer({
             />
           </div>
 
-          {/* Level Filter Pills + Show All Toggle */}
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-sans">
-            <div className="flex items-center gap-1">
-              {[
-                { key: 'ALL', label: 'All Levels' },
-                { key: '100', label: '100 Level' },
-                { key: '200', label: '200 Level' },
-                { key: '300', label: '300 Level' }
-              ].map(lvl => (
-                <button
-                  key={lvl.key}
-                  onClick={() => setSelectedLevel(lvl.key)}
-                  className={`px-2.5 py-1 rounded-lg border transition-all text-xs ${
-                    selectedLevel === lvl.key
-                      ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white border-slate-900 dark:border-red-600 font-bold shadow-2xs'
-                      : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium'
-                  }`}
-                >
-                  {lvl.label}
-                </button>
-              ))}
-            </div>
-
-            {setShowAllCatalogUnits && (
+          {/* Show All / Hide Scheduled Units Toggle */}
+          {setShowAllCatalogUnits && (
+            <div className="flex items-center justify-end font-sans">
               <button
                 onClick={() => setShowAllCatalogUnits(!showAllCatalogUnits)}
-                className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
+                className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-all ${
                   showAllCatalogUnits
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 font-bold'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -90,8 +69,8 @@ export default function DroppablePaletteContainer({
               >
                 {showAllCatalogUnits ? 'Showing All 28 Units' : 'Hide Scheduled Units'}
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Drop zone feedback notice when dragging unit over palette */}
