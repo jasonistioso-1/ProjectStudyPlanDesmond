@@ -8,9 +8,8 @@ export default function DroppablePeriod({ id, yearLevel, period, units, onRemove
   const { setNodeRef, isOver } = useDroppable({ id });
 
   const totalCP = units.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
-  const maxCP = 12;
-  const isOverLimit = totalCP > maxCP;
-  const cpPercentage = Math.min(100, Math.round((totalCP / maxCP) * 100));
+  const targetCP = 12; // Standard full-time load benchmark
+  const cpPercentage = Math.min(100, Math.round((totalCP / targetCP) * 100));
 
   const unitIds = units.map(u => String(u.unit_id || u.code));
 
@@ -20,8 +19,6 @@ export default function DroppablePeriod({ id, yearLevel, period, units, onRemove
       className={`rounded-2xl border p-3.5 flex flex-col h-full min-h-[220px] transition-all font-sans shadow-2xs ${
         isOver
           ? 'bg-slate-100/90 dark:bg-slate-800/90 border-slate-400 dark:border-slate-600 ring-2 ring-slate-400/50'
-          : isOverLimit
-          ? 'bg-rose-50/40 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800'
           : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
       }`}
     >
@@ -41,37 +38,21 @@ export default function DroppablePeriod({ id, yearLevel, period, units, onRemove
               )}
             </div>
           </div>
-          <span
-            className={`text-[11px] font-semibold tabular-nums px-2.5 py-0.5 rounded-full ${
-              isOverLimit
-                ? 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-800'
-                : totalCP === maxCP
-                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700'
-            }`}
-          >
-            {totalCP} / {maxCP} CP
+          <span className="text-[11px] font-semibold tabular-nums px-2.5 py-0.5 rounded-full text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 font-mono">
+            {totalCP} CP
           </span>
         </div>
 
-        {/* Dynamic Credit Point Progress Meter Bar */}
+        {/* Credit Point Progress Meter Bar */}
         <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full overflow-hidden flex">
           <div
-            className={`h-full transition-all duration-300 ${
-              isOverLimit ? 'bg-rose-600' : totalCP === maxCP ? 'bg-emerald-600' : 'bg-slate-900 dark:bg-red-600'
-            }`}
+            className="h-full transition-all duration-300 bg-slate-900 dark:bg-red-600"
             style={{ width: `${cpPercentage}%` }}
           />
         </div>
       </div>
 
-      {/* Over Limit Warning Banner */}
-      {isOverLimit && (
-        <div className="mb-2 px-2.5 py-1 bg-rose-100/90 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-800 rounded-lg text-[11px] text-rose-900 dark:text-rose-200 flex items-center gap-1.5 font-bold">
-          <AlertCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
-          <span>Exceeds maximum {maxCP} CP limit per semester</span>
-        </div>
-      )}
+
 
       {/* Droppable Container */}
       <SortableContext items={unitIds} strategy={verticalListSortingStrategy}>

@@ -613,7 +613,7 @@ export default function PlanBuilder({
                     3-Year Study Plan Grid
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-normal">
-                    Maximum 12 CP per semester limit strictly enforced.
+                    Drag & drop units to structure semester and trimester study sequences.
                   </p>
                 </div>
 
