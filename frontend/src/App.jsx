@@ -423,9 +423,7 @@ export default function App() {
 
               {/* Total Degree Credit Meter */}
               {(() => {
-                const calculatedCP = (planUnits && planUnits.length > 0)
-                  ? planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)
-                  : (currentPlan?.total_credit_points || 72);
+                const calculatedCP = (planUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
                 const progressPct = Math.min(100, Math.round((calculatedCP / 72) * 100));
 
                 return (
