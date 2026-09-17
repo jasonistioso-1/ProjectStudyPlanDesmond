@@ -22,7 +22,8 @@ import {
   recommendPlan,
   agreePlan,
   approvePlan,
-  fetchAuditLog
+  fetchAuditLog,
+  mockClientStudentPlans
 } from './services/api';
 
 import {
@@ -32,7 +33,10 @@ import {
   FileText,
   User,
   GraduationCap,
-  Building2
+  Building2,
+  BookOpen,
+  Award,
+  ShieldCheck
 } from 'lucide-react';
 
 const initialSampleStudents = [
@@ -102,8 +106,8 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [catalogUnits, setCatalogUnits] = useState([]);
   const [periods, setPeriods] = useState([]);
-  const [currentPlan, setCurrentPlan] = useState(null);
-  const [planUnits, setPlanUnits] = useState([]);
+  const [currentPlan, setCurrentPlan] = useState(() => mockClientStudentPlans[1].plan);
+  const [planUnits, setPlanUnits] = useState(() => mockClientStudentPlans[1].units);
   const [validationResult, setValidationResult] = useState(null);
   const [activeTab, setActiveTab] = useState('STUDY_PLAN');
   const [storedPlansCount, setStoredPlansCount] = useState(4);
@@ -354,17 +358,38 @@ export default function App() {
           {/* Executive Student Course Info Header */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-2xs font-sans transition-colors">
             <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-red-700 dark:text-red-400 flex items-center gap-1.5 uppercase tracking-wider">
-                    <span className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400 inline-block animate-pulse" />
-                    Major: {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
-                      ? selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()
-                      : 'Artificial Intelligence'}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 bg-red-50 dark:bg-red-950/70 border border-red-200/80 dark:border-red-800/80 px-3 py-1 rounded-lg text-xs font-bold text-red-700 dark:text-red-300">
+                    <BookOpen className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                    <span>MAJOR: {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
+                      ? selectedStudent.course_name.split('Major:')[1].replace(')', '').trim().toUpperCase()
+                      : 'ARTIFICIAL INTELLIGENCE'}</span>
                   </span>
+
+                  {currentPlan?.status === 'approved' && (
+                    <span className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 px-3 py-1 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase font-mono">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Plan Approved & Finalized
+                    </span>
+                  )}
+                  {currentPlan?.status === 'agreed' && (
+                    <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 px-3 py-1 rounded-lg text-xs font-bold text-blue-700 dark:text-blue-300 uppercase font-mono">
+                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Student Agreed
+                    </span>
+                  )}
+                  {currentPlan?.status === 'recommended' && (
+                    <span className="inline-flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 px-3 py-1 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300 uppercase font-mono">
+                      <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Recommended to Student
+                    </span>
+                  )}
+                  {(!currentPlan || currentPlan?.status === 'draft' || currentPlan?.status === 'stored') && (
+                    <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 uppercase font-mono">
+                      Official Draft Plan
+                    </span>
+                  )}
                 </div>
 
-                <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
                   Bachelor of Information Technology
                 </h1>
 
@@ -375,43 +400,55 @@ export default function App() {
                     <span className="font-bold text-slate-900 dark:text-white">
                       {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
                     </span>
-                    <span className="text-slate-400 dark:text-slate-500 font-normal">
+                    <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                       ({selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'})
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 font-medium">
                     <GraduationCap className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                    <span>Course Code: <strong>{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-AI01'}</strong></span>
+                    <span>Course Code: <strong className="font-mono">{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-AI01'}</strong></span>
                   </div>
 
                   <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 font-medium">
                     <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Singapore Campus</span>
+                    <span>{selectedStudent?.location_name || 'PT3 Solutions Singapore Campus'}</span>
                   </div>
 
-                  <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-xl">
-                    Sample Student Profile
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-xl font-mono">
+                    Enrolled Student Profile
                   </span>
                 </div>
               </div>
 
               {/* Total Degree Credit Meter */}
-              <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 p-4 rounded-2xl text-right shrink-0 min-w-[230px]">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
-                  Degree Credit Load
-                </div>
-                <div className="text-2xl font-black text-slate-900 dark:text-white my-0.5 tracking-tight tabular-nums flex items-baseline justify-end gap-1">
-                  <span>{planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)}</span>
-                  <span className="text-slate-400 dark:text-slate-500 font-semibold text-xs">/ 72 CP</span>
-                </div>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden mt-1.5 border border-slate-200 dark:border-slate-700">
-                  <div 
-                    className="bg-red-700 dark:bg-emerald-400 h-full rounded-full transition-all duration-500" 
-                    style={{ width: `${Math.min(100, Math.round((planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0) / 72) * 100))}%` }}
-                  />
-                </div>
-              </div>
+              {(() => {
+                const calculatedCP = (planUnits && planUnits.length > 0)
+                  ? planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)
+                  : (currentPlan?.total_credit_points || 72);
+                const progressPct = Math.min(100, Math.round((calculatedCP / 72) * 100));
+
+                return (
+                  <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 p-4.5 rounded-2xl text-right shrink-0 min-w-[240px] shadow-2xs">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 font-mono">
+                      Degree Credit Load
+                    </div>
+                    <div className="text-2xl font-black text-slate-900 dark:text-white my-0.5 tracking-tight tabular-nums flex items-baseline justify-end gap-1">
+                      <span>{calculatedCP}</span>
+                      <span className="text-slate-400 dark:text-slate-500 font-semibold text-xs font-mono">/ 72 CP</span>
+                    </div>
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden mt-1.5 border border-slate-200 dark:border-slate-700">
+                      <div 
+                        className="bg-red-700 dark:bg-emerald-400 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                      {progressPct}% Completion
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
