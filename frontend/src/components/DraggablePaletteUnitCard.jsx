@@ -55,10 +55,7 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-heading font-bold text-slate-900 dark:text-white text-xs tracking-tight bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-600 shadow-2xs">{unit.code}</span>
-            <span className={`text-[10px] px-2.5 py-0.5 rounded-full border ${lvlBadge}`}>
-              Level {uLvl}
-            </span>
+            <span className="font-heading font-bold text-slate-900 dark:text-white text-xs tracking-tight bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-600 shadow-2xs font-mono">{unit.code}</span>
           </div>
           <div className="text-slate-900 dark:text-slate-100 text-xs font-semibold truncate mt-1">
             {unit.title}
