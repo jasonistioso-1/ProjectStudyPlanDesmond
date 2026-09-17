@@ -30,9 +30,16 @@ export default function DroppablePeriod({ id, yearLevel, period, units, onRemove
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-slate-900 dark:bg-red-500"></span>
-            <span className="text-xs font-bold text-slate-900 dark:text-white tracking-tight font-heading">
-              {period.name}
-            </span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xs font-bold text-slate-900 dark:text-white tracking-tight font-heading">
+                {period.name}
+              </span>
+              {period.date_range && (
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">
+                  ({period.date_range})
+                </span>
+              )}
+            </div>
           </div>
           <span
             className={`text-[11px] font-semibold tabular-nums px-2.5 py-0.5 rounded-full ${

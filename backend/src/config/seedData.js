@@ -9,11 +9,11 @@ export const mockLocations = [
 ];
 
 export const mockTeachingPeriods = [
-    { period_id: 1, code: 'S1', name: 'Semester 1', period_type: 'semester', sequence_order: 1 },
-    { period_id: 2, code: 'S2', name: 'Semester 2', period_type: 'semester', sequence_order: 2 },
-    { period_id: 3, code: 'T1', name: 'Trimester 1', period_type: 'trimester', sequence_order: 1 },
-    { period_id: 4, code: 'T2', name: 'Trimester 2', period_type: 'trimester', sequence_order: 2 },
-    { period_id: 5, code: 'T3', name: 'Trimester 3', period_type: 'trimester', sequence_order: 3 }
+    { period_id: 1, code: 'S1', name: 'Semester 1', period_type: 'semester', sequence_order: 1, start_date: '2026-03-02', end_date: '2026-06-26', date_range: '02 Mar – 26 Jun' },
+    { period_id: 2, code: 'S2', name: 'Semester 2', period_type: 'semester', sequence_order: 2, start_date: '2026-07-27', end_date: '2026-11-20', date_range: '27 Jul – 20 Nov' },
+    { period_id: 3, code: 'T1', name: 'Trimester 1', period_type: 'trimester', sequence_order: 1, start_date: '2026-01-05', end_date: '2026-04-17', date_range: '05 Jan – 17 Apr' },
+    { period_id: 4, code: 'T2', name: 'Trimester 2', period_type: 'trimester', sequence_order: 2, start_date: '2026-05-04', end_date: '2026-08-14', date_range: '04 May – 14 Aug' },
+    { period_id: 5, code: 'T3', name: 'Trimester 3', period_type: 'trimester', sequence_order: 3, start_date: '2026-08-31', end_date: '2026-12-11', date_range: '31 Aug – 11 Dec' }
 ];
 
 export const mockCourses = [

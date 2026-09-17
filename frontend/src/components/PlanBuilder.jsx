@@ -68,14 +68,14 @@ export default function PlanBuilder({
 
   // Teaching Periods list according to layoutType (FR-05 Semester vs Trimester)
   const semesterPeriods = [
-    { period_id: 1, name: 'Semester 1', code: 'S1' },
-    { period_id: 2, name: 'Semester 2', code: 'S2' }
+    { period_id: 1, name: 'Semester 1', code: 'S1', date_range: '02 Mar – 26 Jun' },
+    { period_id: 2, name: 'Semester 2', code: 'S2', date_range: '27 Jul – 20 Nov' }
   ];
 
   const trimesterPeriods = [
-    { period_id: 3, name: 'Trimester 1', code: 'T1' },
-    { period_id: 4, name: 'Trimester 2', code: 'T2' },
-    { period_id: 5, name: 'Trimester 3', code: 'T3' }
+    { period_id: 3, name: 'Trimester 1', code: 'T1', date_range: '05 Jan – 17 Apr' },
+    { period_id: 4, name: 'Trimester 2', code: 'T2', date_range: '04 May – 14 Aug' },
+    { period_id: 5, name: 'Trimester 3', code: 'T3', date_range: '31 Aug – 11 Dec' }
   ];
 
   const defaultPeriodList = layoutType === 'trimester' ? trimesterPeriods : semesterPeriods;
