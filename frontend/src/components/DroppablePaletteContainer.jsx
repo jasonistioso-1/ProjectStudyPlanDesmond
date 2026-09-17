@@ -30,13 +30,13 @@ export default function DroppablePaletteContainer({
       }`}
     >
       <div className="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-wrap justify-between items-center gap-2">
-        <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-2 font-heading">
+        <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2 font-heading">
           <BookOpen className="w-4 h-4 text-slate-700 dark:text-slate-300" />
-          Available Unit Offerings
+          Available Course Units
         </h3>
         <div className="flex items-center gap-1.5 text-xs font-semibold">
           <span className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full text-slate-700 dark:text-slate-300 tabular-nums">
-            {filteredOfferings.length} Available / {totalCatalogCount} Master List
+            {filteredOfferings.length} Available / {totalCatalogCount} Total Units
           </span>
         </div>
       </div>
