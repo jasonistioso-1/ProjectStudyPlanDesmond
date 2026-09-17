@@ -53,10 +53,10 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
           PT3 SOLUTIONS SINGAPORE STUDENT DIRECTORY
         </span>
         <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-2 font-heading">
-          Academic Chair Student Selector
+          Select Student Profile
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-          Please select a student from the PT3 Solutions Study Plan Repository to view their academic history and construct/amend their study plan.
+          Select a student from the 4 registered sample database profiles to view their academic history, active study plan, and progress in either Student View or Academic Chair mode.
         </p>
       </div>
 

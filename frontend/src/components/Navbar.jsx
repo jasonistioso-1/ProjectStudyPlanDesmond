@@ -88,18 +88,16 @@ export default function Navbar({
         {/* Right: Active Context, Tools, Theme & Role Switcher */}
         <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
           {/* Active Student Selector Trigger */}
-          {isChair && (
-            <button
-              onClick={onOpenStudentSelectModal}
-              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-2xs flex items-center gap-2 transition-colors shrink-0 whitespace-nowrap"
-              title="Click to select student"
-            >
-              <UserCheck className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-              <span className="whitespace-nowrap font-bold">
-                {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Select Student'}
-              </span>
-            </button>
-          )}
+          <button
+            onClick={onOpenStudentSelectModal}
+            className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-2xs flex items-center gap-2 transition-colors shrink-0 whitespace-nowrap"
+            title="Click to select active student profile"
+          >
+            <UserCheck className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+            <span className="whitespace-nowrap font-bold">
+              {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Select Student'}
+            </span>
+          </button>
 
           {/* Theme Switcher Toggle - Icon Only */}
           <button

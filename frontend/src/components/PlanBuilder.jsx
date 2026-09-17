@@ -43,7 +43,8 @@ export default function PlanBuilder({
   onAgreePlan,
   onApprovePlan,
   onSavePlan,
-  onOpenOfficialDocument
+  onOpenOfficialDocument,
+  onOpenStudentSelectModal
 }) {
   const isChair = activeRole === 'chair';
   const [unitFilter, setUnitFilter] = useState('');
@@ -375,7 +376,23 @@ export default function PlanBuilder({
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {onOpenStudentSelectModal && (
+              <button
+                onClick={onOpenStudentSelectModal}
+                className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-amber-300 dark:border-slate-700 px-3 py-1.5 rounded-lg text-left shadow-2xs flex items-center gap-2 transition-colors shrink-0"
+                title="Click to view/switch between registered sample database students"
+              >
+                <User className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                <div>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block">Student Profile</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                    {stName}
+                    <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold underline">(Change)</span>
+                  </span>
+                </div>
+              </button>
+            )}
             <div className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-right shadow-2xs">
               <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block">Current Status</span>
               <span className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase">{planStatus}</span>

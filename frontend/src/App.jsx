@@ -358,7 +358,11 @@ export default function App() {
 
                 <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white font-heading">
                   Bachelor of Information Technology
-                  <span className="text-slate-500 dark:text-slate-400 font-normal text-sm md:text-base ml-2 inline-block">(Major: Software & Systems)</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-normal text-sm md:text-base ml-2 inline-block">
+                    {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
+                      ? `(Major: ${selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()})`
+                      : '(Major: Artificial Intelligence)'}
+                  </span>
                 </h1>
 
                 <div className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-3 pt-0.5">
@@ -414,6 +418,7 @@ export default function App() {
               onApprovePlan={handleApprovePlan}
               onSavePlan={handleSavePlan}
               onOpenOfficialDocument={() => setShowDocumentModal(true)}
+              onOpenStudentSelectModal={() => setShowStudentSelectModal(true)}
             />
           )}
 
