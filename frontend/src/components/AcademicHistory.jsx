@@ -19,10 +19,13 @@ export default function AcademicHistory({ history }) {
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm transition-colors">
-      <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">
-        <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <History className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Student Academic History Breakdown
-        </h2>
+      <div className="flex flex-wrap justify-between items-center mb-4 pb-2 border-b border-slate-200 dark:border-slate-800 gap-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <History className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Student Academic History Breakdown
+          </h2>
+          <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono">Sample Student Record</span>
+        </div>
         <div className="flex gap-2 text-xs font-mono font-bold">
           <span className="px-2.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
             Passed: {completed.length}
