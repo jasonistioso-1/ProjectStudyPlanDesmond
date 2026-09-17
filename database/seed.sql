@@ -112,12 +112,10 @@ INSERT INTO Prerequisite (unit_id, prereq_unit_id, min_grade, is_concurrent_allo
 
 -- 7. Seed Students (6 Students across 6 Distinct Majors)
 INSERT INTO Student (student_id, student_number, first_name, last_name, email, course_id, location_id, commencement_year, study_status) VALUES
-(1, 'PT3-2026-001', 'Alex', 'Mercer', 'alex.mercer@student.pt3solutions.edu.au', 1, 1, 2026, 'active'),
-(2, 'PT3-2026-002', 'Sarah', 'Chen', 's.chen@student.pt3solutions.edu.au', 2, 2, 2026, 'active'),
-(3, 'PT3-2025-003', 'David', 'Tan', 'd.tan@student.pt3solutions.edu.au', 3, 1, 2025, 'at-risk'),
-(4, 'PT3-2026-004', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.au', 4, 3, 2026, 'part-time'),
-(5, 'PT3-2024-005', 'Michael', 'Rahardjo', 'm.rahardjo@student.pt3solutions.edu.au', 5, 1, 2024, 'graduating'),
-(6, 'PT3-2026-006', 'Jessica', 'Taylor', 'j.taylor@student.pt3solutions.edu.au', 6, 4, 2026, 'active');
+(1, 'PT3-2026-001', 'Alex', 'Mercer', 'alex.mercer@student.pt3solutions.edu.sg', 1, 2, 2026, 'active'),
+(2, 'PT3-2026-002', 'Sarah', 'Jenkins', 'sarah.jenkins@student.pt3solutions.edu.sg', 2, 2, 2026, 'active'),
+(3, 'PT3-2026-003', 'Michael', 'Chang', 'm.chang@student.pt3solutions.edu.sg', 3, 2, 2026, 'active'),
+(4, 'PT3-2026-004', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.sg', 4, 2, 2026, 'part-time');
 
 -- 8. Seed Student Unit History
 INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period_id, year_taken) VALUES

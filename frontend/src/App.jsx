@@ -8,6 +8,7 @@ import CourseCatalogPreview from './components/CourseCatalogPreview';
 import CertificateView from './components/CertificateView';
 import DataImportModal from './components/DataImportModal';
 import OfficialStudyPlanDocumentModal from './components/OfficialStudyPlanDocumentModal';
+import GuideModal from './components/GuideModal';
 import Footer from './components/Footer';
 
 import {
@@ -69,6 +70,7 @@ export default function App() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState(null);
 
   useEffect(() => {
@@ -258,6 +260,7 @@ export default function App() {
           storedPlansCount={storedPlansCount}
           onOpenImport={() => setShowImportModal(true)}
           onOpenAudit={() => setShowAuditModal(true)}
+          onOpenGuide={() => setShowGuideModal(true)}
           theme={theme}
           onToggleTheme={toggleTheme}
         />
@@ -473,6 +476,12 @@ export default function App() {
           onClose={() => setShowImportModal(false)}
         />
       )}
+
+      {/* User & System Guide Modal */}
+      <GuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+      />
     </div>
   );
 }
