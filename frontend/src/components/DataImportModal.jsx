@@ -1,10 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Database, Upload, CheckCircle2, AlertCircle, X, FileSpreadsheet, Download, FileText, Check, AlertTriangle } from 'lucide-react';
+import { Database, Upload, CheckCircle2, AlertCircle, X, FileSpreadsheet, Download, FileText, Check, AlertTriangle, Users, BookOpen, Layers, Award } from 'lucide-react';
 import { importSeedData } from '../services/api';
 
 export default function DataImportModal({ onClose }) {
-  const [activeTab, setActiveTab] = useState('excel'); // 'excel' | 'json'
-  const [importType, setImportType] = useState('units'); // 'units' | 'offerings' | 'prerequisites'
+  const [importEntity, setImportEntity] = useState('units'); // 'units' | 'students' | 'offerings' | 'prerequisites' | 'courses'
   const [inputText, setInputText] = useState('');
   const [fileName, setFileName] = useState('');
   const [parsedData, setParsedData] = useState([]);
@@ -12,9 +11,9 @@ export default function DataImportModal({ onClose }) {
   const [status, setStatus] = useState({ loading: false, success: null, error: null });
   const fileInputRef = useRef(null);
 
-  // Exact sample header structure:
-  // Unit Code | Unit Name | Strict Prerequisite | 2027 & 2028 Trimester Offer
-  const sampleExcelCSV = `Unit Code,Unit Name,Strict Prerequisite,2027 & 2028 Trimester Offer
+  // Sample CSV templates for all database entity schemas:
+  const sampleTemplates = {
+    units: `Unit Code,Unit Name,Strict Prerequisite,2027 & 2028 Trimester Offer
 ICT100,Transition to IT,None,T1, T2, T3
 ICT158,Introduction to Computer Systems,None,T1, T3
 ICT159,Foundations of Programming,None,T1, T2, T3
@@ -23,30 +22,40 @@ ICT201,IT Project Management,ICT158,T1, T2, T3
 ICT202,Machine Learning,ICT159,T2, T3
 ICT203,Artificial Intelligence,ICT167,T1, T3
 ICT283,Data Structures & Algorithms,ICT167,T1, T2
-ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
+ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`,
 
-  const parseContent = (text) => {
+    students: `Student Number,First Name,Last Name,Email,Course Code,Location Code,Status
+PT3-2026-005,David,Miller,d.miller@student.pt3solutions.edu.sg,PT3-BSIT-AI01,SINGAPORE,active
+PT3-2026-006,Jessica,Tan,j.tan@student.pt3solutions.edu.sg,PT3-BSIT-CS02,SINGAPORE,active
+PT3-2026-007,Kevin,Wong,k.wong@student.pt3solutions.edu.sg,PT3-BSIT-BIS03,SINGAPORE,part-time`,
+
+    offerings: `Unit Code,Location Code,Period Code,Year Version,Delivery Mode
+ICT100,SINGAPORE,T1,2026,internal
+ICT100,SINGAPORE,T2,2026,internal
+ICT159,SINGAPORE,T1,2026,internal
+ICT159,SINGAPORE,T2,2026,internal
+ICT202,SINGAPORE,T2,2026,internal`,
+
+    prerequisites: `Unit Code,Prerequisite Unit Code,Minimum Grade,Concurrent Allowed
+ICT167,ICT159,P,false
+ICT201,ICT158,P,false
+ICT202,ICT159,P,false
+ICT203,ICT167,P,false
+ICT283,ICT167,P,false`,
+
+    courses: `Course Code,Course Name,Degree Level,Total Credit Points
+PT3-BSIT-AI01,Bachelor of Information Technology (Major: Artificial Intelligence),Bachelor,72
+PT3-BSIT-CS02,Bachelor of Information Technology (Major: Computer Science),Bachelor,72
+PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information Systems),Bachelor,72`
+  };
+
+  const parseContent = (text, entity = importEntity) => {
     if (!text || !text.trim()) {
       setParsedData([]);
       setRowErrors([]);
       return;
     }
 
-    // Parse JSON
-    if (activeTab === 'json' || text.trim().startsWith('[')) {
-      try {
-        const json = JSON.parse(text);
-        setParsedData(json);
-        setRowErrors([]);
-        return;
-      } catch (err) {
-        setRowErrors([`Invalid JSON payload format: ${err.message}`]);
-        setParsedData([]);
-        return;
-      }
-    }
-
-    // Excel / CSV / Tab-Separated Parsing
     const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
     if (lines.length === 0) {
       setParsedData([]);
@@ -57,69 +66,96 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
     const errors = [];
     const validRows = [];
 
-    // Identify header line
     const headerLine = lines[0];
     const isTab = headerLine.includes('\t');
     const headers = isTab
       ? headerLine.split('\t').map(h => h.trim().toLowerCase())
       : headerLine.split(',').map(h => h.trim().toLowerCase().replace(/^["']|["']$/g, ''));
 
-    let colCodeIdx = headers.findIndex(h => h.includes('code') || h.includes('unit code'));
-    let colNameIdx = headers.findIndex(h => h.includes('name') || h.includes('title') || h.includes('unit name'));
-    let colPrereqIdx = headers.findIndex(h => h.includes('prerequisite') || h.includes('prereq') || h.includes('strict'));
-    let colOfferIdx = headers.findIndex(h => h.includes('offer') || h.includes('trimester') || h.includes('period') || h.includes('semester'));
-
-    // Fallbacks if no header detected
-    if (colCodeIdx === -1) colCodeIdx = 0;
-    if (colNameIdx === -1) colNameIdx = 1;
-    if (colPrereqIdx === -1) colPrereqIdx = 2;
-    if (colOfferIdx === -1) colOfferIdx = 3;
-
-    const hasHeader = headers.some(h => h.includes('unit') || h.includes('code') || h.includes('name') || h.includes('prereq') || h.includes('offer'));
+    const hasHeader = headers.some(h => 
+      h.includes('unit') || h.includes('code') || h.includes('name') || 
+      h.includes('prereq') || h.includes('offer') || h.includes('student') || h.includes('email')
+    );
     const startRowIdx = hasHeader ? 1 : 0;
 
     for (let i = startRowIdx; i < lines.length; i++) {
-      const rowNum = i + 1; // 1-indexed row number in CSV/Excel!
+      const rowNum = i + 1;
       const line = lines[i];
-
       const cols = isTab
         ? line.split('\t').map(c => c.trim().replace(/^["']|["']$/g, ''))
         : line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
 
-      const unitCode = cols[colCodeIdx] || '';
-      const unitName = cols[colNameIdx] || '';
-      const prereq = cols[colPrereqIdx] || 'None';
-      const offeringsRaw = cols[colOfferIdx] || 'T1, T2';
+      if (entity === 'units') {
+        const unitCode = cols[0] || '';
+        const unitName = cols[1] || '';
+        const prereq = cols[2] || 'None';
+        const offeringsRaw = cols[3] || 'T1, T2';
 
-      // Line Validation Rules:
-      if (!unitCode) {
-        errors.push(`Row ${rowNum}: 'Unit Code' (Column 1) cannot be empty.`);
-        continue;
+        if (!unitCode) { errors.push(`Row ${rowNum}: 'Unit Code' (Column 1) cannot be empty.`); continue; }
+        if (!unitName) { errors.push(`Row ${rowNum} (${unitCode}): 'Unit Name' (Column 2) cannot be empty.`); continue; }
+
+        const parsedOfferings = offeringsRaw.split(/[,;&/]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+        const invalidOfferings = parsedOfferings.filter(p => !['S1', 'S2', 'T1', 'T2', 'T3'].includes(p));
+        if (invalidOfferings.length > 0) {
+          errors.push(`Row ${rowNum} (${unitCode}): Invalid teaching period '${invalidOfferings.join(', ')}' in Offerings. (Valid: S1, S2, T1, T2, T3)`);
+        }
+
+        validRows.push({
+          rowNum,
+          code: unitCode.toUpperCase(),
+          title: unitName,
+          prerequisites: prereq === 'None' || !prereq ? [] : prereq.split(/[,;&/]+/).map(p => p.trim().toUpperCase()),
+          offerings: parsedOfferings.length > 0 ? parsedOfferings : ['T1', 'T2']
+        });
+      } else if (entity === 'students') {
+        const studentNum = cols[0] || '';
+        const firstName = cols[1] || '';
+        const lastName = cols[2] || '';
+        const email = cols[3] || '';
+        const courseCode = cols[4] || 'PT3-BSIT-AI01';
+        const location = cols[5] || 'SINGAPORE';
+
+        if (!studentNum) { errors.push(`Row ${rowNum}: 'Student Number' (Column 1) cannot be empty.`); continue; }
+        if (!firstName || !lastName) { errors.push(`Row ${rowNum} (${studentNum}): Student First & Last Name cannot be empty.`); continue; }
+
+        validRows.push({ rowNum, student_number: studentNum, first_name: firstName, last_name: lastName, email, course_code: courseCode, location });
+      } else if (entity === 'offerings') {
+        const unitCode = cols[0] || '';
+        const locationCode = cols[1] || 'SINGAPORE';
+        const periodCode = cols[2] || 'T1';
+        const yearVersion = Number(cols[3] || 2026);
+        const mode = cols[4] || 'internal';
+
+        if (!unitCode) { errors.push(`Row ${rowNum}: 'Unit Code' (Column 1) cannot be empty.`); continue; }
+        validRows.push({ rowNum, unit_code: unitCode, location_code: locationCode, period_code: periodCode, year_version: yearVersion, delivery_mode: mode });
+      } else if (entity === 'prerequisites') {
+        const unitCode = cols[0] || '';
+        const prereqCode = cols[1] || '';
+        const minGrade = cols[2] || 'P';
+
+        if (!unitCode || !prereqCode) { errors.push(`Row ${rowNum}: Target Unit Code and Prerequisite Code are required.`); continue; }
+        validRows.push({ rowNum, unit_code: unitCode, prereq_unit_code: prereqCode, min_grade: minGrade });
+      } else if (entity === 'courses') {
+        const courseCode = cols[0] || '';
+        const courseName = cols[1] || '';
+        const degreeLevel = cols[2] || 'Bachelor';
+        const totalCP = Number(cols[3] || 72);
+
+        if (!courseCode || !courseName) { errors.push(`Row ${rowNum}: Course Code and Course Name are required.`); continue; }
+        validRows.push({ rowNum, code: courseCode, name: courseName, degree_level: degreeLevel, total_credit_points: totalCP });
       }
-
-      if (!unitName) {
-        errors.push(`Row ${rowNum} (${unitCode}): 'Unit Name' (Column 2) cannot be empty.`);
-        continue;
-      }
-
-      const parsedOfferings = offeringsRaw.split(/[,;&/]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
-      const invalidOfferings = parsedOfferings.filter(p => !['S1', 'S2', 'T1', 'T2', 'T3'].includes(p));
-
-      if (invalidOfferings.length > 0) {
-        errors.push(`Row ${rowNum} (${unitCode}): Invalid teaching period code '${invalidOfferings.join(', ')}' in Offerings column. (Valid: S1, S2, T1, T2, or T3)`);
-      }
-
-      validRows.push({
-        rowNum,
-        code: unitCode.toUpperCase(),
-        title: unitName,
-        prerequisites: prereq === 'None' || !prereq ? [] : prereq.split(/[,;&/]+/).map(p => p.trim().toUpperCase()),
-        offerings: parsedOfferings.length > 0 ? parsedOfferings : ['T1', 'T2']
-      });
     }
 
     setRowErrors(errors);
     setParsedData(validRows);
+  };
+
+  const handleEntityChange = (entityKey) => {
+    setImportEntity(entityKey);
+    setFileName('');
+    const sampleText = sampleTemplates[entityKey] || '';
+    setInputText(sampleText);
+    parseContent(sampleText, entityKey);
   };
 
   const handleInputChange = (e) => {
@@ -142,18 +178,13 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
     reader.readAsText(file);
   };
 
-  const handleLoadSample = () => {
-    setFileName('sample_unit_catalog.csv');
-    setInputText(sampleExcelCSV);
-    parseContent(sampleExcelCSV);
-  };
-
   const handleDownloadSampleCSV = () => {
-    const blob = new Blob([sampleExcelCSV], { type: 'text/csv;charset=utf-8;' });
+    const content = sampleTemplates[importEntity] || sampleTemplates.units;
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'sample_course_catalog_header.csv');
+    link.setAttribute('download', `sample_${importEntity}_database_schema.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -161,14 +192,14 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
 
   const handleExecuteImport = async () => {
     if (parsedData.length === 0) {
-      setStatus({ loading: false, success: null, error: 'No valid unit records available to import.' });
+      setStatus({ loading: false, success: null, error: 'No valid records available to import.' });
       return;
     }
 
     try {
       setStatus({ loading: true, success: null, error: null });
-      const res = await importSeedData(importType, parsedData);
-      setStatus({ loading: false, success: res.message || `Successfully imported ${parsedData.length} course unit catalog records!`, error: null });
+      const res = await importSeedData(importEntity, parsedData);
+      setStatus({ loading: false, success: res.message || `Successfully imported ${parsedData.length} ${importEntity} records into database!`, error: null });
     } catch (err) {
       setStatus({ loading: false, success: null, error: err.message });
     }
@@ -176,7 +207,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-3xl w-full shadow-2xl relative font-sans text-slate-900 dark:text-white transition-colors max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-4xl w-full shadow-2xl relative font-sans text-slate-900 dark:text-slate-100 transition-colors max-h-[90vh] flex flex-col">
         
         {/* Close Button */}
         <button
@@ -189,45 +220,65 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
         {/* Modal Header */}
         <div className="flex items-center gap-3 mb-3 pb-3 border-b border-slate-200 dark:border-slate-800">
           <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shadow-2xs">
-            <FileSpreadsheet className="w-5 h-5" />
+            <Database className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
-              Course Catalog Excel / CSV Dataset Import Engine
+              Universal Database CSV / Excel Dataset Import Engine
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Upload or paste unit catalog and prerequisite datasets using standard university header structure.
+              Import Unit Catalog, Students, Unit Offerings, Prerequisites, or Courses directly into database schema (Section 8).
             </p>
           </div>
         </div>
 
-        {/* Format Header Guidance Badge */}
+        {/* Entity Dataset Tab Selector */}
+        <div className="flex flex-wrap gap-1.5 mb-4 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+          {[
+            { key: 'units', label: 'Course Units Catalog', icon: BookOpen },
+            { key: 'students', label: 'Student Records', icon: Users },
+            { key: 'offerings', label: 'Unit Offerings', icon: Layers },
+            { key: 'prerequisites', label: 'Prerequisites', icon: AlertTriangle },
+            { key: 'courses', label: 'Degree Programs', icon: Award }
+          ].map(ent => {
+            const Icon = ent.icon;
+            return (
+              <button
+                key={ent.key}
+                onClick={() => handleEntityChange(ent.key)}
+                className={`flex-1 min-w-[120px] py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  importEntity === ent.key
+                    ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span>{ent.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Header Guidance & Template Download */}
         <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 mb-4 text-xs space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-red-600 dark:text-red-400" /> Standard Excel / CSV Header Structure:
+              <FileText className="w-4 h-4 text-red-600 dark:text-red-400" /> Database Schema Header Structure ({importEntity.toUpperCase()}):
             </span>
             <div className="flex gap-2">
               <button
                 onClick={handleDownloadSampleCSV}
-                className="text-[11px] font-bold text-red-700 dark:text-red-400 hover:underline flex items-center gap-1 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded border border-red-200 dark:border-red-900"
+                className="text-[11px] font-bold text-red-700 dark:text-red-400 hover:underline flex items-center gap-1 bg-red-50 dark:bg-red-950/50 px-2.5 py-1 rounded border border-red-200 dark:border-red-900"
               >
-                <Download className="w-3 h-3" /> Download Template CSV
+                <Download className="w-3.5 h-3.5" /> Download Template CSV
               </button>
               <button
-                onClick={handleLoadSample}
-                className="text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:underline bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded"
+                onClick={() => handleEntityChange(importEntity)}
+                className="text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:underline bg-slate-200 dark:bg-slate-700 px-2.5 py-1 rounded"
               >
                 Load Sample Data
               </button>
             </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-1 font-mono text-[11px] text-center font-semibold bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
-            <div className="bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 py-1 rounded">Unit Code</div>
-            <div className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 py-1 rounded">Unit Name</div>
-            <div className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 py-1 rounded">Strict Prerequisite</div>
-            <div className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 py-1 rounded">2027 & 2028 Trimester Offer</div>
           </div>
         </div>
 
@@ -260,7 +311,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
           {/* Text Area Input */}
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-              Or Paste Raw CSV / Excel Text Payload:
+              Or Paste CSV / Tab-Separated Excel Dataset Payload:
             </label>
             <textarea
               rows={5}
@@ -296,7 +347,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
                 <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4" /> Valid Records Preview ({parsedData.length} Units Ready to Import):
+                  <CheckCircle2 className="w-4 h-4" /> Valid Records Preview ({parsedData.length} Records Ready to Import):
                 </span>
               </div>
               <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden max-h-48 overflow-y-auto text-xs font-sans">
@@ -304,20 +355,70 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
                   <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[11px] sticky top-0">
                     <tr>
                       <th className="p-2 border-b border-slate-200 dark:border-slate-700">Row</th>
-                      <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Code</th>
-                      <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Name</th>
-                      <th className="p-2 border-b border-slate-200 dark:border-slate-700">Prerequisite</th>
-                      <th className="p-2 border-b border-slate-200 dark:border-slate-700">Offerings</th>
+                      {importEntity === 'units' && <>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Code</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Name</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Prerequisite</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Offerings</th>
+                      </>}
+                      {importEntity === 'students' && <>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Student Number</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Name</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Email</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Course</th>
+                      </>}
+                      {importEntity === 'offerings' && <>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Code</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Location</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Period</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Year</th>
+                      </>}
+                      {importEntity === 'prerequisites' && <>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Target Unit</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Prerequisite Unit</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Min Grade</th>
+                      </>}
+                      {importEntity === 'courses' && <>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Course Code</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Course Name</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Degree Level</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Total CP</th>
+                      </>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
                     {parsedData.map((row, idx) => (
                       <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                         <td className="p-2 font-mono text-slate-400 text-[11px]">{row.rowNum}</td>
-                        <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.code}</td>
-                        <td className="p-2 font-semibold text-slate-900 dark:text-white">{row.title}</td>
-                        <td className="p-2 font-mono text-amber-600 dark:text-amber-400">{row.prerequisites.length > 0 ? row.prerequisites.join(', ') : 'None'}</td>
-                        <td className="p-2 font-mono text-emerald-600 dark:text-emerald-400">{row.offerings.join(', ')}</td>
+                        {importEntity === 'units' && <>
+                          <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.code}</td>
+                          <td className="p-2 font-semibold text-slate-900 dark:text-white">{row.title}</td>
+                          <td className="p-2 font-mono text-amber-600 dark:text-amber-400">{row.prerequisites?.length > 0 ? row.prerequisites.join(', ') : 'None'}</td>
+                          <td className="p-2 font-mono text-emerald-600 dark:text-emerald-400">{row.offerings?.join(', ')}</td>
+                        </>}
+                        {importEntity === 'students' && <>
+                          <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.student_number}</td>
+                          <td className="p-2 font-semibold text-slate-900 dark:text-white">{row.first_name} {row.last_name}</td>
+                          <td className="p-2 text-slate-500">{row.email}</td>
+                          <td className="p-2 font-mono">{row.course_code}</td>
+                        </>}
+                        {importEntity === 'offerings' && <>
+                          <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.unit_code}</td>
+                          <td className="p-2 font-semibold">{row.location_code}</td>
+                          <td className="p-2 font-mono text-emerald-600 dark:text-emerald-400">{row.period_code}</td>
+                          <td className="p-2 font-mono">{row.year_version}</td>
+                        </>}
+                        {importEntity === 'prerequisites' && <>
+                          <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.unit_code}</td>
+                          <td className="p-2 font-mono text-amber-600 dark:text-amber-400">{row.prereq_unit_code}</td>
+                          <td className="p-2 font-mono">{row.min_grade}</td>
+                        </>}
+                        {importEntity === 'courses' && <>
+                          <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.code}</td>
+                          <td className="p-2 font-semibold text-slate-900 dark:text-white">{row.name}</td>
+                          <td className="p-2">{row.degree_level}</td>
+                          <td className="p-2 font-mono">{row.total_credit_points} CP</td>
+                        </>}
                       </tr>
                     ))}
                   </tbody>
