@@ -12,7 +12,7 @@ export default function DataImportModal({ onClose }) {
   const [status, setStatus] = useState({ loading: false, success: null, error: null });
   const fileInputRef = useRef(null);
 
-  // Exact sample header requested by user:
+  // Exact sample header structure:
   // Unit Code | Unit Name | Strict Prerequisite | 2027 & 2028 Trimester Offer
   const sampleExcelCSV = `Unit Code,Unit Name,Strict Prerequisite,2027 & 2028 Trimester Offer
 ICT100,Transition to IT,None,T1, T2, T3
@@ -32,7 +32,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
       return;
     }
 
-    // Try parsing as JSON first if json mode or starts with [
+    // Parse JSON
     if (activeTab === 'json' || text.trim().startsWith('[')) {
       try {
         const json = JSON.parse(text);
@@ -40,7 +40,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
         setRowErrors([]);
         return;
       } catch (err) {
-        setRowErrors([`Format JSON tidak valid: ${err.message}`]);
+        setRowErrors([`Invalid JSON payload format: ${err.message}`]);
         setParsedData([]);
         return;
       }
@@ -50,7 +50,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
     const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
     if (lines.length === 0) {
       setParsedData([]);
-      setRowErrors(['File / data yang dimasukkan kosong.']);
+      setRowErrors(['The uploaded file or dataset payload is empty.']);
       return;
     }
 
@@ -93,12 +93,12 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
 
       // Line Validation Rules:
       if (!unitCode) {
-        errors.push(`Baris ${rowNum}: 'Unit Code' (Kolom 1) tidak boleh kosong!`);
+        errors.push(`Row ${rowNum}: 'Unit Code' (Column 1) cannot be empty.`);
         continue;
       }
 
       if (!unitName) {
-        errors.push(`Baris ${rowNum} (${unitCode}): 'Unit Name' (Kolom 2) tidak boleh kosong!`);
+        errors.push(`Row ${rowNum} (${unitCode}): 'Unit Name' (Column 2) cannot be empty.`);
         continue;
       }
 
@@ -106,7 +106,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
       const invalidOfferings = parsedOfferings.filter(p => !['S1', 'S2', 'T1', 'T2', 'T3'].includes(p));
 
       if (invalidOfferings.length > 0) {
-        errors.push(`Baris ${rowNum} (${unitCode}): Kode periode '${invalidOfferings.join(', ')}' tidak valid! (Gunakan: S1, S2, T1, T2, atau T3)`);
+        errors.push(`Row ${rowNum} (${unitCode}): Invalid teaching period code '${invalidOfferings.join(', ')}' in Offerings column. (Valid: S1, S2, T1, T2, or T3)`);
       }
 
       validRows.push({
@@ -161,14 +161,14 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
 
   const handleExecuteImport = async () => {
     if (parsedData.length === 0) {
-      setStatus({ loading: false, success: null, error: 'Tidak ada data valid yang dapat di-import.' });
+      setStatus({ loading: false, success: null, error: 'No valid unit records available to import.' });
       return;
     }
 
     try {
       setStatus({ loading: true, success: null, error: null });
       const res = await importSeedData(importType, parsedData);
-      setStatus({ loading: false, success: res.message || `Berhasil meng-import ${parsedData.length} data unit catalog!`, error: null });
+      setStatus({ loading: false, success: res.message || `Successfully imported ${parsedData.length} course unit catalog records!`, error: null });
     } catch (err) {
       setStatus({ loading: false, success: null, error: err.message });
     }
@@ -196,7 +196,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
               Course Catalog Excel / CSV Dataset Import Engine
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Upload atau paste data matakuliah & prasyarat menggunakan format header standar universitas.
+              Upload or paste unit catalog and prerequisite datasets using standard university header structure.
             </p>
           </div>
         </div>
@@ -218,7 +218,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
                 onClick={handleLoadSample}
                 className="text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:underline bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded"
               >
-                Isi Contoh Data
+                Load Sample Data
               </button>
             </div>
           </div>
@@ -248,7 +248,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
               className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border border-slate-700 shadow-2xs"
             >
               <Upload className="w-4 h-4 text-emerald-400" />
-              <span>Upload File Excel / CSV</span>
+              <span>Upload Excel / CSV File</span>
             </button>
             {fileName && (
               <span className="text-xs font-mono font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
@@ -260,13 +260,13 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
           {/* Text Area Input */}
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-              Atau Paste Data Text (CSV / Excel Tabbed):
+              Or Paste Raw CSV / Excel Text Payload:
             </label>
             <textarea
               rows={5}
               value={inputText}
               onChange={handleInputChange}
-              placeholder="Paste data Excel atau CSV di sini..."
+              placeholder="Paste CSV or tab-separated Excel payload here..."
               className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-semibold"
             />
           </div>
@@ -276,7 +276,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
             <div className="p-4 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/80 rounded-xl space-y-2">
               <div className="flex items-center gap-2 text-rose-800 dark:text-rose-300 font-bold text-xs">
                 <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-                <span>Ditemukan {rowErrors.length} Kesalahan Format pada Baris Excel/CSV:</span>
+                <span>Detected {rowErrors.length} format validation errors across dataset rows:</span>
               </div>
               <ul className="space-y-1.5 text-xs font-mono max-h-32 overflow-y-auto pr-1">
                 {rowErrors.map((err, idx) => (
@@ -296,14 +296,14 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
                 <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4" /> Preview Data Valid ({parsedData.length} Matakuliah SIAP DI-IMPORT):
+                  <CheckCircle2 className="w-4 h-4" /> Valid Records Preview ({parsedData.length} Units Ready to Import):
                 </span>
               </div>
               <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden max-h-48 overflow-y-auto text-xs font-sans">
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[11px] sticky top-0">
                     <tr>
-                      <th className="p-2 border-b border-slate-200 dark:border-slate-700">Baris</th>
+                      <th className="p-2 border-b border-slate-200 dark:border-slate-700">Row</th>
                       <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Code</th>
                       <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Name</th>
                       <th className="p-2 border-b border-slate-200 dark:border-slate-700">Prerequisite</th>
@@ -347,7 +347,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
             onClick={onClose}
             className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           >
-            Batal & Tutup
+            Cancel & Close
           </button>
           <button
             onClick={handleExecuteImport}
@@ -355,7 +355,7 @@ ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`;
             className="flex items-center gap-2 px-5 py-2.5 bg-red-700 hover:bg-red-800 disabled:opacity-40 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all"
           >
             <Upload className="w-4 h-4" />
-            <span>Eksekusi Import ({parsedData.length} Data)</span>
+            <span>Execute Import ({parsedData.length} Records)</span>
           </button>
         </div>
 
