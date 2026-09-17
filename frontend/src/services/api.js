@@ -58,11 +58,11 @@ export async function fetchStudentHistory(id) {
     } catch (err) {
         console.warn('API fetchStudentHistory fallback activated:', err.message);
         return [
-            { history_id: 1, student_id: 1, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to Computing', status: 'completed', grade: 'D', mark: 78.5, period_id: 1, period_code: 'S1', year_taken: 2026 },
-            { history_id: 2, student_id: 1, unit_id: 2, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'C', mark: 68.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
-            { history_id: 3, student_id: 1, unit_id: 5, unit_code: 'ICT169', unit_title: 'Data Communications & Networks', status: 'attempted', grade: 'F', mark: 42.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
-            { history_id: 4, student_id: 1, unit_id: 3, unit_code: 'ICT164', unit_title: 'Discrete Mathematics & Logic', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 },
-            { history_id: 5, student_id: 1, unit_id: 4, unit_code: 'ICT111', unit_title: 'Cybersecurity Principles', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 }
+            { history_id: 1, student_id: 1, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'D', mark: 78.5, period_id: 1, period_code: 'S1', year_taken: 2026 },
+            { history_id: 2, student_id: 1, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'C', mark: 68.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
+            { history_id: 3, student_id: 1, unit_id: 5, unit_code: 'ICT169', unit_title: 'Foundations of Data Communications', status: 'attempted', grade: 'F', mark: 42.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
+            { history_id: 4, student_id: 1, unit_id: 17, unit_code: 'MAS162', unit_title: 'Discrete Mathematics', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 },
+            { history_id: 5, student_id: 1, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 }
         ];
     }
 }
@@ -75,21 +75,34 @@ export async function fetchCatalogUnits() {
     } catch (err) {
         console.warn('API fetchCatalogUnits fallback activated:', err.message);
         return [
-            { unit_id: 1, code: 'ICT100', title: 'Transition to Computing', credit_points: 3, level: 100, prerequisites: [] },
-            { unit_id: 2, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, level: 100, prerequisites: [] },
-            { unit_id: 3, code: 'ICT164', title: 'Discrete Mathematics & Logic', credit_points: 3, level: 100, prerequisites: [] },
-            { unit_id: 4, code: 'ICT111', title: 'Cybersecurity Principles', credit_points: 3, level: 100, prerequisites: [] },
-            { unit_id: 5, code: 'ICT169', title: 'Data Communications & Networks', credit_points: 3, level: 100, prerequisites: [] },
-            { unit_id: 6, code: 'ICT170', title: 'Computer Systems Architecture', credit_points: 3, level: 100, prerequisites: [] },
-            { unit_id: 7, code: 'ICT167', title: 'Data Structures & Algorithms', credit_points: 3, level: 100, prerequisites: [{ prereq_code: 'ICT159' }] },
-            { unit_id: 8, code: 'ICT162', title: 'Applied Linear Algebra & Statistics', credit_points: 3, level: 100, prerequisites: [{ prereq_code: 'ICT164' }] },
-            { unit_id: 9, code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200, prerequisites: [] },
-            { unit_id: 10, code: 'ICT202', title: 'Advanced Programming & Software Architecture', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT167' }] },
-            { unit_id: 11, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT159' }] },
-            { unit_id: 12, code: 'ICT203', title: 'Distributed Systems & Network Security', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT202' }] },
-            { unit_id: 13, code: 'ICT285', title: 'Database Systems', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT159' }] },
-            { unit_id: 14, code: 'ICT304', title: 'Software Systems Architecture & Design', credit_points: 3, level: 300, prerequisites: [] },
-            { unit_id: 15, code: 'ICT302', title: 'Capstone IT Practice Project', credit_points: 3, level: 300, prerequisites: [] }
+            { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, level: 100, prerequisites: [], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, level: 100, prerequisites: [], offerings: ['T1', 'T3'] },
+            { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, level: 100, prerequisites: [], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, level: 100, prerequisites: [{ prereq_code: 'ICT159' }], offerings: ['T1', 'T2'] },
+            { unit_id: 5, code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, level: 100, prerequisites: [], offerings: ['T1', 'T2'] },
+            { unit_id: 6, code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, level: 100, prerequisites: [], offerings: ['T1', 'T3'] },
+            { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, level: 100, prerequisites: [], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT158' }], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT159' }], offerings: ['T2', 'T3'] },
+            { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT167' }], offerings: ['T1', 'T3'] },
+            { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT167' }], offerings: ['T2', 'T3'] },
+            { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT167' }], offerings: ['T1', 'T2'] },
+            { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT158' }], offerings: ['T1', 'T2'] },
+            { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT159' }], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT158' }], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, level: 200, prerequisites: [{ prereq_code: 'ICT158' }], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, level: 100, prerequisites: [], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 18, code: 'MAS164', title: 'Fundamentals of Mathematics', credit_points: 3, level: 100, prerequisites: [], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 19, code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, level: 100, prerequisites: [], offerings: ['T1', 'T3'] },
+            { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT292' }], offerings: ['T1', 'T2'] },
+            { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT201' }], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 22, code: 'ICT303', title: 'Advanced Machine Learning', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT202' }], offerings: ['T2', 'T3'] },
+            { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT203' }], offerings: ['T1', 'T3'] },
+            { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT202' }], offerings: ['T2', 'T3'] },
+            { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT283' }], offerings: ['T1', 'T3'] },
+            { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT283' }], offerings: ['T2', 'T3'] },
+            { unit_id: 27, code: 'ICT393', title: 'Advanced Business Intelligence', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT284' }], offerings: ['T1', 'T3'] },
+            { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT285' }], offerings: ['T1', 'T2', 'T3'] }
         ];
     }
 }
