@@ -1,17 +1,29 @@
-# 🎓 PT3 Solutions — Study Plan Repository (SPR)
+# 🎓 PT3 Solutions User Guide & Study Plan Repository (SPR)
+
 > **ICT302 Outsource Development Final Deliverable & System Handover**  
 > **Target Campus**: PT3 Solutions Singapore Campus  
-> **Stack**: React 18 (Vite) + Node.js (Express REST API) + MySQL 8.0 / PostgreSQL 15 + Docker  
+> **Tech Stack**: React 18 (Vite) + Node.js (Express REST API) + MySQL 8.0 / PostgreSQL 15 + Docker  
 
 ---
 
 ## 📌 Executive Summary
+
 The **Study Plan Repository (SPR)** is an executive web application designed for **PT3 Solutions Academic Chairs** and **Students** to construct, validate, recommend, digitally sign, approve, and archive multi-year university study plans.
 
 ### Core Business Rules Enforced
 - **BR-01 (Unit Offering Validation)**: Verifies whether proposed units are officially offered at the selected campus (Singapore Campus) and teaching period (e.g. Capstone `ICT302` restricted from Tri-Semester 3).
 - **BR-02 (Prerequisite Validation)**: Ensures students have satisfied prerequisite units with passing grades (`P`, `C`, `D`, `HD`) before enrolling in advanced units.
 - **Credit Point Load Control**: Enforces maximum **12 Credit Points per teaching period** limit with dynamic meter bars and warning banners.
+
+---
+
+## 🎓 Official Degree Majors & Course Codes
+
+According to the Section 8 curriculum specification, the system supports 3 official degree majors under the Bachelor of Information Technology degree program:
+
+1. **`PT3-BSIT-AI01`**: Bachelor of Information Technology (Major: Artificial Intelligence)
+2. **`PT3-BSIT-CS02`**: Bachelor of Information Technology (Major: Computer Science)
+3. **`PT3-BSIT-BIS03`**: Bachelor of Information Technology (Major: Business Information Systems)
 
 ---
 
@@ -65,7 +77,7 @@ LOG_LEVEL=info
 
 ---
 
-## 🏗️ Architecture & Component Design
+## 🏗️ Architecture & System Structure
 
 ```
 +-----------------------------------------------------------------------+
@@ -87,15 +99,31 @@ LOG_LEVEL=info
 +-----------------------------------------------------------------------+
 |                           DATABASE LAYER                              |
 |                    MySQL 8.0 / PostgreSQL 15                          |
-|   Student | Course | Unit | UnitOffering | Prerequisite | StudyPlan   |
+|        11 Core Entities (Student, Course, Unit, StudyPlan, etc.)       |
 +-----------------------------------------------------------------------+
 ```
 
 ---
 
-## 🗄️ Database Schema & ERD (Entity Relationship Diagram)
+## 🗄️ Relational Database Model (11 Core Entities)
 
-### Mermaid ERD Diagram
+The system implements **exactly 11 core database tables** matching Section 5 Data Model requirements:
+
+| # | Database Entity | Description & Purpose | Primary Key & Attributes |
+|---|---|---|---|
+| **1** | **`Student`** | Student profile records, student number (e.g. `PT3-2026-001`), course_id, and campus location. | `student_id (PK)`, `student_number`, `first_name`, `last_name`, `email`, `course_id (FK)`, `location_id (FK)` |
+| **2** | **`Course`** | Official degree programs and majors (AI, CS, BIS) with 72 credit point target. | `course_id (PK)`, `code`, `name`, `degree_level`, `total_credit_points` |
+| **3** | **`Unit`** | Course catalog of academic units, titles, credit points (3 CP), and level details. | `unit_id (PK)`, `code`, `title`, `credit_points`, `level` |
+| **4** | **`UnitOffering`** | Campus location, year version, and teaching period availability (Semester vs Trimester). | `offering_id (PK)`, `unit_id (FK)`, `location_id (FK)`, `period_id (FK)`, `year_version` |
+| **5** | **`Prerequisite`** | Subject prerequisite rules enforced by the validation engine (BR-02). | `prereq_id (PK)`, `unit_id (FK)`, `prereq_unit_id (FK)`, `min_grade` |
+| **6** | **`StudentUnitHistory`** | Student academic history, completed subjects, grades, marks, and current enrollments. | `history_id (PK)`, `student_id (FK)`, `unit_id (FK)`, `status`, `grade`, `mark` |
+| **7** | **`StudyPlan`** | Active multi-year study plans and approval workflow status (`Draft`, `Recommended`, `Agreed`, `Approved`). | `plan_id (PK)`, `student_id (FK)`, `title`, `status`, `total_credit_points`, `created_by` |
+| **8** | **`StudyPlanUnit`** | Scheduled subjects mapped to specific study years (Year 1..3) and teaching periods. | `plan_unit_id (PK)`, `plan_id (FK)`, `unit_id (FK)`, `period_id (FK)`, `year_level` |
+| **9** | **`StudyPlanVersion`** | NFR-07 Audit Trail recording version history whenever a plan status changes. | `version_id (PK)`, `plan_id (FK)`, `version_number`, `plan_status`, `amendment_reason` |
+| **10** | **`TeachingPeriod`** | Academic study terms (Semester 1 & 2, Trimester 1, 2 & 3, Winter, Summer). | `period_id (PK)`, `code`, `name`, `period_type`, `sequence_order` |
+| **11** | **`Location`** | Campus locations (Singapore, Perth, Dubai, Online). | `location_id (PK)`, `code`, `name` |
+
+### Mermaid ERD Diagram (11 Tables)
 ```mermaid
 erDiagram
     COURSE ||--o{ STUDENT : "enrolls"
@@ -107,55 +135,31 @@ erDiagram
     UNIT ||--o{ STUDY_PLAN_UNIT : "scheduled_in"
     UNIT ||--o{ UNIT_OFFERING : "offered_as"
     UNIT ||--o{ PREREQUISITE : "requires"
+    LOCATION ||--o{ UNIT_OFFERING : "located_at"
+    TEACHING_PERIOD ||--o{ UNIT_OFFERING : "offered_in"
     TEACHING_PERIOD ||--o{ STUDY_PLAN_UNIT : "occurs_in"
-
-    STUDENT {
-        int student_id PK
-        string student_number
-        string first_name
-        string last_name
-        string email
-        int course_id FK
-        int location_id FK
-    }
-
-    STUDY_PLAN {
-        int plan_id PK
-        int student_id FK
-        string title
-        string status
-        int total_credit_points
-    }
-
-    STUDY_PLAN_UNIT {
-        int plan_unit_id PK
-        int plan_id FK
-        int unit_id FK
-        int period_id FK
-        int year_level
-    }
 ```
 
-### SQL Migrations & Data Files
+### SQL Migrations & Schema Files
 - **Database Schema**: [`database/schema.sql`](file:///d:/ProjectDesmondandTeam/database/schema.sql)
 - **Seed Data**: [`database/seed.sql`](file:///d:/ProjectDesmondandTeam/database/seed.sql)
 
 ---
 
-## 📊 Sample Registered Student Dataset (4 Students)
+## 📊 Pre-Loaded Registered Student Profiles
 
-The system comes pre-seeded with 4 registered sample students in `StoredPlansView`:
+The system comes pre-configured with registered student profiles for testing:
 
-| Student ID | Student Name | Course & Major | Status | Location |
+| Student ID | Student Name | Course & Major | Governance Status | Location |
 |---|---|---|---|---|
-| `PT3-2026-001` | **Alex Mercer** (Sample Student) | PT3-BSIT-01 Software & Systems | **APPROVED v2.0** | Singapore Campus |
-| `PT3-2026-002` | **Sarah Jenkins** (Sample Student) | PT3-BSCS-02 Computer Science | **STUDENT AGREED v1.0** | Singapore Campus |
-| `PT3-2026-003` | **Michael Chang** (Sample Student) | PT3-BSE-03 Software Engineering | **RECOMMENDED v1.0** | Singapore Campus |
-| `PT3-2026-004` | **Emily Watson** (Sample Student) | PT3-BSCY-04 Cyber Security | **DRAFT v3.3** | Singapore Campus |
+| `PT3-2026-001` | **Alex Mercer** | PT3-BSIT-AI01 (Artificial Intelligence) | **APPROVED v2.0** | Singapore Campus |
+| `PT3-2026-002` | **Sarah Jenkins** | PT3-BSIT-CS02 (Computer Science) | **STUDENT AGREED v1.0** | Singapore Campus |
+| `PT3-2026-003` | **Michael Chang** | PT3-BSIT-BIS03 (Business Info Systems) | **RECOMMENDED v1.0** | Singapore Campus |
+| `PT3-2026-004` | **Emily Watson** | PT3-BSIT-AI04 (Artificial Intelligence) | **DRAFT v3.3** | Singapore Campus |
 
 ---
 
-## 🧪 Test Evidence & Verification Matrix
+## 🧪 Requirements Verification & Test Matrix
 
 | Test Case | Description | Requirement | Expected Result | Pass/Fail |
 |---|---|---|---|---|
@@ -164,40 +168,25 @@ The system comes pre-seeded with 4 registered sample students in `StoredPlansVie
 | **TC-03** | Schedule 5 units (15 CP) in single period | Max 12 CP Limit | Alert banner: Exceeds 12 CP limit | **PASS** |
 | **TC-04** | Switch between Semester & Trimester mode | FR-05 Period Switch | Canvas updates grid layout smoothly | **PASS** |
 | **TC-05** | Student Digital Sign-Off | FR-10 Sign-Off | Plan status updates to `STUDENT AGREED` | **PASS** |
-| **TC-06** | Export Official Study Plan Document | FR-15 Document Export | Clean branded document modal opens | **PASS** |
+| **TC-06** | Export Official Study Plan Document | FR-15 Document Export | Clean formatted document modal opens | **PASS** |
+| **TC-07** | Parse binary Excel (.xlsx) / CSV file | FR-12 Data Import | Parses rows without binary corruption | **PASS** |
+| **TC-08** | NFR-07 Audit Trail Logging | NFR-07 Audit | Version record saved in StudyPlanVersion | **PASS** |
 
 ---
 
-## 🚢 Deployment Guide (PT03 Account Infrastructure)
+## 🚢 Deployment & Server Handover
 
-1. **SSH to Server**: Log in to PT03 hosting server via SSH.
-2. **Clone Codebase**:
+1. **Clone Codebase**:
    ```bash
    git clone https://github.com/jasonistioso-1/ProjectStudyPlanDesmond.git
    cd ProjectStudyPlanDesmond
    ```
-3. **Configure Environment**:
+2. **Configure Environment**:
    ```bash
    cp .env.example .env
    ```
-4. **Deploy Containers**:
+3. **Deploy Docker Containers**:
    ```bash
    docker-compose up -d --build
    ```
-5. **Verify Live Endpoint**: Curl `http://localhost:3000` to confirm HTTP status 200 OK.
-
----
-
-## 🤝 Handover & Codebase Walkthrough
-
-- **Interactive In-App Guide**: Click **User Guide** in the top navigation bar to open full interactive documentation directly inside the application.
-- **Clean Component Structure**:
-  - `PlanBuilder.jsx`: Drag-and-Drop Study Plan canvas & validation engine.
-  - `DroppablePeriod.jsx`: Column period droppable container with CP progress bar.
-  - `DraggableUnitCard.jsx`: Reusable clean unit card.
-  - `StoredPlansView.jsx`: Versioned archived study plans repository table.
-  - `GuideModal.jsx`: Comprehensive tabbed in-app user & system guide.
-
----
-
-*Prepared by Desmond & Development Team for PT3 Solutions — September 2026*
+4. **Verify Application Status**: Open `http://localhost:3000` to confirm live application availability.
