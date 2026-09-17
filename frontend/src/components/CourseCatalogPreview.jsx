@@ -69,7 +69,7 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport }
         <div className="relative z-10">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-red-950/80 text-red-300 border border-red-800/60 rounded-full text-xs font-semibold tracking-wide mb-2">
             <BookOpen className="w-3.5 h-3.5 text-red-400 shrink-0" />
-            <span>Section 8 Requirement — Data-Driven Course Unit Catalog</span>
+            <span>Data-Driven Course Unit Catalog & Prerequisites</span>
           </div>
           <h2 className="text-xl font-extrabold text-white tracking-tight font-heading">
             Official Course Unit Catalog & Prerequisites Directory

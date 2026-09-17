@@ -421,7 +421,7 @@ export default function PlanBuilder({
             </span>
             <h2 className="text-base font-extrabold text-slate-900 dark:text-amber-100 tracking-tight flex items-center gap-2 mt-1.5">
               <FileCheck className="w-5 h-5 text-amber-700 dark:text-amber-400" />
-              Proposed Study Plan Review — {stCourse}
+              Proposed Study Plan Review ({stCourse})
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-normal">
               Please review the unit sequence proposed by your Academic Chair. Check your credit load balance before digitally signing below.

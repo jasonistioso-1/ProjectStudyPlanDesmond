@@ -592,7 +592,7 @@ export default function App() {
                   Study Plan Change Log & Data Audit Trail
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  NFR-07 Auditability — Real-time database audit log recording study plan status changes and unit amendments.
+                  Real-time database audit log recording study plan status changes and unit amendments.
                 </p>
               </div>
             </div>
@@ -631,7 +631,7 @@ export default function App() {
                     <div key={log.version_id || idx} className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
                       <div className="flex items-center justify-between font-mono text-[10px] font-bold">
                         <span className="bg-red-700 text-white px-2 py-0.5 rounded font-mono">
-                          v{log.version_number || '1'} — {new Date(log.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          v{log.version_number || '1'} · {new Date(log.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
                         <span className={`px-2 py-0.5 rounded uppercase font-bold text-[9px] ${
                           log.plan_status === 'approved' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300' :
@@ -658,7 +658,7 @@ export default function App() {
                 <div className="space-y-3 text-xs">
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
                     <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1">
-                      <span className="bg-red-600 text-white px-2 py-0.5 rounded">v1.1 — 15 SEP 2026</span>
+                      <span className="bg-red-600 text-white px-2 py-0.5 rounded">v1.1 · 15 SEP 2026</span>
                       <span className="text-slate-400 dark:text-slate-500">STATUS: ACTIVE RELEASE</span>
                     </div>
                     <p className="font-bold text-slate-900 dark:text-white font-heading">Executive Navigation & Clean Layout Update</p>
@@ -669,7 +669,7 @@ export default function App() {
 
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
                     <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1">
-                      <span className="bg-slate-800 dark:bg-slate-700 text-white px-2 py-0.5 rounded">v1.0 — 14 SEP 2026</span>
+                      <span className="bg-slate-800 dark:bg-slate-700 text-white px-2 py-0.5 rounded">v1.0 · 14 SEP 2026</span>
                       <span className="text-slate-400 dark:text-slate-500">STABLE</span>
                     </div>
                     <p className="font-bold text-slate-900 dark:text-white font-heading">Core Engine & Database Release</p>
@@ -680,7 +680,7 @@ export default function App() {
 
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
                     <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1">
-                      <span className="bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded">v0.1 — 09 SEP 2026</span>
+                      <span className="bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded">v0.1 · 09 SEP 2026</span>
                       <span className="text-slate-400 dark:text-slate-500">INITIAL SPEC</span>
                     </div>
                     <p className="font-bold text-slate-900 dark:text-white font-heading">Outsourced Development Requirements</p>
