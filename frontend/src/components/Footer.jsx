@@ -38,10 +38,10 @@ export default function Footer() {
           </span>
         </div>
 
-        {/* Right: Murdoch University Partnership Notice */}
+        {/* Right: Singapore Campus Partnership Notice */}
         <div className="text-right text-[11px] text-slate-400 dark:text-slate-500">
           <span>Official Academic Advisor Tool</span>
-          <span className="block text-slate-600 dark:text-slate-300 font-semibold mt-0.5">Murdoch University Perth Main Campus</span>
+          <span className="block text-slate-600 dark:text-slate-300 font-semibold mt-0.5">PT3 Solutions Singapore Campus</span>
         </div>
 
       </div>

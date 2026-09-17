@@ -288,7 +288,7 @@ export default function App() {
                   </span>
                   <span className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                    Perth Main Campus
+                    Singapore Campus
                   </span>
                 </div>
 

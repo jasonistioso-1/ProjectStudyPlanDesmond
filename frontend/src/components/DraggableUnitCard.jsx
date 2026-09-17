@@ -84,8 +84,8 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> DONE
             </span>
           ) : warning ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> REQ
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800 shrink-0 animate-pulse">
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" /> VIOLATION
             </span>
           ) : (
             categoryBadge
@@ -106,6 +106,14 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
           )}
         </div>
       </div>
+
+      {/* Warning Message Alert Banner */}
+      {warning && (
+        <div className="mt-2.5 text-[11px] bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200 p-2.5 rounded-xl flex items-start gap-2 font-medium shadow-2xs">
+          <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+          <span>{warning}</span>
+        </div>
+      )}
     </div>
   );
 }

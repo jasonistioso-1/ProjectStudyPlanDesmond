@@ -18,7 +18,7 @@ export async function fetchStudents(search = '') {
                 course_code: 'PT3-BSIT-01',
                 course_name: 'Bachelor of Information Technology (Major: Software & Systems)',
                 location_id: 1,
-                location_name: 'PT3 Solutions Main Campus (Perth)',
+                location_name: 'PT3 Solutions Singapore Campus',
                 commencement_year: 2026,
                 study_status: 'active'
             }
@@ -43,7 +43,7 @@ export async function fetchStudentById(id) {
             course_code: 'PT3-BSIT-01',
             course_name: 'Bachelor of Information Technology (Major: Software & Systems)',
             location_id: 1,
-            location_name: 'PT3 Solutions Main Campus (Perth)',
+            location_name: 'PT3 Solutions Singapore Campus',
             commencement_year: 2026,
             study_status: 'active'
         };

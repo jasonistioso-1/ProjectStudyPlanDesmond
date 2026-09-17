@@ -80,12 +80,92 @@ export default function PlanBuilder({
 
   const defaultPeriodList = layoutType === 'trimester' ? trimesterPeriods : semesterPeriods;
 
-  // Warnings mapping
+  // Data-driven Prerequisite Map & Unit Offering Rules
+  const prereqMap = {
+    'ICT167': 'ICT159',
+    'ICT201': 'ICT158',
+    'ICT202': 'ICT159',
+    'ICT203': 'ICT167',
+    'ICT206': 'ICT167',
+    'ICT283': 'ICT167',
+    'ICT284': 'ICT158',
+    'ICT285': 'ICT159',
+    'ICT292': 'ICT158',
+    'BSC203': 'ICT158',
+    'ICT301': 'ICT292',
+    'ICT302': 'ICT201',
+    'ICT303': 'ICT202',
+    'ICT304': 'ICT203',
+    'ICT305': 'ICT202',
+    'ICT373': 'ICT283',
+    'ICT374': 'ICT283',
+    'ICT393': 'ICT284',
+    'ICT394': 'ICT285'
+  };
+
+  const t3RestrictedUnits = new Set(['ICT302', 'ICT373', 'ICT374', 'ICT303', 'ICT304', 'ICT203', 'ICT206']);
+  const s1OnlyUnits = new Set(['ICT158', 'ICT145', 'MAS162', 'ICT201', 'ICT202', 'ICT283', 'ICT301', 'ICT373', 'ICT393']);
+  const s2OnlyUnits = new Set(['ICT167', 'ICT169', 'ICT170', 'ICT203', 'ICT206', 'ICT292', 'BSC203', 'ICT304', 'ICT374', 'ICT394']);
+
+  // Complete Warnings List & Unit-level Warning Map
   const warningsByUnit = {};
-  const warningsList = (validationResult && validationResult.warnings) ? validationResult.warnings : [];
-  warningsList.forEach(w => {
-    if (w.unitCode && !warningsByUnit[w.unitCode]) {
-      warningsByUnit[w.unitCode] = w.message;
+  const warningsList = [];
+
+  // Merge backend warnings if available
+  if (validationResult && validationResult.warnings) {
+    validationResult.warnings.forEach(w => {
+      warningsList.push(w);
+      if (w.unitCode && !warningsByUnit[w.unitCode]) {
+        warningsByUnit[w.unitCode] = w.message;
+      }
+    });
+  }
+
+  // Real-time BR-01 Offering & BR-02 Prerequisite checks on planUnits
+  planUnits.forEach(unit => {
+    const isTri3 = unit.period_id === 5;
+    const isS1OrT1 = unit.period_id === 1 || unit.period_id === 3;
+    const isS2OrT2 = unit.period_id === 2 || unit.period_id === 4;
+
+    // BR-01 Offering Check
+    if (isTri3 && t3RestrictedUnits.has(unit.code)) {
+      const msg = `Unit ${unit.code} (${unit.title}) is NOT offered in Tri-Semester 3 (T3) at Singapore Campus.`;
+      if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
+      if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
+        warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
+      }
+    } else if (isS2OrT2 && s1OnlyUnits.has(unit.code)) {
+      const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 1 / Trimester 1 and cannot be taken in this period.`;
+      if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
+      if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
+        warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
+      }
+    } else if (isS1OrT1 && s2OnlyUnits.has(unit.code)) {
+      const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 2 / Trimester 2 and cannot be taken in this period.`;
+      if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
+      if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
+        warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
+      }
+    }
+
+    // BR-02 Prerequisite Check
+    const prereqCode = prereqMap[unit.code];
+    if (prereqCode) {
+      const isCompleted = completedUnitCodes.has(prereqCode);
+      const isScheduledPrior = planUnits.some(other => {
+        if (other.code !== prereqCode) return false;
+        if (other.year_level < unit.year_level) return true;
+        if (other.year_level === unit.year_level && (other.period_id || 0) < (unit.period_id || 0)) return true;
+        return false;
+      });
+
+      if (!isCompleted && !isScheduledPrior) {
+        const msg = `Unit ${unit.code} requires prerequisite ${prereqCode}, which is neither completed in history nor scheduled in a prior teaching period.`;
+        if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
+        if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-02_PREREQUISITE_UNMET')) {
+          warningsList.push({ type: 'BR-02_PREREQUISITE_UNMET', severity: 'error', unitCode: unit.code, prereqCode, message: msg });
+        }
+      }
     }
   });
 
@@ -497,14 +577,14 @@ export default function PlanBuilder({
                   </h3>
                 </div>
                 <span className="text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                  Perth Campus
+                  Singapore Campus
                 </span>
               </div>
 
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2 p-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-emerald-900 dark:text-emerald-300 font-medium">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>BR-01 Check: Units offered at Perth Campus.</span>
+                  <span>BR-01 Check: Units offered at Singapore Campus.</span>
                 </div>
 
                 {warningsList && warningsList.length > 0 ? (

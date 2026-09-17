@@ -50,13 +50,13 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
           <GraduationCap className="w-6 h-6" />
         </div>
         <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
-          MURDOCH UNIVERSITY STUDENT DIRECTORY
+          PT3 SOLUTIONS SINGAPORE STUDENT DIRECTORY
         </span>
         <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-2 font-heading">
           Academic Chair Student Selector
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-          Please select a student from the Murdoch Study Plan Repository to view their academic history and construct/amend their study plan.
+          Please select a student from the PT3 Solutions Study Plan Repository to view their academic history and construct/amend their study plan.
         </p>
       </div>
 
@@ -155,7 +155,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
                     <span>•</span>
                     <span className="flex items-center gap-1">
                       <Building2 className="w-3 h-3 text-slate-400 dark:text-slate-500" />
-                      Perth Campus
+                      Singapore Campus
                     </span>
                   </div>
                 </div>

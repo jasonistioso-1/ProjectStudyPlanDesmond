@@ -66,6 +66,11 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
         // 5. Group plan units by period to validate Credit Points (Max 12 CP rule)
         const periodTotals = new Map(); // key: "year_periodId", value: { totalCP: number, periodCode: string, yearLevel: number }
 
+        // BR-01 Offering Mismatch Rule Sets
+        const t3RestrictedUnits = new Set(['ICT302', 'ICT373', 'ICT374', 'ICT303', 'ICT304', 'ICT203', 'ICT206']);
+        const s1OnlyUnits = new Set(['ICT158', 'ICT145', 'MAS162', 'ICT201', 'ICT202', 'ICT283', 'ICT301', 'ICT373', 'ICT393']);
+        const s2OnlyUnits = new Set(['ICT167', 'ICT169', 'ICT170', 'ICT203', 'ICT206', 'ICT292', 'BSC203', 'ICT304', 'ICT374', 'ICT394']);
+
         for (const unit of planUnits) {
             const period = periodMap.get(unit.period_id);
             const periodCode = period ? period.code : `Period #${unit.period_id}`;
@@ -77,16 +82,31 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
             periodTotals.get(key).totalCP += Number(unit.credit_points || 3);
 
             // BR-01 Check: Unit Offering by Location and Period
-            if (locationId) {
-                const offeringKey = `${unit.unit_id}_${locationId}_${unit.period_id}`;
-                if (!offeringSet.has(offeringKey)) {
-                    warnings.push({
-                        type: 'BR-01_OFFERING_MISMATCH',
-                        severity: 'error',
-                        unitCode: unit.code,
-                        message: `Unit ${unit.code} (${unit.title}) is NOT offered in ${periodCode} at your campus location.`
-                    });
-                }
+            const isTri3 = unit.period_id === 5 || periodCode === 'T3';
+            const isS1OrT1 = unit.period_id === 1 || unit.period_id === 3 || periodCode === 'S1' || periodCode === 'T1';
+            const isS2OrT2 = unit.period_id === 2 || unit.period_id === 4 || periodCode === 'S2' || periodCode === 'T2';
+
+            if (isTri3 && t3RestrictedUnits.has(unit.code)) {
+                warnings.push({
+                    type: 'BR-01_OFFERING_MISMATCH',
+                    severity: 'error',
+                    unitCode: unit.code,
+                    message: `Unit ${unit.code} (${unit.title}) is NOT offered in Tri-Semester 3 (T3) at Singapore Campus.`
+                });
+            } else if (isS2OrT2 && s1OnlyUnits.has(unit.code)) {
+                warnings.push({
+                    type: 'BR-01_OFFERING_MISMATCH',
+                    severity: 'error',
+                    unitCode: unit.code,
+                    message: `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 1 / Trimester 1 and cannot be taken in ${periodCode}.`
+                });
+            } else if (isS1OrT1 && s2OnlyUnits.has(unit.code)) {
+                warnings.push({
+                    type: 'BR-01_OFFERING_MISMATCH',
+                    severity: 'error',
+                    unitCode: unit.code,
+                    message: `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 2 / Trimester 2 and cannot be taken in ${periodCode}.`
+                });
             }
 
             // Already Completed Check
@@ -112,7 +132,7 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
 
                     if (otherUnit.year_level < unit.year_level) return true;
                     if (otherUnit.year_level === unit.year_level && otherPeriod && period) {
-                        return otherPeriod.sequence_order < period.sequence_order;
+                        return (otherPeriod.sequence_order || 0) < (period.sequence_order || 0);
                     }
                     return false;
                 });
@@ -123,7 +143,7 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
                         severity: 'error',
                         unitCode: unit.code,
                         prereqCode,
-                        message: `Unit ${unit.code} requires prerequisite ${prereqCode}, which is neither completed nor scheduled in a prior period.`
+                        message: `Unit ${unit.code} requires prerequisite ${prereqCode}, which is neither completed in history nor scheduled in a prior teaching period.`
                     });
                 }
             }

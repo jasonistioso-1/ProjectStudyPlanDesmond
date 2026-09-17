@@ -18,7 +18,7 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
       total_cp: 72,
       created_by: 'Academic Chair',
       updated_at: '2026-09-15 08:30',
-      location: 'Perth Main Campus'
+      location: 'Singapore Campus'
     },
     {
       plan_id: 102,
@@ -32,7 +32,7 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
       total_cp: 72,
       created_by: 'Academic Chair',
       updated_at: '2026-09-14 16:45',
-      location: 'Perth Main Campus'
+      location: 'Singapore Campus'
     },
     {
       plan_id: 103,
@@ -46,7 +46,7 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
       total_cp: 69,
       created_by: 'Academic Chair',
       updated_at: '2026-09-14 11:20',
-      location: 'Perth Main Campus'
+      location: 'Singapore Campus'
     },
     {
       plan_id: 104,
@@ -60,7 +60,7 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
       total_cp: 72,
       created_by: 'Academic Chair',
       updated_at: '2026-09-13 14:10',
-      location: 'Perth Main Campus'
+      location: 'Singapore Campus'
     }
   ];
 

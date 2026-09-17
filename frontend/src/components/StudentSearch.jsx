@@ -144,7 +144,7 @@ export default function StudentSearch({ selectedStudent, onSelectStudent }) {
           <div className="flex items-center gap-3 text-xs font-semibold">
             <div className="flex items-center gap-1.5 text-slate-700 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
               <MapPin className="w-3.5 h-3.5 text-rose-600" />
-              <span>Campus: <strong className="text-slate-900">{selectedStudent.location_name || 'Perth'}</strong></span>
+              <span>Campus: <strong className="text-slate-900">{selectedStudent.location_name || 'Singapore'}</strong></span>
             </div>
             <div className="flex items-center gap-1.5 text-slate-700 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
               <GraduationCap className="w-3.5 h-3.5 text-blue-600" />

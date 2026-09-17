@@ -66,7 +66,7 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
           <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2 font-medium">
             <span className="tabular-nums font-semibold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-200/70 dark:border-slate-600">{unit.credit_points || 3} CP</span>
             <span className="text-slate-300 dark:text-slate-600">•</span>
-            <span className="text-slate-500 dark:text-slate-400">Perth Campus</span>
+            <span className="text-slate-500 dark:text-slate-400">Singapore Campus</span>
           </div>
         </div>
       </div>
