@@ -43,25 +43,25 @@ export default function Navbar({
 
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 font-sans shadow-2xs border-t-2 border-t-red-600 transition-colors">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4 overflow-x-auto no-scrollbar">
         
         {/* Left: Brand Identity */}
         <div 
-          className="flex items-center gap-2.5 cursor-pointer shrink-0 group select-none" 
+          className="flex items-center gap-2.5 cursor-pointer shrink-0 group select-none whitespace-nowrap" 
           onClick={() => onTabChange('STUDY_PLAN')}
         >
-          <div className="bg-red-700 text-white w-7 h-7 rounded-md flex items-center justify-center font-bold shadow-2xs group-hover:bg-red-800 transition-colors">
+          <div className="bg-red-700 text-white w-7 h-7 rounded-md flex items-center justify-center font-bold shadow-2xs group-hover:bg-red-800 transition-colors shrink-0">
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">PT3 Solutions</span>
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight whitespace-nowrap">PT3 Solutions</span>
             <span className="text-slate-300 dark:text-slate-700 font-light">/</span>
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 hidden sm:inline">Study Plan Repository</span>
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 hidden sm:inline whitespace-nowrap">Study Plan Repository</span>
           </div>
         </div>
 
         {/* Middle: Executive Navigation Tabs */}
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
           {navItems.map(tab => {
             const isActive = activeTab === tab.id;
             const IconComp = tab.icon;
@@ -70,30 +70,30 @@ export default function Navbar({
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 shrink-0 whitespace-nowrap ${
                   isActive
                     ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white font-bold shadow-2xs'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800'
                 }`}
               >
-                {IconComp && <IconComp className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'}`} />}
-                <span>{tab.label}</span>
+                {IconComp && <IconComp className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-emerald-400 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'}`} />}
+                <span className="whitespace-nowrap">{tab.label}</span>
               </button>
             );
           })}
         </nav>
 
         {/* Right: Active Context, Tools, Theme & Role Switcher */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
           {/* Active Student Selector Trigger */}
           {isChair && (
             <button
               onClick={onOpenStudentSelectModal}
-              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-2xs flex items-center gap-1.5 transition-colors"
+              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-2xs flex items-center gap-2 transition-colors shrink-0 whitespace-nowrap"
               title="Click to select student"
             >
-              <UserCheck className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-              <span className="truncate max-w-[120px]">
+              <UserCheck className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+              <span className="whitespace-nowrap font-bold">
                 {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Select Student'}
               </span>
             </button>
@@ -102,24 +102,24 @@ export default function Navbar({
           {/* Theme Switcher Toggle */}
           <button
             onClick={onToggleTheme}
-            className="p-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1 text-xs font-medium"
+            className="p-1.5 px-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1.5 text-xs font-medium shrink-0 whitespace-nowrap"
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {theme === 'dark' ? (
-              <Sun className="w-4 h-4 text-amber-400" />
+              <Sun className="w-4 h-4 text-amber-400 shrink-0" />
             ) : (
-              <Moon className="w-4 h-4 text-slate-700" />
+              <Moon className="w-4 h-4 text-slate-700 dark:text-slate-300 shrink-0" />
             )}
-            <span className="hidden xl:inline text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400">
-              {theme === 'dark' ? 'Light' : 'Dark'}
+            <span className="text-[11px] uppercase font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </span>
           </button>
 
           {/* Role Switcher Pill */}
-          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md p-0.5 text-xs">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 text-xs shrink-0 whitespace-nowrap">
             <button
               onClick={() => onRoleChange('chair')}
-              className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
+              className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all whitespace-nowrap shrink-0 ${
                 isChair
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs border border-slate-200 dark:border-slate-700 font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -129,7 +129,7 @@ export default function Navbar({
             </button>
             <button
               onClick={() => onRoleChange('student')}
-              className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
+              className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all whitespace-nowrap shrink-0 ${
                 !isChair
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs border border-slate-200 dark:border-slate-700 font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -141,23 +141,23 @@ export default function Navbar({
 
           {/* Utility Action Buttons */}
           {isChair && (
-            <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-700 pl-2">
+            <div className="flex items-center gap-1.5 border-l border-slate-200 dark:border-slate-700 pl-2.5 shrink-0 whitespace-nowrap">
               <button
                 onClick={onOpenImport}
                 title="Import Unit Offerings & Prerequisites CSV/Seed"
-                className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span className="hidden lg:inline">Import CSV</span>
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="whitespace-nowrap font-bold">Import CSV</span>
               </button>
 
               <button
                 onClick={onOpenAudit}
                 title="View System Change Log & Audit Trail"
-                className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-md text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap"
               >
-                <Clock className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-                <span className="hidden lg:inline">Change Log</span>
+                <Clock className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                <span className="whitespace-nowrap font-bold">Change Log</span>
               </button>
             </div>
           )}
