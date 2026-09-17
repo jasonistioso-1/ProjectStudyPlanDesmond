@@ -445,6 +445,16 @@ export default function PlanBuilder({
                 </div>
               </button>
             )}
+            {onOpenOfficialDocument && (
+              <button
+                onClick={onOpenOfficialDocument}
+                className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 shrink-0"
+                title="Export official Study Plan as PDF or PNG image"
+              >
+                <BookOpen className="w-4 h-4 text-amber-200" />
+                <span>Export PDF / Image</span>
+              </button>
+            )}
             <div className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-right shadow-2xs">
               <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block">Current Status</span>
               <span className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase">{planStatus}</span>

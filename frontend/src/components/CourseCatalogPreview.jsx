@@ -102,37 +102,17 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
         </div>
       </div>
 
-      {/* Search & Filter Controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
-        <div className="relative flex-1">
+      {/* Search Bar */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
+        <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
             placeholder="Search unit by code or title (e.g. ICT159, Machine Learning)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-all placeholder:text-slate-400"
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-all placeholder:text-slate-400 font-semibold"
           />
-        </div>
-
-        {/* Level Filters */}
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs shrink-0">
-          <span className="text-[10px] font-bold text-slate-400 uppercase px-2 flex items-center gap-1">
-            <Filter className="w-3 h-3" /> Level:
-          </span>
-          {['ALL', '100', '200', '300'].map(lvl => (
-            <button
-              key={lvl}
-              onClick={() => setLevelFilter(lvl)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                levelFilter === lvl
-                  ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {lvl === 'ALL' ? 'All Units' : `Level ${lvl}`}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -187,8 +167,8 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-                <span>Level {unit.level || 100} Core Unit</span>
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-mono font-bold">Active Unit</span>
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" /> Data-Driven
                 </span>
