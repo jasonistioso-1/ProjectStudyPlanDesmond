@@ -16,37 +16,37 @@ import {
   Check,
   Clock,
   ArrowRight,
-  Sparkles,
   Building2,
   Calendar,
   Lock,
-  RotateCcw
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 
 export default function GuideModal({ isOpen, onClose }) {
-  const [activeTab, setActiveTab] = useState('chair_workflow'); // 'chair_workflow' | 'student_workflow' | 'architecture_erd' | 'handover_deploy'
+  const [activeTab, setActiveTab] = useState('chair_workflow');
 
   if (!isOpen) return null;
 
   const databaseEntities = [
-    { name: 'Student', count: '1', desc: 'Stores student profile records, student number (PT3-2026-001), major course_id, location_id, and commencement year.', schema: 'student_id (PK), student_number, first_name, last_name, email, course_id (FK), location_id (FK), commencement_year, study_status' },
-    { name: 'Course', count: '2', desc: 'Defines official degree programs and majors (AI, CS, BIS) with required total credit points (72 CP).', schema: 'course_id (PK), code, name, degree_level, total_credit_points' },
-    { name: 'Unit', count: '3', desc: 'Catalogue of all academic units, unit codes (e.g. ICT159), title, credit points (3 CP), and level (100, 200, 300).', schema: 'unit_id (PK), code, title, credit_points, level' },
-    { name: 'UnitOffering', count: '4', desc: 'Maps active unit availability to specific campuses, teaching periods, and year versions.', schema: 'offering_id (PK), unit_id (FK), location_id (FK), period_id (FK), year_version, delivery_mode, is_active' },
-    { name: 'Prerequisite', count: '5', desc: 'Stores strict prerequisite rules between units (BR-02 rule engine enforcement).', schema: 'prereq_id (PK), unit_id (FK), prereq_unit_id (FK), min_grade, is_concurrent_allowed' },
-    { name: 'StudentUnitHistory', count: '6', desc: 'Records student academic history (completed units with grades/marks, attempted failures, and current enrollments).', schema: 'history_id (PK), student_id (FK), unit_id (FK), status, grade, mark, period_id (FK), year_taken' },
-    { name: 'StudyPlan', count: '7', desc: 'Stores student multi-year study plans and governance workflow states (Draft → Recommended → Agreed → Approved).', schema: 'plan_id (PK), student_id (FK), title, status, total_credit_points, created_by, recommended_at, agreed_at, approved_at' },
-    { name: 'StudyPlanUnit', count: '8', desc: 'Junction table mapping scheduled units inside a study plan to specific years (Year 1..3) and teaching periods.', schema: 'plan_unit_id (PK), plan_id (FK), unit_id (FK), period_id (FK), year_level, sequence_order, credit_points' },
-    { name: 'StudyPlanVersion', count: '9', desc: 'NFR-07 Audit Trail recording complete version history and amendment logs whenever a plan status changes.', schema: 'version_id (PK), plan_id (FK), version_number, plan_status, amendment_reason, created_by, created_at' },
-    { name: 'TeachingPeriod', count: '10', desc: 'Defines academic study periods (Semester 1 & 2, Trimester 1, 2 & 3, Winter, Summer terms).', schema: 'period_id (PK), code, name, period_type, sequence_order, start_date, end_date' },
-    { name: 'Location', count: '11', desc: 'Stores PT3 Solutions university campus locations (Main Perth, Singapore, Dubai, Online).', schema: 'location_id (PK), code, name' }
+    { count: '1', name: 'Student', desc: 'Student profile details, student number (PT3-2026-001), degree major, and campus location.', schema: 'student_id (PK), student_number, first_name, last_name, email, course_id (FK), location_id (FK)' },
+    { count: '2', name: 'Course', desc: 'Official degree programs and majors (AI, Computer Science, BIS) with 72 credit point target.', schema: 'course_id (PK), code, name, degree_level, total_credit_points' },
+    { count: '3', name: 'Unit', desc: 'Course catalog of subjects (e.g. ICT159), titles, credit points (3 CP), and level details.', schema: 'unit_id (PK), code, title, credit_points, level' },
+    { count: '4', name: 'UnitOffering', desc: 'Availability of units per campus, year, and teaching period (Semester vs Trimester).', schema: 'offering_id (PK), unit_id (FK), location_id (FK), period_id (FK), year_version' },
+    { count: '5', name: 'Prerequisite', desc: 'Prerequisite requirements between subjects enforced by the validation engine.', schema: 'prereq_id (PK), unit_id (FK), prereq_unit_id (FK), min_grade' },
+    { count: '6', name: 'StudentUnitHistory', desc: 'Academic history records including passed units, grades, marks, and current enrollments.', schema: 'history_id (PK), student_id (FK), unit_id (FK), status, grade, mark' },
+    { count: '7', name: 'StudyPlan', desc: 'Active multi-year study plans and approval workflow status (Draft, Recommended, Agreed, Approved).', schema: 'plan_id (PK), student_id (FK), title, status, total_credit_points, created_by' },
+    { count: '8', name: 'StudyPlanUnit', desc: 'Scheduled subjects inside a plan mapped to specific study years and teaching periods.', schema: 'plan_unit_id (PK), plan_id (FK), unit_id (FK), period_id (FK), year_level' },
+    { count: '9', name: 'StudyPlanVersion', desc: 'Audit trail records logging every change and version update made to a study plan.', schema: 'version_id (PK), plan_id (FK), version_number, plan_status, amendment_reason' },
+    { count: '10', name: 'TeachingPeriod', desc: 'Study terms including Semesters (S1, S2) and Trimesters (T1, T2, T3).', schema: 'period_id (PK), code, name, period_type, sequence_order' },
+    { count: '11', name: 'Location', desc: 'University campus locations (Singapore, Perth, Dubai, Online).', schema: 'location_id (PK), code, name' }
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200 font-sans">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden transition-colors">
         
-        {/* Modal Header */}
+        {/* Header */}
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-red-700 rounded-xl shadow-2xs">
@@ -55,14 +55,14 @@ export default function GuideModal({ isOpen, onClose }) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-extrabold tracking-tight font-heading">
-                  PT3 Solutions — Study Plan Repository System Guide
+                  PT3 Solutions User Guide & System Manual
                 </h2>
-                <span className="bg-red-950 text-red-300 border border-red-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">
-                  Section 5 & NFR-07 Compliant
+                <span className="bg-red-950 text-red-300 border border-red-800 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full">
+                  Official Manual
                 </span>
               </div>
               <p className="text-xs text-slate-300 font-normal mt-0.5">
-                Executive operational manual, rule engine workflow guide, and 11-table relational database architecture specs.
+                Simple step-by-step guide to help Academic Chairs and Students build, review, and approve degree study plans.
               </p>
             </div>
           </div>
@@ -75,7 +75,7 @@ export default function GuideModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Tab Navigation Bar */}
+        {/* Tab Navigation */}
         <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-6 gap-2 pt-2.5 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('chair_workflow')}
@@ -86,7 +86,7 @@ export default function GuideModal({ isOpen, onClose }) {
             }`}
           >
             <UserCheck className="w-4 h-4" />
-            <span>Academic Chair Workflow</span>
+            <span>Academic Chair Guide</span>
           </button>
 
           <button
@@ -126,18 +126,18 @@ export default function GuideModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Tab Body Content */}
+        {/* Tab Body */}
         <div className="p-6 overflow-y-auto flex-1 text-slate-800 dark:text-slate-200 text-xs space-y-6">
 
-          {/* TAB 1: ACADEMIC CHAIR WORKFLOW GUIDE */}
+          {/* TAB 1: CHAIR GUIDE */}
           {activeTab === 'chair_workflow' && (
             <div className="space-y-5">
               <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4.5 rounded-xl flex items-start gap-3.5 shadow-2xs">
                 <ShieldCheck className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">Academic Chair Administrative Role & Governance Workflow</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">Academic Chair Quick Workflow</h3>
                   <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-xs">
-                    As an Academic Chair, you manage student enrollment sequences, build multi-year degree study plans, execute real-time prerequisite rule checks, switch study schedules (Semester vs Trimester), recommend proposed plans, and issue final approvals.
+                    As an Academic Chair, you can select student profiles, structure their subjects across semesters or trimesters, run automated rule checks, and approve final study plans.
                   </p>
                 </div>
               </div>
@@ -145,58 +145,54 @@ export default function GuideModal({ isOpen, onClose }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">STEP 1</span>
-                    <span className="text-[10px] text-slate-400 font-mono font-semibold">Student Directory</span>
+                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">1. SELECT STUDENT</span>
                   </div>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Select Student & View History</h4>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Pick a Student Profile</h4>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs font-medium">
-                    Click <strong>Select Student</strong> to pick a student from the directory (e.g. Alex Mercer, PT3-2026-001). The system automatically loads their course major, completed unit history, and grade transcript.
+                    Click <strong>Select Student</strong> in the top navigation bar to choose a student (such as Alex Mercer). The system immediately displays their degree major, completed subjects, and transcript history.
                   </p>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">STEP 2</span>
-                    <span className="text-[10px] text-slate-400 font-mono font-semibold">Study Plan Canvas</span>
+                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">2. BUILD PLAN</span>
                   </div>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Drag & Drop Unit Sequence</h4>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Drag & Drop Subjects</h4>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs font-medium">
-                    Drag units from the left catalog palette into teaching period slots across 3 academic years. Toggle between <strong>Semester</strong> and <strong>Trimester</strong> layout views seamlessly.
+                    Drag subjects from the course catalog on the left into semester or trimester slots across Year 1, Year 2, and Year 3.
                   </p>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">STEP 3</span>
-                    <span className="text-[10px] text-slate-400 font-mono font-semibold">Validation Console</span>
+                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">3. VALIDATE RULES</span>
                   </div>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Automated Rule Engine Checks</h4>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Automatic Rule Checker</h4>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs font-medium">
-                    The rule engine automatically validates prerequisite completion (BR-02), campus availability (BR-01), and semester credit load limits (Max 12 CP per period) in real-time.
+                    The rule checker automatically alerts you if required prerequisite subjects are missing or if a semester load exceeds 12 credit points.
                   </p>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">STEP 4</span>
-                    <span className="text-[10px] text-slate-400 font-mono font-semibold">Approval & Audit Trail</span>
+                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">4. APPROVE & ARCHIVE</span>
                   </div>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Recommend, Approve & Audit</h4>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Recommend & Approve</h4>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs font-medium">
-                    Click <strong>Recommend to Student</strong>. Once the student digitally signs off, click <strong>Final Approve Plan</strong> to log version history in the StudyPlanVersion database audit trail.
+                    Click <strong>Recommend to Student</strong>. Once the student reviews and signs off, click <strong>Final Approve Plan</strong> to complete the process.
                   </p>
                 </div>
               </div>
 
-              {/* Real-time Sync & Change Log Box */}
+              {/* Data Sync info */}
               <div className="bg-red-50/90 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 p-4 rounded-xl space-y-2 shadow-2xs">
                 <h4 className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2 font-heading">
                   <CheckCircle2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                  Real-Time Database Sync & NFR-07 Audit Log Compliance
+                  Real-Time Data Sync & Audit Logging
                 </h4>
                 <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-medium">
-                  • <strong>Real-Time Synchronization</strong>: All plan modifications, unit movements, layout switches, and workflow state transitions instantly update in the database without page refresh.<br />
-                  • <strong>NFR-07 Audit Trail</strong>: Every state change (Draft → Recommended → Agreed → Approved) records a version snapshot in the <code>StudyPlanVersion</code> table accessible via the <strong>Change Log</strong> button.
+                  • <strong>Real-Time Updates</strong>: Subject additions, semester switches, and plan status changes update instantly across all screens.<br />
+                  • <strong>Audit History</strong>: Every status update (Draft, Recommended, Agreed, Approved) is recorded in the audit log so you can review version history anytime.
                 </p>
               </div>
             </div>
@@ -208,9 +204,9 @@ export default function GuideModal({ isOpen, onClose }) {
               <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4.5 rounded-xl flex items-start gap-3.5 shadow-2xs">
                 <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">Student Portal Review & Digital Agreement Sign-Off</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">Student Portal Review Guide</h3>
                   <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-xs">
-                    Students can log into their dedicated review portal to inspect recommended study sequences, check degree progress (72 CP target), digitally sign off on proposed study plans, and export official summary documents.
+                    Students can inspect their recommended study plan, verify total credit points (72 CP target), digitally sign off on their plan, and download official PDF copies.
                   </p>
                 </div>
               </div>
@@ -219,9 +215,9 @@ export default function GuideModal({ isOpen, onClose }) {
                 <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">1. View Perspective Toggle</h4>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">1. View Perspective</h4>
                     <p className="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed text-xs font-medium">
-                      Switch between <strong>Academic Chair View</strong> and <strong>Student View</strong> using the header role toggle pill.
+                      Use the role toggle at the top of the navigation bar to switch between Academic Chair View and Student View.
                     </p>
                   </div>
                 </div>
@@ -229,9 +225,9 @@ export default function GuideModal({ isOpen, onClose }) {
                 <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">2. Inspect Recommended Sequence</h4>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">2. Review Subjects</h4>
                     <p className="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed text-xs font-medium">
-                      Review proposed units scheduled across 3 academic years (Year 1, 2, 3) to ensure workload balance (12 CP per semester) meets graduation targets.
+                      Check your scheduled subjects for Year 1, Year 2, and Year 3 to ensure the workload suits your timetable.
                     </p>
                   </div>
                 </div>
@@ -239,9 +235,9 @@ export default function GuideModal({ isOpen, onClose }) {
                 <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">3. Digital Sign-Off Confirmation</h4>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">3. Digital Sign-Off</h4>
                     <p className="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed text-xs font-medium">
-                      Check the digital sign-off agreement box and click <strong>Submit Digital Sign-Off</strong> to transition the plan state to <code>AGREED</code>.
+                      Tick the digital sign-off agreement box and click <strong>Submit Digital Sign-Off</strong> to confirm your agreement.
                     </p>
                   </div>
                 </div>
@@ -249,9 +245,9 @@ export default function GuideModal({ isOpen, onClose }) {
                 <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">4. Export PDF / Image Study Plan</h4>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">4. Export Document</h4>
                     <p className="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed text-xs font-medium">
-                      Click <strong>Export PDF / Image</strong> to generate and print an official university formatted study plan document.
+                      Click <strong>Export PDF / Image</strong> to view or print your official formatted study plan document.
                     </p>
                   </div>
                 </div>
@@ -259,20 +255,20 @@ export default function GuideModal({ isOpen, onClose }) {
             </div>
           )}
 
-          {/* TAB 3: SYSTEM ARCHITECTURE & 11 DATABASE ENTITIES */}
+          {/* TAB 3: ARCHITECTURE & 11 TABLES */}
           {activeTab === 'architecture_erd' && (
             <div className="space-y-6">
               <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl border border-slate-300 dark:border-slate-700 shadow-2xs">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-2 font-heading">
-                    <Cpu className="w-4 h-4 text-red-600 dark:text-red-400" /> Technical Architecture & Database Specifications
+                    <Cpu className="w-4 h-4 text-red-600 dark:text-red-400" /> System Architecture & Database Structure
                   </h3>
                   <span className="bg-red-700 text-white font-mono text-[10px] font-bold px-2.5 py-0.5 rounded shadow-2xs">
-                    11 CORE DATABASE ENTITIES
+                    11 CORE TABLES
                   </span>
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-medium">
-                  The Study Plan Repository (SPR) data model implements <strong>exactly 11 core database tables</strong> matching Section 5 Data Model requirements. It provides complete auditability (NFR-07), multi-campus offerings, multi-year progression, and prerequisite enforcement.
+                  The Study Plan Repository is built on <strong>11 core database tables</strong> that manage student profiles, course catalogs, prerequisite rules, study plans, audit history, and multi-campus offerings.
                 </p>
               </div>
 
@@ -281,10 +277,10 @@ export default function GuideModal({ isOpen, onClose }) {
                 <div className="flex items-center justify-between">
                   <h4 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wider font-heading flex items-center gap-2">
                     <Table className="w-4 h-4 text-red-600 dark:text-red-400" />
-                    Section 5 Minimum Database Entities (11 Tables)
+                    Database Tables (11 Entities)
                   </h4>
                   <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold">
-                    MySQL 8.0 / PostgreSQL Compliant
+                    MySQL / PostgreSQL Compatible
                   </span>
                 </div>
 
@@ -312,33 +308,33 @@ export default function GuideModal({ isOpen, onClose }) {
                 </div>
               </div>
 
-              {/* Technology Stack summary boxes */}
+              {/* Tech Stack Boxes */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block mb-1 font-heading">Frontend Layer</span>
-                  <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium block">React 18 SPA, Vite, TailwindCSS, @dnd-kit Core Drag & Drop</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block mb-1 font-heading">Frontend</span>
+                  <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium block">React 18, Vite, TailwindCSS, @dnd-kit Drag & Drop</span>
                 </div>
                 <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block mb-1 font-heading">REST API Engine</span>
-                  <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium block">Node.js Express Server, CORS, Excel/CSV Parser, Rule Engine Validation</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block mb-1 font-heading">Backend REST API</span>
+                  <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium block">Node.js Express Server with Rule Engine Validation</span>
                 </div>
                 <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block mb-1 font-heading">Relational Store</span>
-                  <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium block">MySQL 8.0 Container with Foreign Keys & Cascading Audit Versioning</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block mb-1 font-heading">Database</span>
+                  <span className="text-slate-600 dark:text-slate-300 text-[11px] font-medium block">MySQL 8.0 / PostgreSQL with Foreign Keys & Version History</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: SETUP & DOCKER INSTALLATION */}
+          {/* TAB 4: SETUP */}
           {activeTab === 'handover_deploy' && (
             <div className="space-y-5">
               <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 shadow-2xs">
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-2 font-heading">
-                  <Terminal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Docker Orchestration Launch Command
+                  <Terminal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Docker Launch Command
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-medium">
-                  To build and launch all 3 microservices (Database, Backend API, and Frontend web client) in Docker containers, execute:
+                  To start all services (Database, Backend API, and Frontend) in Docker, run:
                 </p>
                 <div className="bg-slate-900 text-emerald-400 p-3.5 rounded-xl font-mono text-xs select-all border border-slate-800 shadow-inner">
                   docker-compose up -d --build
@@ -347,16 +343,16 @@ export default function GuideModal({ isOpen, onClose }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
-                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block font-heading">Environment Config (.env)</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block font-heading">Environment Config</span>
                   <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed font-medium">
-                    Configure port allocations and database connection parameters in <code>backend/.env</code> (PORT=3000, DB_HOST=spr-db, DB_USER=root).
+                    Configure ports and database settings in <code>backend/.env</code>.
                   </p>
                 </div>
 
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
-                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block font-heading">Sample Registered Dataset</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white text-xs block font-heading">Pre-loaded Profiles</span>
                   <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed font-medium">
-                    Includes 4 registered student profiles across official degree majors (AI, CS, BIS) ready for testing and validation.
+                    Includes 4 registered student profiles across official degree majors (AI, CS, BIS).
                   </p>
                 </div>
               </div>
@@ -365,7 +361,7 @@ export default function GuideModal({ isOpen, onClose }) {
 
         </div>
 
-        {/* Modal Footer */}
+        {/* Footer */}
         <div className="px-6 py-3.5 bg-slate-100 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs">
           <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px] font-semibold">
             PT3 Solutions Study Plan Repository System
