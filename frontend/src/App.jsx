@@ -108,6 +108,12 @@ export default function App() {
   const [periods, setPeriods] = useState([]);
   const [currentPlan, setCurrentPlan] = useState(() => mockClientStudentPlans[1].plan);
   const [planUnits, setPlanUnits] = useState(() => mockClientStudentPlans[1].units);
+  const [allStudentPlansMap, setAllStudentPlansMap] = useState(() => ({
+    1: { plan: mockClientStudentPlans[1].plan, units: mockClientStudentPlans[1].units },
+    2: { plan: mockClientStudentPlans[2].plan, units: mockClientStudentPlans[2].units },
+    3: { plan: mockClientStudentPlans[3].plan, units: mockClientStudentPlans[3].units },
+    4: { plan: mockClientStudentPlans[4].plan, units: mockClientStudentPlans[4].units }
+  }));
   const [validationResult, setValidationResult] = useState(null);
   const [activeTab, setActiveTab] = useState('STUDY_PLAN');
   const [storedPlansCount, setStoredPlansCount] = useState(4);
@@ -174,11 +180,50 @@ export default function App() {
     }
   };
 
+  // Wrapper to set planUnits AND update per-student cache map
+  const handleSetPlanUnits = (newUnitsOrUpdater) => {
+    setPlanUnits(prevUnits => {
+      const updatedUnits = typeof newUnitsOrUpdater === 'function' ? newUnitsOrUpdater(prevUnits) : newUnitsOrUpdater;
+      if (selectedStudent) {
+        setAllStudentPlansMap(prevMap => ({
+          ...prevMap,
+          [selectedStudent.student_id]: {
+            plan: currentPlan,
+            units: updatedUnits
+          }
+        }));
+      }
+      return updatedUnits;
+    });
+  };
+
   const handleSelectStudent = async (student) => {
+    // 1. Preserve current student's working draft in cache map before switching
+    if (selectedStudent && currentPlan) {
+      setAllStudentPlansMap(prev => ({
+        ...prev,
+        [selectedStudent.student_id]: {
+          plan: currentPlan,
+          units: planUnits
+        }
+      }));
+    }
+
     setSelectedStudent(student);
     setShowStudentSelectModal(false);
     showToast(`Selected student ${student.first_name} ${student.last_name}`);
 
+    // 2. If student ALREADY has a working draft in memory, load it directly to prevent wiping data!
+    if (allStudentPlansMap[student.student_id]) {
+      const cached = allStudentPlansMap[student.student_id];
+      setCurrentPlan(cached.plan);
+      setPlanUnits(cached.units);
+      runValidation(student.student_id, student.location_id, cached.units);
+      fetchStudentHistory(student.student_id).then(h => setHistory(h || [])).catch(console.error);
+      return;
+    }
+
+    // 3. Otherwise fetch from API / fallback
     try {
       const [historyData, planData] = await Promise.all([
         fetchStudentHistory(student.student_id),
@@ -187,30 +232,26 @@ export default function App() {
 
       setHistory(historyData || []);
       
-      if (planData && planData.plan) {
-        setCurrentPlan(planData.plan);
-        setPlanUnits(planData.units || []);
-        runValidation(student.student_id, student.location_id, planData.units || []);
-      } else {
-        setCurrentPlan({
-          plan_id: 1,
-          student_id: student.student_id,
-          title: `${student.course_code || 'PT3-BSIT'} Study Plan`,
-          status: 'draft',
-          total_credit_points: 15
-        });
-        const initialUnits = (catalogUnits || []).slice(0, 4).map((u, i) => ({
-          unit_id: u.unit_id,
-          code: u.code,
-          title: u.title,
-          credit_points: u.credit_points || 3,
-          year_level: i < 2 ? 1 : 2,
-          period_id: i % 2 === 0 ? 1 : 2,
-          sequence_order: i + 1
-        }));
-        setPlanUnits(initialUnits);
-        runValidation(student.student_id, student.location_id, initialUnits);
-      }
+      const initialPlan = (planData && planData.plan) ? planData.plan : {
+        plan_id: student.student_id,
+        student_id: student.student_id,
+        title: `${student.course_code || 'PT3-BSIT'} Study Plan`,
+        status: 'draft',
+        total_credit_points: 0
+      };
+      const initialUnits = (planData && planData.units) ? planData.units : [];
+
+      setCurrentPlan(initialPlan);
+      setPlanUnits(initialUnits);
+      runValidation(student.student_id, student.location_id, initialUnits);
+
+      setAllStudentPlansMap(prev => ({
+        ...prev,
+        [student.student_id]: {
+          plan: initialPlan,
+          units: initialUnits
+        }
+      }));
     } catch (err) {
       console.error('Failed to load student plan/history:', err);
     }
@@ -237,71 +278,90 @@ export default function App() {
   // Recommend Plan
   const handleRecommendPlan = async () => {
     if (!selectedStudent) return;
+    const updatedPlan = { ...currentPlan, status: 'recommended' };
+    setCurrentPlan(updatedPlan);
+    setAllStudentPlansMap(prev => ({
+      ...prev,
+      [selectedStudent.student_id]: {
+        plan: updatedPlan,
+        units: planUnits
+      }
+    }));
+    showToast('Plan recommended to student! Switch to Student View to review & agree.');
     try {
-      const planId = currentPlan ? currentPlan.plan_id : 1;
+      const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
       await recommendPlan(planId, 'Academic Chair');
-      setCurrentPlan(prev => ({ ...prev, status: 'recommended' }));
-      showToast('Plan recommended to student! Switch to Student View to review & agree.');
     } catch (err) {
       console.error('Recommend failed:', err);
-      setCurrentPlan(prev => ({ ...prev, status: 'recommended' }));
-      showToast('Plan recommended to student!');
     }
   };
 
   // Student Agree Plan
   const handleAgreePlan = async () => {
     if (!selectedStudent) return;
+    const updatedPlan = { ...currentPlan, status: 'agreed' };
+    setCurrentPlan(updatedPlan);
+    setAllStudentPlansMap(prev => ({
+      ...prev,
+      [selectedStudent.student_id]: {
+        plan: updatedPlan,
+        units: planUnits
+      }
+    }));
+    showToast('Study plan agreed and digitally signed by student!');
     try {
-      const planId = currentPlan ? currentPlan.plan_id : 1;
+      const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
       await agreePlan(planId, `${selectedStudent.first_name} ${selectedStudent.last_name}`);
-      setCurrentPlan(prev => ({ ...prev, status: 'agreed' }));
-      showToast('Study plan agreed and digitally signed by student!');
     } catch (err) {
       console.error('Agree failed:', err);
-      setCurrentPlan(prev => ({ ...prev, status: 'agreed' }));
-      showToast('Study plan agreed and digitally signed!');
     }
   };
 
   // Chair Approve & Finalise Plan
   const handleApprovePlan = async () => {
     if (!selectedStudent) return;
+    const updatedPlan = { ...currentPlan, status: 'approved' };
+    setCurrentPlan(updatedPlan);
+    setAllStudentPlansMap(prev => ({
+      ...prev,
+      [selectedStudent.student_id]: {
+        plan: updatedPlan,
+        units: planUnits
+      }
+    }));
+    showToast('Study Plan officially approved and finalized by Academic Chair!');
     try {
-      const planId = currentPlan ? currentPlan.plan_id : 1;
+      const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
       await approvePlan(planId, 'Academic Chair');
-      setCurrentPlan(prev => ({ ...prev, status: 'approved' }));
-      showToast('Study Plan officially approved and finalized by Academic Chair!');
     } catch (err) {
       console.error('Approve failed:', err);
-      setCurrentPlan(prev => ({ ...prev, status: 'approved' }));
-      showToast('Study Plan officially approved & finalized!');
     }
   };
 
   // Save & Store Plan in Repository
   const handleSavePlan = async () => {
     if (!selectedStudent) return;
+    const updatedPlan = { ...currentPlan, status: 'stored' };
+    setCurrentPlan(updatedPlan);
+    setAllStudentPlansMap(prev => ({
+      ...prev,
+      [selectedStudent.student_id]: {
+        plan: updatedPlan,
+        units: planUnits
+      }
+    }));
+    setStoredPlansCount(prev => prev + 1);
+    showToast('Study Plan saved & archived in Stored Plans Repository!');
     try {
-      const res = await saveStudyPlan({
+      await saveStudyPlan({
         student_id: selectedStudent.student_id,
         title: `${selectedStudent.course_code || 'PT3-BSIT'} Study Plan`,
         status: currentPlan ? currentPlan.status : 'draft',
         units: planUnits,
         created_by: 'Academic Chair'
       });
-      setCurrentPlan(prev => ({
-        ...prev,
-        plan_id: res.plan_id || (prev ? prev.plan_id : 1),
-        status: 'stored'
-      }));
-      setStoredPlansCount(prev => prev + 1);
-      showToast('Study Plan saved & archived in Stored Plans Repository!');
     } catch (err) {
       console.error('Failed to save study plan:', err);
-      setCurrentPlan(prev => ({ ...prev, status: 'stored' }));
-      setStoredPlansCount(prev => prev + 1);
-      showToast('Saved in Stored Plans Repository!');
     }
   };
 
@@ -455,7 +515,7 @@ export default function App() {
             <PlanBuilder
               student={selectedStudent}
               planUnits={planUnits}
-              setPlanUnits={setPlanUnits}
+              setPlanUnits={handleSetPlanUnits}
               catalogUnits={catalogUnits}
               periods={periods}
               validationResult={validationResult}
