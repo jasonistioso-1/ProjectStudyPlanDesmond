@@ -99,20 +99,18 @@ export default function Navbar({
             </button>
           )}
 
-          {/* Theme Switcher Toggle */}
+          {/* Theme Switcher Toggle - Icon Only */}
           <button
             onClick={onToggleTheme}
-            className="p-1.5 px-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1.5 text-xs font-medium shrink-0 whitespace-nowrap"
+            className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center shrink-0"
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle Dark/Light Mode"
           >
             {theme === 'dark' ? (
               <Sun className="w-4 h-4 text-amber-400 shrink-0" />
             ) : (
               <Moon className="w-4 h-4 text-slate-700 dark:text-slate-300 shrink-0" />
             )}
-            <span className="text-[11px] uppercase font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </span>
           </button>
 
           {/* Role Switcher Pill */}

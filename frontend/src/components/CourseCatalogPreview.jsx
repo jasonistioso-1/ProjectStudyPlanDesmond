@@ -49,13 +49,13 @@ export default function CourseCatalogPreview() {
     <section className="py-4 font-sans">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-bold text-[#008652] mb-1">
-            <BookOpen className="w-3.5 h-3.5 text-[#008652]" /> Academic Degree Pathways
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-full text-xs font-bold text-[#008652] dark:text-emerald-400 mb-1">
+            <BookOpen className="w-3.5 h-3.5 text-[#008652] dark:text-emerald-400" /> Academic Degree Pathways
           </div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             Academic Course Catalog & Degree Pathways
           </h2>
-          <p className="text-xs text-slate-600 mt-0.5 font-medium">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
             Official degree structures and required course units offered at PT3 Solutions campuses.
           </p>
         </div>
@@ -68,7 +68,7 @@ export default function CourseCatalogPreview() {
           return (
             <div
               key={course.code}
-              className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+              className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
             >
               <div>
                 <div className="flex justify-between items-start mb-4">
@@ -80,22 +80,22 @@ export default function CourseCatalogPreview() {
                   </span>
                 </div>
 
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">
                   {course.category}
                 </span>
-                <h3 className="text-xs font-extrabold text-slate-900 group-hover:text-[#008652] transition-colors leading-snug">
+                <h3 className="text-xs font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-[#008652] dark:group-hover:text-emerald-400 transition-colors leading-snug">
                   {course.title}
                 </h3>
-                <p className="text-[11px] text-slate-500 font-medium mt-1">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">
                   Duration: {course.duration}
                 </p>
 
                 {/* Key Units Tags */}
-                <div className="mt-4 pt-3 border-t border-slate-100 space-y-1">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Key Units Included:</span>
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Key Units Included:</span>
                   <div className="flex flex-wrap gap-1">
                     {course.units.map((u, i) => (
-                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-slate-700 font-semibold font-mono">
+                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold font-mono">
                         {u}
                       </span>
                     ))}

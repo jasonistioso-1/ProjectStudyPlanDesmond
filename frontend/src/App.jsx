@@ -379,56 +379,56 @@ export default function App() {
 
       {/* Audit Log / Change Log Modal */}
       {showAuditModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border-t-4 border-t-red-600 border border-slate-200 rounded-xl p-6 max-w-lg w-full shadow-2xl relative font-sans">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border-t-4 border-t-red-600 border border-slate-200 dark:border-slate-800 rounded-xl p-6 max-w-lg w-full shadow-2xl relative font-sans text-slate-900 dark:text-slate-100 transition-colors">
             <button
               onClick={() => setShowAuditModal(false)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1 rounded-lg"
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-lg"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200">
-              <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center font-bold">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 flex items-center justify-center font-bold">
                 <Clock className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-slate-900">PT3 Solutions — System Change Log & Audit Trail</h3>
-                <p className="text-[11px] text-slate-500 font-medium">ICT302 Specification Versioning History</p>
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">PT3 Solutions — System Change Log & Audit Trail</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">ICT302 Specification Versioning History</p>
               </div>
             </div>
 
             {/* Change Log Entries */}
             <div className="space-y-3 max-h-72 overflow-y-auto text-xs font-sans pr-1">
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1">
                   <span className="bg-red-600 text-white px-2 py-0.5 rounded">v1.1 — 15 SEP 2026</span>
-                  <span className="text-slate-400">STATUS: ACTIVE RELEASE</span>
+                  <span className="text-slate-400 dark:text-slate-500">STATUS: ACTIVE RELEASE</span>
                 </div>
-                <p className="font-bold text-slate-900">Executive Navigation & Clean Layout Update</p>
-                <p className="text-[11px] text-slate-600 mt-1">
+                <p className="font-bold text-slate-900 dark:text-white">Executive Navigation & Clean Layout Update</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
                   Removed cluttered workflow stepper bar. Integrated direct executive tab navigation (Plan Builder, Academic History, Stored Plans, Course Catalog) for Academic Chair.
                 </p>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1">
-                  <span className="bg-slate-800 text-white px-2 py-0.5 rounded">v1.0 — 14 SEP 2026</span>
-                  <span className="text-slate-400">STABLE</span>
+                  <span className="bg-slate-800 dark:bg-slate-700 text-white px-2 py-0.5 rounded">v1.0 — 14 SEP 2026</span>
+                  <span className="text-slate-400 dark:text-slate-500">STABLE</span>
                 </div>
-                <p className="font-bold text-slate-900">Core Engine & MySQL Database Release</p>
-                <p className="text-[11px] text-slate-600 mt-1">
+                <p className="font-bold text-slate-900 dark:text-white">Core Engine & MySQL Database Release</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
                   Created 11 MySQL database tables, rule validation engine (`validationEngine.js`), Express endpoints, and React drag-and-drop plan builder.
                 </p>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1">
-                  <span className="bg-slate-300 text-slate-800 px-2 py-0.5 rounded">v0.1 — 09 SEP 2026</span>
-                  <span className="text-slate-400">INITIAL SPEC</span>
+                  <span className="bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded">v0.1 — 09 SEP 2026</span>
+                  <span className="text-slate-400 dark:text-slate-500">INITIAL SPEC</span>
                 </div>
-                <p className="font-bold text-slate-900">Outsourced Development Requirements</p>
-                <p className="text-[11px] text-slate-600 mt-1">
+                <p className="font-bold text-slate-900 dark:text-white">Outsourced Development Requirements</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
                   Initial requirements drafted following client meeting with PT03 team and Peter.
                 </p>
               </div>
@@ -437,7 +437,7 @@ export default function App() {
             <div className="mt-5 text-right">
               <button
                 onClick={() => setShowAuditModal(false)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-all shadow-xs"
+                className="px-4 py-2 bg-slate-900 dark:bg-red-700 hover:bg-slate-800 dark:hover:bg-red-800 text-white text-xs font-bold rounded-lg transition-all shadow-xs"
               >
                 Close Audit Log
               </button>
