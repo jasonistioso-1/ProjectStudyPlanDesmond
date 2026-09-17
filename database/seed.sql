@@ -35,12 +35,12 @@ INSERT INTO TeachingPeriod (period_id, code, name, period_type, sequence_order) 
 (6, 'WINT', 'Winter Term', 'winter', 4),
 (7, 'SUMM', 'Summer Term', 'summer', 5);
 
--- 3. Seed Courses (Bachelor of Information Technology Majors: AI, CS, BIS)
+-- 3. Seed Courses (Bachelor of Information Technology Majors: Software Engineering, CS, BIS)
 INSERT INTO Course (course_id, code, name, degree_level, total_credit_points) VALUES
-(1, 'PT3-BSIT-AI01', 'Bachelor of Information Technology (Major: Artificial Intelligence)', 'Bachelor', 72),
+(1, 'PT3-BSIT-SE01', 'Bachelor of Information Technology (Major: Software Engineering)', 'Bachelor', 72),
 (2, 'PT3-BSIT-CS02', 'Bachelor of Information Technology (Major: Computer Science)', 'Bachelor', 72),
 (3, 'PT3-BSIT-BIS03', 'Bachelor of Information Technology (Major: Business Information Systems)', 'Bachelor', 72),
-(4, 'PT3-BSIT-AI04', 'Bachelor of Information Technology (Major: Artificial Intelligence)', 'Bachelor', 72);
+(4, 'PT3-BSIT-CY04', 'Bachelor of Information Technology (Major: Cyber Security)', 'Bachelor', 72);
 
 -- 4. Seed Units (Standard Curriculum Dataset)
 INSERT INTO Unit (unit_id, code, title, credit_points, level) VALUES
@@ -52,9 +52,9 @@ INSERT INTO Unit (unit_id, code, title, credit_points, level) VALUES
 (6, 'ICT170', 'Foundations of Computer Systems', 3, 100),
 (7, 'ICT145', 'Python Programming', 3, 100),
 (8, 'ICT201', 'IT Project Management', 3, 200),
-(9, 'ICT202', 'Machine Learning', 3, 200),
-(10, 'ICT203', 'Artificial Intelligence', 3, 200),
-(11, 'ICT206', 'Intelligent Systems', 3, 200),
+(9, 'ICT202', 'Data Analytics & Processing', 3, 200),
+(10, 'ICT203', 'Software Architecture & Design', 3, 200),
+(11, 'ICT206', 'Distributed Systems', 3, 200),
 (12, 'ICT283', 'Data Structures & Algorithms', 3, 200),
 (13, 'ICT284', 'Systems Analysis & Design', 3, 200),
 (14, 'ICT285', 'Databases', 3, 200),
@@ -65,8 +65,8 @@ INSERT INTO Unit (unit_id, code, title, credit_points, level) VALUES
 (19, 'MAS183', 'Statistical Data Analysis', 3, 100),
 (20, 'ICT301', 'Enterprise Architecture', 3, 300),
 (21, 'ICT302', 'IT Professional Practice (Capstone)', 3, 300),
-(22, 'ICT303', 'Advanced Machine Learning', 3, 300),
-(23, 'ICT304', 'AI System Design', 3, 300),
+(22, 'ICT303', 'Cloud Infrastructure & DevOps', 3, 300),
+(23, 'ICT304', 'Enterprise Software Systems', 3, 300),
 (24, 'ICT305', 'Data Visualisation', 3, 300),
 (25, 'ICT373', 'Software Architecture', 3, 300),
 (26, 'ICT374', 'Operating Systems', 3, 300),
@@ -134,10 +134,10 @@ INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period
 
 -- 9. Seed Sample Study Plans (Distinct per Student)
 INSERT INTO StudyPlan (plan_id, student_id, title, status, total_credit_points, created_by, recommended_at, agreed_at, approved_at) VALUES
-(1, 1, 'PT3-BSIT Artificial Intelligence Plan 2026', 'approved', 72, 'Academic Chair', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 1 DAY, NOW()),
+(1, 1, 'PT3-BSIT Software Engineering Plan 2026', 'approved', 72, 'Academic Chair', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 1 DAY, NOW()),
 (2, 2, 'PT3-BSIT Computer Science Plan 2026', 'agreed', 72, 'Academic Chair', NOW() - INTERVAL 1 DAY, NOW(), NULL),
 (3, 3, 'PT3-BSIT Business Info Systems Plan 2026', 'recommended', 69, 'Academic Chair', NOW(), NULL, NULL),
-(4, 4, 'PT3-BSIT Artificial Intelligence Plan 2026', 'draft', 72, 'Academic Chair', NULL, NULL, NULL);
+(4, 4, 'PT3-BSIT Cyber Security Plan 2026', 'draft', 72, 'Academic Chair', NULL, NULL, NULL);
 
 -- 10. Seed Study Plan Units (Plan 1 - Alex Mercer - AI Major - 72 CP)
 INSERT INTO StudyPlanUnit (plan_id, unit_id, period_id, year_level, sequence_order, credit_points) VALUES

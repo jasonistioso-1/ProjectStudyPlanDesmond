@@ -6,15 +6,15 @@ export default function AddStudentModal({ onSaveStudent, editStudent = null, onC
   const [firstName, setFirstName] = useState(editStudent ? editStudent.first_name : '');
   const [lastName, setLastName] = useState(editStudent ? editStudent.last_name : '');
   const [email, setEmail] = useState(editStudent ? editStudent.email : '');
-  const [courseCode, setCourseCode] = useState(editStudent ? editStudent.course_code : 'PT3-BSIT-AI01');
+  const [courseCode, setCourseCode] = useState(editStudent ? editStudent.course_code : 'PT3-BSIT-SE01');
   const [locationName, setLocationName] = useState(editStudent ? editStudent.location_name : 'PT3 Solutions Singapore Campus');
   const [error, setError] = useState('');
 
   const courseOptions = [
-    { code: 'PT3-BSIT-AI01', name: 'Bachelor of Information Technology (Major: Artificial Intelligence)' },
+    { code: 'PT3-BSIT-SE01', name: 'Bachelor of Information Technology (Major: Software Engineering)' },
     { code: 'PT3-BSIT-CS02', name: 'Bachelor of Information Technology (Major: Computer Science)' },
     { code: 'PT3-BSIT-BIS03', name: 'Bachelor of Information Technology (Major: Business Information Systems)' },
-    { code: 'PT3-BSIT-SE04', name: 'Bachelor of Information Technology (Major: Software Engineering)' }
+    { code: 'PT3-BSIT-CY04', name: 'Bachelor of Information Technology (Major: Cyber Security)' }
   ];
 
   const handleSubmit = (e) => {

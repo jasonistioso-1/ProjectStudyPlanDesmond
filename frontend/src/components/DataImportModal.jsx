@@ -20,13 +20,13 @@ ICT158,Introduction to Computer Systems,None,T1, T3
 ICT159,Foundations of Programming,None,T1, T2, T3
 ICT167,Principles of Computer Science,ICT159,T1, T2
 ICT201,IT Project Management,ICT158,T1, T2, T3
-ICT202,Machine Learning,ICT159,T2, T3
-ICT203,Artificial Intelligence,ICT167,T1, T3
+ICT202,Data Analytics & Processing,ICT159,T2, T3
+ICT203,Software Architecture & Design,ICT167,T1, T3
 ICT283,Data Structures & Algorithms,ICT167,T1, T2
 ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`,
 
     students: `Student Number,First Name,Last Name,Email,Course Code,Location Code,Status
-PT3-2026-005,David,Miller,d.miller@student.pt3solutions.edu.sg,PT3-BSIT-AI01,SINGAPORE,active
+PT3-2026-005,David,Miller,d.miller@student.pt3solutions.edu.sg,PT3-BSIT-SE01,SINGAPORE,active
 PT3-2026-006,Jessica,Tan,j.tan@student.pt3solutions.edu.sg,PT3-BSIT-CS02,SINGAPORE,active
 PT3-2026-007,Kevin,Wong,k.wong@student.pt3solutions.edu.sg,PT3-BSIT-BIS03,SINGAPORE,part-time`,
 
@@ -45,7 +45,7 @@ ICT203,ICT167,P,false
 ICT283,ICT167,P,false`,
 
     courses: `Course Code,Course Name,Degree Level,Total Credit Points
-PT3-BSIT-AI01,Bachelor of Information Technology (Major: Artificial Intelligence),Bachelor,72
+PT3-BSIT-SE01,Bachelor of Information Technology (Major: Software Engineering),Bachelor,72
 PT3-BSIT-CS02,Bachelor of Information Technology (Major: Computer Science),Bachelor,72
 PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information Systems),Bachelor,72`
   };
