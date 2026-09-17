@@ -29,7 +29,10 @@ import {
   CheckCircle2,
   X,
   Clock,
-  FileText
+  FileText,
+  User,
+  GraduationCap,
+  Building2
 } from 'lucide-react';
 
 const initialSampleStudents = [
@@ -348,60 +351,63 @@ export default function App() {
             />
           )}
 
-          {/* Student Course Info Header */}
-          <div className="bg-gradient-to-r from-white via-slate-50/60 to-red-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-red-950/30 border border-slate-200/90 dark:border-slate-800 p-5 rounded-2xl shadow-xs font-sans relative overflow-hidden transition-colors">
-            {/* Top Accent Gradient Line */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-red-500 to-slate-900" />
-            
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-5 pt-0.5">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="bg-red-700 text-white font-semibold text-[11px] px-3 py-0.5 rounded-full shadow-2xs tracking-wide">
-                    {selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-01'}
-                  </span>
-                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                    Singapore Campus
+          {/* Executive Student Course Info Header */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-2xs font-sans transition-colors">
+            <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-red-700 dark:text-red-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    <span className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400 inline-block animate-pulse" />
+                    Major: {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
+                      ? selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()
+                      : 'Artificial Intelligence'}
                   </span>
                 </div>
 
-                <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white font-heading">
+                <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
                   Bachelor of Information Technology
-                  <span className="text-slate-500 dark:text-slate-400 font-normal text-sm md:text-base ml-2 inline-block">
-                    {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
-                      ? `(Major: ${selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()})`
-                      : '(Major: Artificial Intelligence)'}
-                  </span>
                 </h1>
 
-                <div className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-3 pt-0.5">
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-slate-400 dark:text-slate-500">Student:</span>
-                    <strong className="text-slate-900 dark:text-slate-200 font-semibold">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong>
-                    <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">Sample Student</span>
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-slate-400 dark:text-slate-500">ID:</span>
-                    <strong className="text-slate-800 dark:text-slate-200 font-medium tracking-tight bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] border border-slate-200/80 dark:border-slate-700">
-                      {selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}
-                    </strong>
+                {/* Student Context Metadata Badges */}
+                <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs">
+                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                    <User className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
+                    </span>
+                    <span className="text-slate-400 dark:text-slate-500 font-normal">
+                      ({selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'})
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 font-medium">
+                    <GraduationCap className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <span>Course Code: <strong>{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-AI01'}</strong></span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 font-medium">
+                    <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span>Singapore Campus</span>
+                  </div>
+
+                  <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-xl">
+                    Sample Student Profile
                   </span>
                 </div>
               </div>
 
               {/* Total Degree Credit Meter */}
-              <div className="bg-white/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700 p-4 rounded-xl text-right shrink-0 min-w-[210px] shadow-2xs">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Planned Credit Load
+              <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 p-4 rounded-2xl text-right shrink-0 min-w-[230px]">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                  Degree Credit Load
                 </div>
-                <div className="text-lg font-bold text-slate-900 dark:text-white my-0.5 tracking-tight tabular-nums flex items-baseline justify-end gap-1">
-                  <span className="text-slate-900 dark:text-white text-xl font-extrabold">{planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)}</span>
+                <div className="text-2xl font-black text-slate-900 dark:text-white my-0.5 tracking-tight tabular-nums flex items-baseline justify-end gap-1">
+                  <span>{planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0)}</span>
                   <span className="text-slate-400 dark:text-slate-500 font-semibold text-xs">/ 72 CP</span>
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden mt-1.5 p-0.5 border border-slate-100 dark:border-slate-700">
+                <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden mt-1.5 border border-slate-200 dark:border-slate-700">
                   <div 
-                    className="bg-gradient-to-r from-red-600 to-slate-900 dark:to-emerald-400 h-full rounded-full transition-all duration-500" 
+                    className="bg-red-700 dark:bg-emerald-400 h-full rounded-full transition-all duration-500" 
                     style={{ width: `${Math.min(100, Math.round((planUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0) / 72) * 100))}%` }}
                   />
                 </div>
