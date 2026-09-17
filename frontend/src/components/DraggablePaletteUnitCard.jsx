@@ -55,13 +55,13 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-heading font-bold text-slate-900 dark:text-white text-xs tracking-tight bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-600 shadow-2xs font-mono">{unit.code}</span>
+            <span className="font-heading font-extrabold text-white bg-red-700 dark:bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs font-mono">{unit.code}</span>
           </div>
-          <div className="text-slate-900 dark:text-slate-100 text-xs font-semibold truncate mt-1">
+          <div className="text-slate-900 dark:text-slate-100 text-xs font-bold truncate mt-1">
             {unit.title}
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2 font-medium">
-            <span className="tabular-nums font-semibold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-200/70 dark:border-slate-600">{unit.credit_points || 3} CP</span>
+            <span className="tabular-nums font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-600 font-mono text-[10px]">{unit.credit_points || 3} CP</span>
             <span className="text-slate-300 dark:text-slate-600">•</span>
             <span className="text-slate-500 dark:text-slate-400">Singapore Campus</span>
           </div>
@@ -71,11 +71,11 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
       <div className="flex items-center gap-1.5 shrink-0 relative">
         <button
           onClick={() => onAdd(unit)}
-          className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
+          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-extrabold rounded-xl transition-all shadow-2xs flex items-center gap-1"
           title="Add to study plan"
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Unit</span>
+          <Plus className="w-3.5 h-3.5 text-red-400" />
+          <span>+ Add Unit</span>
         </button>
 
         <button

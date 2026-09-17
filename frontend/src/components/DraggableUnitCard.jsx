@@ -47,19 +47,19 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
             <GripVertical className="w-4 h-4" />
           </div>
 
-          <span className="font-heading font-extrabold text-slate-900 dark:text-white text-xs tracking-tight bg-slate-100 dark:bg-slate-700/80 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-600 shadow-2xs shrink-0 font-mono">
+          <span className="font-heading font-extrabold text-white bg-slate-900 dark:bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs shrink-0 font-mono">
             {unit.code}
           </span>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           {isCompleted && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> DONE
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> PASSED
             </span>
           )}
 
-          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 tabular-nums bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-600">
+          <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 tabular-nums bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-600">
             {unit.credit_points || 3} CP
           </span>
 

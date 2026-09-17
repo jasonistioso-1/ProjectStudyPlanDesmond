@@ -693,33 +693,33 @@ export default function PlanBuilder({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 font-heading">
-                    <Layers className="w-4 h-4 text-slate-700 dark:text-slate-300" />
-                    3-Year Study Plan Grid
+                    <Layers className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    Official 3-Year Study Plan Grid
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-normal">
-                    Drag & drop units to structure semester and trimester study sequences.
+                    Drag & drop units to structure semester and trimester study sequences across 3 academic years.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Semester vs Trimester Layout Switcher */}
-                  <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-0.5 text-xs">
+                  <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 text-xs">
                     <button
                       onClick={() => setLayoutType('semester')}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                         layoutType === 'semester'
-                          ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-bold'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-extrabold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
                       }`}
                     >
                       Semester
                     </button>
                     <button
                       onClick={() => setLayoutType('trimester')}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                         layoutType === 'trimester'
-                          ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-bold'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-extrabold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
                       }`}
                     >
                       Trimester
@@ -729,16 +729,16 @@ export default function PlanBuilder({
                   {onOpenOfficialDocument && (
                     <button
                       onClick={onOpenOfficialDocument}
-                      className="px-3 py-1.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white border border-slate-800 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                      className="px-3.5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white border border-slate-800 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
                     >
                       <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="hidden sm:inline">Export Document</span>
+                      <span>Export Document</span>
                     </button>
                   )}
 
                   <button
                     onClick={onSavePlan}
-                    className="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                    className="px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
                   >
                     <Save className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                     <span>Save Draft</span>
@@ -746,10 +746,10 @@ export default function PlanBuilder({
 
                   <button
                     onClick={handleClearPlan}
-                    className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-semibold text-xs transition-colors"
+                    className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs transition-colors"
                     title="Clear all units from study plan"
                   >
-                    Clear
+                    Clear Canvas
                   </button>
                 </div>
               </div>

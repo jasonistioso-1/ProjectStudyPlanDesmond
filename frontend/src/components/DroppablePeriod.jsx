@@ -58,12 +58,16 @@ export default function DroppablePeriod({ id, yearLevel, period, units, onRemove
       <SortableContext items={unitIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-2 flex-1 min-h-[140px] flex flex-col justify-start">
           {units.length === 0 ? (
-            <div className="h-full border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-400 dark:text-slate-500 text-xs py-8 rounded-xl flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all cursor-pointer select-none">
-              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                <Plus className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                Drag units here
+            <div className="h-full border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-red-500/80 dark:hover:border-red-500/80 text-slate-400 dark:text-slate-500 text-xs py-7 rounded-xl flex flex-col items-center justify-center bg-slate-50/60 dark:bg-slate-800/30 hover:bg-red-50/20 dark:hover:bg-red-950/20 transition-all cursor-pointer select-none group">
+              <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:text-red-600 dark:group-hover:text-red-400 flex items-center justify-center mb-1.5 transition-colors shadow-2xs">
+                <Plus className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors">
+                Drag & Drop Unit Here
               </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal mt-0.5">Drop unit to schedule {period.name}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                Drop unit to schedule {period.name}
+              </span>
             </div>
           ) : (
             units.map(unit => (

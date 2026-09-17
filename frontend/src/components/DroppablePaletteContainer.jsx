@@ -29,17 +29,19 @@ export default function DroppablePaletteContainer({
           : 'border-slate-200 dark:border-slate-800'
       }`}
     >
-      <div className="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+      <div className="bg-slate-50/90 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-wrap justify-between items-center gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2 font-heading">
-            <BookOpen className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+          <h3 className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-2 font-heading">
+            <BookOpen className="w-4 h-4 text-red-600 dark:text-red-400" />
             Available Course Units
           </h3>
-          <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono">Sample Catalog Data</span>
+          <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md font-mono">
+            Official Unit Directory
+          </span>
         </div>
         <div className="flex items-center gap-1.5 text-xs font-semibold">
-          <span className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full text-slate-700 dark:text-slate-300 tabular-nums">
-            {filteredOfferings.length} Available / {totalCatalogCount} Total Units
+          <span className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full text-slate-700 dark:text-slate-300 tabular-nums font-mono text-[11px]">
+            {filteredOfferings.length} Available / {totalCatalogCount} Units
           </span>
         </div>
       </div>
