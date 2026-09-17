@@ -415,108 +415,110 @@ export default function App() {
             />
           )}
 
-          {/* Executive Student Course Info Header */}
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl font-sans text-white transition-all relative overflow-hidden">
-            {/* Subtle executive background accents */}
-            <div className="absolute -right-16 -top-16 w-72 h-72 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -left-16 -bottom-16 w-72 h-72 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none" />
+          {/* Executive Student Course Info Header (Shown only on STUDY_PLAN & ACADEMIC_HISTORY tabs) */}
+          {(activeTab === 'STUDY_PLAN' || activeTab === 'ACADEMIC_HISTORY') && (
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl font-sans text-white transition-all relative overflow-hidden">
+              {/* Subtle executive background accents */}
+              <div className="absolute -right-16 -top-16 w-72 h-72 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -left-16 -bottom-16 w-72 h-72 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 flex flex-col lg:flex-row justify-between lg:items-center gap-6">
-              <div className="space-y-3">
-                {/* Major & Status Tags */}
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <span className="inline-flex items-center gap-1.5 bg-red-950/80 text-red-300 border border-red-800/60 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide">
-                    <BookOpen className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                    <span>Major: {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
-                      ? selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()
-                      : 'Artificial Intelligence'}</span>
-                  </span>
+              <div className="relative z-10 flex flex-col lg:flex-row justify-between lg:items-center gap-6">
+                <div className="space-y-3">
+                  {/* Major & Status Tags */}
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="inline-flex items-center gap-1.5 bg-red-950/80 text-red-300 border border-red-800/60 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide">
+                      <BookOpen className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                      <span>Major: {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
+                        ? selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()
+                        : 'Artificial Intelligence'}</span>
+                    </span>
 
-                  {currentPlan?.status === 'approved' && (
-                    <span className="inline-flex items-center gap-1.5 bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 px-3.5 py-1 rounded-full text-xs font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Plan Approved & Finalized
-                    </span>
-                  )}
-                  {currentPlan?.status === 'agreed' && (
-                    <span className="inline-flex items-center gap-1.5 bg-blue-950/80 text-blue-300 border border-blue-800/60 px-3.5 py-1 rounded-full text-xs font-semibold">
-                      <ShieldCheck className="w-3.5 h-3.5 text-blue-400" /> Student Agreed
-                    </span>
-                  )}
-                  {currentPlan?.status === 'recommended' && (
-                    <span className="inline-flex items-center gap-1.5 bg-amber-950/80 text-amber-300 border border-amber-800/60 px-3.5 py-1 rounded-full text-xs font-semibold">
-                      <Clock className="w-3.5 h-3.5 text-amber-400" /> Recommended to Student
-                    </span>
-                  )}
-                  {(!currentPlan || currentPlan?.status === 'draft' || currentPlan?.status === 'stored') && (
-                    <span className="inline-flex items-center gap-1.5 bg-slate-800 text-slate-300 border border-slate-700 px-3.5 py-1 rounded-full text-xs font-semibold">
-                      Official Draft Plan
-                    </span>
-                  )}
+                    {currentPlan?.status === 'approved' && (
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 px-3.5 py-1 rounded-full text-xs font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Plan Approved & Finalized
+                      </span>
+                    )}
+                    {currentPlan?.status === 'agreed' && (
+                      <span className="inline-flex items-center gap-1.5 bg-blue-950/80 text-blue-300 border border-blue-800/60 px-3.5 py-1 rounded-full text-xs font-semibold">
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-400" /> Student Agreed
+                      </span>
+                    )}
+                    {currentPlan?.status === 'recommended' && (
+                      <span className="inline-flex items-center gap-1.5 bg-amber-950/80 text-amber-300 border border-amber-800/60 px-3.5 py-1 rounded-full text-xs font-semibold">
+                        <Clock className="w-3.5 h-3.5 text-amber-400" /> Recommended to Student
+                      </span>
+                    )}
+                    {(!currentPlan || currentPlan?.status === 'draft' || currentPlan?.status === 'stored') && (
+                      <span className="inline-flex items-center gap-1.5 bg-slate-800 text-slate-300 border border-slate-700 px-3.5 py-1 rounded-full text-xs font-semibold">
+                        Official Draft Plan
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Degree Title */}
+                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white font-heading">
+                    Bachelor of Information Technology
+                  </h1>
+
+                  {/* Student Context Metadata Strip */}
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300 pt-0.5">
+                    <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/90 px-3.5 py-1.5 rounded-xl">
+                      <User className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                      <span className="font-semibold text-white">
+                        {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
+                      </span>
+                      <span className="text-slate-400 text-[11px] font-mono bg-slate-900 px-2 py-0.5 rounded-md border border-slate-800">
+                        {selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/90 px-3.5 py-1.5 rounded-xl text-slate-300">
+                      <GraduationCap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>Course Code: <strong className="text-white font-semibold font-mono">{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-AI01'}</strong></span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/90 px-3.5 py-1.5 rounded-xl text-slate-300">
+                      <Building2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>{selectedStudent?.location_name || 'PT3 Solutions Singapore Campus'}</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Degree Title */}
-                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white font-heading">
-                  Bachelor of Information Technology
-                </h1>
+                {/* Total Degree Credit Meter Widget */}
+                {(() => {
+                  const calculatedCP = (planUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+                  const progressPct = Math.min(100, Math.round((calculatedCP / 72) * 100));
 
-                {/* Student Context Metadata Strip */}
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300 pt-0.5">
-                  <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/90 px-3.5 py-1.5 rounded-xl">
-                    <User className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                    <span className="font-semibold text-white">
-                      {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
-                    </span>
-                    <span className="text-slate-400 text-[11px] font-mono bg-slate-900 px-2 py-0.5 rounded-md border border-slate-800">
-                      {selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}
-                    </span>
-                  </div>
+                  return (
+                    <div className="bg-slate-800/90 border border-slate-700/90 p-5 rounded-2xl text-right shrink-0 min-w-[260px] shadow-sm relative">
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-1">
+                        <span>Degree Load Progress</span>
+                        <span className="text-emerald-400 font-bold font-mono">{progressPct}%</span>
+                      </div>
 
-                  <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/90 px-3.5 py-1.5 rounded-xl text-slate-300">
-                    <GraduationCap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>Course Code: <strong className="text-white font-semibold font-mono">{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-AI01'}</strong></span>
-                  </div>
+                      <div className="text-3xl font-extrabold text-white tracking-tight flex items-baseline justify-end gap-1.5 my-1">
+                        <span className="tabular-nums font-mono">{calculatedCP}</span>
+                        <span className="text-slate-400 font-medium text-xs font-mono">/ 72 CP</span>
+                      </div>
 
-                  <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700/90 px-3.5 py-1.5 rounded-xl text-slate-300">
-                    <Building2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>{selectedStudent?.location_name || 'PT3 Solutions Singapore Campus'}</span>
-                  </div>
-                </div>
+                      {/* Dynamic Gradient Progress Bar */}
+                      <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-700/80 my-2">
+                        <div 
+                          className="bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500" 
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+
+                      <div className="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                        <span>Target: 72 CP</span>
+                        <span className="text-slate-300 font-semibold font-mono">{Math.max(0, 72 - calculatedCP)} CP remaining</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
-
-              {/* Total Degree Credit Meter Widget */}
-              {(() => {
-                const calculatedCP = (planUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
-                const progressPct = Math.min(100, Math.round((calculatedCP / 72) * 100));
-
-                return (
-                  <div className="bg-slate-800/90 border border-slate-700/90 p-5 rounded-2xl text-right shrink-0 min-w-[260px] shadow-sm relative">
-                    <div className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-1">
-                      <span>Degree Load Progress</span>
-                      <span className="text-emerald-400 font-bold font-mono">{progressPct}%</span>
-                    </div>
-
-                    <div className="text-3xl font-extrabold text-white tracking-tight flex items-baseline justify-end gap-1.5 my-1">
-                      <span className="tabular-nums font-mono">{calculatedCP}</span>
-                      <span className="text-slate-400 font-medium text-xs font-mono">/ 72 CP</span>
-                    </div>
-
-                    {/* Dynamic Gradient Progress Bar */}
-                    <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-700/80 my-2">
-                      <div 
-                        className="bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500" 
-                        style={{ width: `${progressPct}%` }}
-                      />
-                    </div>
-
-                    <div className="text-[11px] font-medium text-slate-400 flex items-center justify-between">
-                      <span>Target: 72 CP</span>
-                      <span className="text-slate-300 font-semibold font-mono">{Math.max(0, 72 - calculatedCP)} CP remaining</span>
-                    </div>
-                  </div>
-                );
-              })()}
             </div>
-          </div>
+          )}
 
           {/* View Component: STUDY_PLAN (Main Builder / Review) */}
           {activeTab === 'STUDY_PLAN' && (
