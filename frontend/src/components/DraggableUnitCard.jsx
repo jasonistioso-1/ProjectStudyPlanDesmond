@@ -58,16 +58,16 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
       {/* Top Header Row: Drag Handle, Code, Badges & Actions */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <button
+          <div
             {...attributes}
             {...listeners}
-            className="p-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 cursor-grab active:cursor-grabbing shrink-0 transition-all border border-slate-200/70 dark:border-slate-600 shadow-2xs"
+            className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 cursor-grab active:cursor-grabbing shrink-0 transition-colors p-0.5"
             title="Drag to reposition unit"
           >
-            <GripVertical className="w-3.5 h-3.5" />
-          </button>
+            <GripVertical className="w-4 h-4" />
+          </div>
 
-          <span className="font-heading font-extrabold text-slate-900 dark:text-white text-xs tracking-tight bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-600 shadow-2xs shrink-0 font-mono">
+          <span className="font-heading font-extrabold text-slate-900 dark:text-white text-xs tracking-tight bg-slate-100 dark:bg-slate-700/80 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-600 shadow-2xs shrink-0 font-mono">
             {unit.code}
           </span>
         </div>

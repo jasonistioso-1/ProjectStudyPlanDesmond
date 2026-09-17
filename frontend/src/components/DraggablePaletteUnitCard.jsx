@@ -43,15 +43,15 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
       style={style}
       className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 p-3.5 rounded-2xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative"
     >
-      <div className="flex items-center gap-3 min-w-0 pr-2">
-        <button
+      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+        <div
           {...attributes}
           {...listeners}
-          className="p-1.5 rounded-lg bg-slate-100/90 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 cursor-grab active:cursor-grabbing shrink-0 transition-all border border-slate-200/70 dark:border-slate-600 shadow-2xs"
+          className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 cursor-grab active:cursor-grabbing shrink-0 transition-colors p-0.5"
           title="Drag unit into a semester slot"
         >
           <GripVertical className="w-4 h-4" />
-        </button>
+        </div>
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">

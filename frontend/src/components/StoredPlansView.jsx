@@ -94,10 +94,10 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/50 font-semibold text-[10px] font-mono px-2 py-0.5 rounded">
-              FR-16 & FR-17 REPOSITORY
+            <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-semibold text-[10px] px-2 py-0.5 rounded">
+              STUDY PLAN REPOSITORY
             </span>
-            <span className="text-slate-400 dark:text-slate-500 text-xs">• Versioned Plans Storage</span>
+            <span className="text-slate-400 dark:text-slate-500 text-xs">• Versioned Archives</span>
           </div>
           <h2 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <Database className="w-5 h-5 text-red-600 dark:text-red-400" />
