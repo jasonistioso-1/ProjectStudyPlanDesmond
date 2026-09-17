@@ -114,34 +114,17 @@ export default function AddUnitModal({ onAddUnit, onClose }) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Academic Level
-              </label>
-              <select
-                value={level}
-                onChange={(e) => setLevel(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-bold"
-              >
-                <option value={100}>Level 100 (Introductory)</option>
-                <option value={200}>Level 200 (Intermediate)</option>
-                <option value={300}>Level 300 (Advanced Capstone)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Prerequisites (Optional)
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. ICT159, ICT167 or None"
-                value={prereqs}
-                onChange={(e) => setPrereqs(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-mono text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-bold uppercase"
-              />
-            </div>
+          <div>
+            <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+              Prerequisites (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. ICT159, ICT167 or None"
+              value={prereqs}
+              onChange={(e) => setPrereqs(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-mono text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-bold uppercase"
+            />
           </div>
 
           <div>
