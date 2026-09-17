@@ -158,6 +158,18 @@ export default function GuideModal({ isOpen, onClose }) {
                   </p>
                 </div>
               </div>
+
+              {/* Real-time Sync & Change Log Box */}
+              <div className="bg-red-50/80 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 p-4 rounded-xl space-y-2">
+                <h4 className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                  Real-Time Sync & System Change Log (NFR-07 & Section 18 Requirements)
+                </h4>
+                <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">
+                  • <strong>Real-Time Updates</strong>: Student selections, study plan unit additions, semester/trimester switches, and status transitions (Draft → Recommend → Agreed → Approved) update across views instantly in real-time.<br />
+                  • <strong>System Change Log & Audit Trail</strong>: Accessible via the <strong>Change Log</strong> button in the navigation bar. Tracks system specification releases (v0.1, v1.0, v1.1) and logs every plan amendment timestamp according to <em>NFR-07 Auditability</em> and <em>Section 18 Approval / Change Log</em> requirements.
+                </p>
+              </div>
             </div>
           )}
 
