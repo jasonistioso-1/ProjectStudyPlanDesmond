@@ -17,12 +17,10 @@ export const mockTeachingPeriods = [
 ];
 
 export const mockCourses = [
-    { course_id: 1, code: 'PT3-BSIT-01', name: 'Bachelor of Information Technology (Major: Software & Systems)', degree_level: 'Bachelor', total_credit_points: 72 },
-    { course_id: 2, code: 'PT3-BSIT-CS02', name: 'Bachelor of Information Technology (Major: Cyber Security & Forensics)', degree_level: 'Bachelor', total_credit_points: 72 },
+    { course_id: 1, code: 'PT3-BSIT-AI01', name: 'Bachelor of Information Technology (Major: Artificial Intelligence)', degree_level: 'Bachelor', total_credit_points: 72 },
+    { course_id: 2, code: 'PT3-BSIT-CS02', name: 'Bachelor of Information Technology (Major: Computer Science)', degree_level: 'Bachelor', total_credit_points: 72 },
     { course_id: 3, code: 'PT3-BSIT-BIS03', name: 'Bachelor of Information Technology (Major: Business Information Systems)', degree_level: 'Bachelor', total_credit_points: 72 },
-    { course_id: 4, code: 'PT3-BSIT-DS04', name: 'Bachelor of Data Analytics & Artificial Intelligence', degree_level: 'Bachelor', total_credit_points: 72 },
-    { course_id: 5, code: 'PT3-BSIT-GT05', name: 'Bachelor of Information Technology (Major: Games Technology & Web)', degree_level: 'Bachelor', total_credit_points: 72 },
-    { course_id: 6, code: 'PT3-MSIT-CC06', name: 'Master of Information Technology (Cloud Computing & DevOps)', degree_level: 'Master', total_credit_points: 48 }
+    { course_id: 4, code: 'PT3-BSIT-AI04', name: 'Bachelor of Information Technology (Major: Artificial Intelligence)', degree_level: 'Bachelor', total_credit_points: 72 }
 ];
 
 export const mockUnits = [
@@ -62,12 +60,12 @@ export const mockStudents = [
         student_number: 'PT3-2026-001',
         first_name: 'Alex',
         last_name: 'Mercer',
-        email: 'alex.mercer@student.pt3solutions.edu.au',
+        email: 'alex.mercer@student.pt3solutions.edu.sg',
         course_id: 1,
-        course_code: 'PT3-BSIT-01',
-        course_name: 'Bachelor of Information Technology (Major: Software & Systems)',
-        location_id: 1,
-        location_name: 'PT3 Solutions Main Campus (Perth)',
+        course_code: 'PT3-BSIT-AI01',
+        course_name: 'Bachelor of Information Technology (Major: Artificial Intelligence)',
+        location_id: 2,
+        location_name: 'PT3 Solutions Singapore Campus',
         commencement_year: 2026,
         study_status: 'active'
     },
@@ -78,8 +76,8 @@ export const mockStudents = [
         last_name: 'Jenkins',
         email: 'sarah.jenkins@student.pt3solutions.edu.sg',
         course_id: 2,
-        course_code: 'PT3-BSCS-02',
-        course_name: 'Bachelor of Computer Science (Major: Artificial Intelligence)',
+        course_code: 'PT3-BSIT-CS02',
+        course_name: 'Bachelor of Information Technology (Major: Computer Science)',
         location_id: 2,
         location_name: 'PT3 Solutions Singapore Campus',
         commencement_year: 2026,
@@ -92,8 +90,8 @@ export const mockStudents = [
         last_name: 'Chang',
         email: 'm.chang@student.pt3solutions.edu.sg',
         course_id: 3,
-        course_code: 'PT3-BSE-03',
-        course_name: 'Bachelor of Software Engineering (Honours)',
+        course_code: 'PT3-BSIT-BIS03',
+        course_name: 'Bachelor of Information Technology (Major: Business Information Systems)',
         location_id: 2,
         location_name: 'PT3 Solutions Singapore Campus',
         commencement_year: 2026,
@@ -106,40 +104,12 @@ export const mockStudents = [
         last_name: 'Watson',
         email: 'e.watson@student.pt3solutions.edu.sg',
         course_id: 4,
-        course_code: 'PT3-BSCY-04',
-        course_name: 'Bachelor of Cyber Security & Digital Forensics',
+        course_code: 'PT3-BSIT-AI04',
+        course_name: 'Bachelor of Information Technology (Major: Artificial Intelligence)',
         location_id: 2,
         location_name: 'PT3 Solutions Singapore Campus',
         commencement_year: 2026,
         study_status: 'part-time'
-    },
-    {
-        student_id: 5,
-        student_number: 'PT3-2024-005',
-        first_name: 'Michael',
-        last_name: 'Rahardjo',
-        email: 'm.rahardjo@student.pt3solutions.edu.au',
-        course_id: 5,
-        course_code: 'PT3-BSIT-GT05',
-        course_name: 'Bachelor of Information Technology (Major: Games Technology & Web)',
-        location_id: 1,
-        location_name: 'PT3 Solutions Main Campus (Perth)',
-        commencement_year: 2024,
-        study_status: 'graduating'
-    },
-    {
-        student_id: 6,
-        student_number: 'PT3-2026-006',
-        first_name: 'Jessica',
-        last_name: 'Taylor',
-        email: 'j.taylor@student.pt3solutions.edu.au',
-        course_id: 6,
-        course_code: 'PT3-MSIT-CC06',
-        course_name: 'Master of Information Technology (Cloud Computing & DevOps)',
-        location_id: 4,
-        location_name: 'PT3 Solutions Online Portal',
-        commencement_year: 2026,
-        study_status: 'active'
     }
 ];
 

@@ -35,14 +35,12 @@ INSERT INTO TeachingPeriod (period_id, code, name, period_type, sequence_order) 
 (6, 'WINT', 'Winter Term', 'winter', 4),
 (7, 'SUMM', 'Summer Term', 'summer', 5);
 
--- 3. Seed Courses (6 Distinct Murdoch IT Degree Programs & Majors)
+-- 3. Seed Courses (Bachelor of Information Technology Majors: AI, CS, BIS)
 INSERT INTO Course (course_id, code, name, degree_level, total_credit_points) VALUES
-(1, 'PT3-BSIT-01', 'Bachelor of Information Technology (Major: Software & Systems)', 'Bachelor', 72),
-(2, 'PT3-BSIT-CS02', 'Bachelor of Information Technology (Major: Cyber Security & Forensics)', 'Bachelor', 72),
+(1, 'PT3-BSIT-AI01', 'Bachelor of Information Technology (Major: Artificial Intelligence)', 'Bachelor', 72),
+(2, 'PT3-BSIT-CS02', 'Bachelor of Information Technology (Major: Computer Science)', 'Bachelor', 72),
 (3, 'PT3-BSIT-BIS03', 'Bachelor of Information Technology (Major: Business Information Systems)', 'Bachelor', 72),
-(4, 'PT3-BSIT-DS04', 'Bachelor of Data Analytics & Artificial Intelligence', 'Bachelor', 72),
-(5, 'PT3-BSIT-GT05', 'Bachelor of Information Technology (Major: Games Technology & Web)', 'Bachelor', 72),
-(6, 'PT3-MSIT-CC06', 'Master of Information Technology (Cloud Computing & DevOps)', 'Master', 48);
+(4, 'PT3-BSIT-AI04', 'Bachelor of Information Technology (Major: Artificial Intelligence)', 'Bachelor', 72);
 
 -- 4. Seed Units (Standard Curriculum Dataset)
 INSERT INTO Unit (unit_id, code, title, credit_points, level) VALUES
