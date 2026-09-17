@@ -1,8 +1,9 @@
 import express from 'express';
-import { getPlanByStudent, savePlan, recommendPlan, agreePlan, approvePlan, recalculatePlan } from '../controllers/planController.js';
+import { getPlanByStudent, savePlan, recommendPlan, agreePlan, approvePlan, recalculatePlan, getAuditLog } from '../controllers/planController.js';
 
 const router = express.Router();
 
+router.get('/audit-log', getAuditLog);
 router.get('/student/:studentId', getPlanByStudent);
 router.post('/', savePlan);
 router.post('/:planId/recommend', recommendPlan);

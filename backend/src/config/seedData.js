@@ -164,3 +164,71 @@ export const mockDefaultPlanUnits = [
     { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 7 },
     { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 8 }
 ];
+
+export const mockAuditLog = [
+    {
+        version_id: 105,
+        plan_id: 1,
+        version_number: 5,
+        student_number: 'PT3-2026-001',
+        first_name: 'Alex',
+        last_name: 'Mercer',
+        plan_title: 'PT3-BSIT-AI01 Study Plan',
+        amendment_reason: 'Study Plan officially APPROVED & finalized by Academic Chair',
+        created_by: 'Academic Chair',
+        created_at: '2026-09-17T11:45:00.000Z',
+        plan_status: 'approved'
+    },
+    {
+        version_id: 104,
+        plan_id: 1,
+        version_number: 4,
+        student_number: 'PT3-2026-001',
+        first_name: 'Alex',
+        last_name: 'Mercer',
+        plan_title: 'PT3-BSIT-AI01 Study Plan',
+        amendment_reason: 'Student agreed and digitally signed proposed study plan (72 CP)',
+        created_by: 'Student: Alex Mercer',
+        created_at: '2026-09-17T11:30:00.000Z',
+        plan_status: 'agreed'
+    },
+    {
+        version_id: 103,
+        plan_id: 1,
+        version_number: 3,
+        student_number: 'PT3-2026-001',
+        first_name: 'Alex',
+        last_name: 'Mercer',
+        plan_title: 'PT3-BSIT-AI01 Study Plan',
+        amendment_reason: 'Study plan marked as RECOMMENDED to student for review',
+        created_by: 'Academic Chair',
+        created_at: '2026-09-17T11:15:00.000Z',
+        plan_status: 'recommended'
+    },
+    {
+        version_id: 102,
+        plan_id: 2,
+        version_number: 2,
+        student_number: 'PT3-2026-002',
+        first_name: 'Sarah',
+        last_name: 'Jenkins',
+        plan_title: 'PT3-BSIT-CS02 Study Plan',
+        amendment_reason: 'Amended Computer Science unit sequence (Added ICT283 Data Structures)',
+        created_by: 'Academic Chair',
+        created_at: '2026-09-17T10:45:00.000Z',
+        plan_status: 'draft'
+    },
+    {
+        version_id: 101,
+        plan_id: 1,
+        version_number: 1,
+        student_number: 'PT3-2026-001',
+        first_name: 'Alex',
+        last_name: 'Mercer',
+        plan_title: 'PT3-BSIT-AI01 Study Plan',
+        amendment_reason: 'Initial study plan creation and unit placement (Year 1 S1 & S2)',
+        created_by: 'Academic Chair',
+        created_at: '2026-09-17T10:00:00.000Z',
+        plan_status: 'draft'
+    }
+];

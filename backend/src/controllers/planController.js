@@ -1,6 +1,35 @@
 import pool from '../config/db.js';
 import { validateStudyPlan } from '../services/validationEngine.js';
-import { mockDefaultPlanUnits } from '../config/seedData.js';
+import { mockDefaultPlanUnits, mockAuditLog } from '../config/seedData.js';
+
+export async function getAuditLog(req, res) {
+    try {
+        const [rows] = await pool.query(`
+            SELECT 
+                spv.version_id,
+                spv.plan_id,
+                spv.version_number,
+                spv.amendment_reason,
+                spv.snapshot_json,
+                spv.created_by,
+                spv.created_at,
+                s.first_name,
+                s.last_name,
+                s.student_number,
+                sp.title AS plan_title,
+                sp.status AS plan_status
+            FROM StudyPlanVersion spv
+            LEFT JOIN StudyPlan sp ON spv.plan_id = sp.plan_id
+            LEFT JOIN Student s ON sp.student_id = s.student_id
+            ORDER BY spv.created_at DESC, spv.version_id DESC
+            LIMIT 50
+        `);
+        res.json(rows && rows.length > 0 ? rows : mockAuditLog);
+    } catch (err) {
+        console.warn('DB query failed in getAuditLog, returning mock audit log:', err.message);
+        res.json(mockAuditLog);
+    }
+}
 
 export async function getPlanByStudent(req, res) {
     try {
