@@ -21,26 +21,6 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
 
   const unitLevel = Number(unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : 100));
 
-  let categoryBadge = (
-    <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 font-semibold text-[10px] rounded-full px-2.5 py-0.5">
-      CORE
-    </span>
-  );
-
-  if (unitLevel >= 300) {
-    categoryBadge = (
-      <span className="bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 font-semibold text-[10px] rounded-full px-2.5 py-0.5">
-        ADVANCED
-      </span>
-    );
-  } else if (unitLevel >= 200) {
-    categoryBadge = (
-      <span className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800 font-semibold text-[10px] rounded-full px-2.5 py-0.5">
-        MAJOR
-      </span>
-    );
-  }
-
   let cardBg = 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-xs';
 
   if (isCompleted) {
@@ -55,7 +35,7 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
       style={style}
       className={`relative p-3.5 rounded-2xl border text-xs shadow-2xs transition-all group select-none space-y-2.5 ${cardBg}`}
     >
-      {/* Top Header Row: Drag Handle, Code, Badges & Actions */}
+      {/* Top Header Row: Drag Handle, Code & Actions */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <div
@@ -73,12 +53,10 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {isCompleted ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
+          {isCompleted && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
               <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> DONE
             </span>
-          ) : (
-            categoryBadge
           )}
 
           <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 tabular-nums bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-600">
