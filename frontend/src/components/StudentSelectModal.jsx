@@ -146,6 +146,9 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
                     <span className="bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
                       {student.course_code || 'PT3-BSIT'}
                     </span>
+                    <span className="bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                      Sample Student
+                    </span>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal truncate mt-0.5">
                     {student.course_name || 'Bachelor of Information Technology'}

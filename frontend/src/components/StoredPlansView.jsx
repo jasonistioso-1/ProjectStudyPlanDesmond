@@ -145,7 +145,10 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Plan ID: #{plan.plan_id}</span>
                   </td>
                   <td className="p-3.5">
-                    <div className="font-semibold text-slate-900 dark:text-slate-100">{plan.student_name}</div>
+                    <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                      <span>{plan.student_name}</span>
+                      <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono">Sample Student</span>
+                    </div>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{plan.student_number}</span>
                   </td>
                   <td className="p-3.5">

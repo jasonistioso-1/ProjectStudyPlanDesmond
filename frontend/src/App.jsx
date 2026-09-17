@@ -301,6 +301,7 @@ export default function App() {
                   <span className="flex items-center gap-1.5">
                     <span className="text-slate-400 dark:text-slate-500">Student:</span>
                     <strong className="text-slate-900 dark:text-slate-200 font-semibold">{selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}</strong>
+                    <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">Sample Student</span>
                   </span>
                   <span className="text-slate-300 dark:text-slate-700">•</span>
                   <span className="flex items-center gap-1.5">
