@@ -589,12 +589,12 @@ export default function PlanBuilder({
               <span>Reset Canvas (0 CP)</span>
             </button>
 
-            {planStatus === 'draft' && (
+            {(planStatus === 'draft' || planStatus === 'recommended') && (
               <button
                 onClick={() => onRecommendPlan && onRecommendPlan()}
                 className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
               >
-                <span>Recommend to Student</span>
+                <span>{planStatus === 'recommended' ? 'Update & Re-Recommend' : 'Recommend to Student'}</span>
                 <ArrowRight className="w-4 h-4 text-emerald-300" />
               </button>
             )}
