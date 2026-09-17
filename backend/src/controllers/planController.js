@@ -1,6 +1,6 @@
 import pool from '../config/db.js';
 import { validateStudyPlan } from '../services/validationEngine.js';
-import { mockDefaultPlanUnits, mockAuditLog } from '../config/seedData.js';
+import { mockDefaultPlanUnits, mockAuditLog, mockStudentPlans } from '../config/seedData.js';
 
 export async function getAuditLog(req, res) {
     try {
@@ -20,7 +20,7 @@ export async function getAuditLog(req, res) {
                 sp.status AS plan_status
             FROM StudyPlanVersion spv
             LEFT JOIN StudyPlan sp ON spv.plan_id = sp.plan_id
-            LEFT JOIN Student s ON sp.student_id = s.student_id
+            LEFT JOIN Student s ON spv.student_id = s.student_id
             ORDER BY spv.created_at DESC, spv.version_id DESC
             LIMIT 50
         `);
@@ -32,26 +32,26 @@ export async function getAuditLog(req, res) {
 }
 
 export async function getPlanByStudent(req, res) {
+    const numId = Number(req.params.studentId || 1);
     try {
-        const { studentId } = req.params;
-        
         // Fetch study plan header
         const [planRows] = await pool.query(
             `SELECT * FROM StudyPlan WHERE student_id = ? ORDER BY plan_id DESC LIMIT 1`,
-            [studentId]
+            [numId]
         );
 
         if (planRows.length === 0) {
-            return res.json({
+            const fallback = mockStudentPlans[numId] || {
                 plan: {
-                    plan_id: 1,
-                    student_id: Number(studentId),
-                    title: 'PT3-BSIT-01 Standard Study Plan 2026',
-                    status: 'recommended',
+                    plan_id: numId,
+                    student_id: numId,
+                    title: 'PT3-BSIT Standard Study Plan 2026',
+                    status: 'draft',
                     total_credit_points: 24
                 },
                 units: mockDefaultPlanUnits
-            });
+            };
+            return res.json(fallback);
         }
 
         const plan = planRows[0];
@@ -81,16 +81,17 @@ export async function getPlanByStudent(req, res) {
         res.json({ plan, units: unitRows });
     } catch (err) {
         console.warn('Database query failed in getPlanByStudent, returning fallback plan:', err.message);
-        res.json({
+        const fallback = mockStudentPlans[numId] || {
             plan: {
-                plan_id: 1,
-                student_id: Number(req.params.studentId || 1),
-                title: 'PT3-BSIT-01 Standard Study Plan 2026',
-                status: 'recommended',
+                plan_id: numId,
+                student_id: numId,
+                title: 'PT3-BSIT Standard Study Plan 2026',
+                status: 'draft',
                 total_credit_points: 24
             },
             units: mockDefaultPlanUnits
-        });
+        };
+        res.json(fallback);
     }
 }
 
