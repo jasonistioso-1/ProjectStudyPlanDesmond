@@ -1,111 +1,188 @@
-import React from 'react';
-import { Cpu, Database, ShieldCheck, Code, BookOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Search, FileSpreadsheet, Layers, CheckCircle2, ChevronRight, Filter } from 'lucide-react';
 
-export default function CourseCatalogPreview() {
-  const courses = [
-    {
-      code: 'B1390',
-      title: 'Bachelor of IT (Software Systems & Enterprise Tech)',
-      category: 'Software Engineering',
-      duration: '3 Years (72 CP)',
-      badgeBg: 'bg-emerald-50 text-[#008652] border-emerald-200',
-      iconBg: 'bg-[#008652]',
-      icon: Cpu,
-      units: ['ICT159 Programming', 'ICT167 Computer Science', 'ICT285 Databases', 'ICT302 Capstone']
-    },
-    {
-      code: 'B1420',
-      title: 'Bachelor of Data Analytics & Business Intelligence',
-      category: 'Data Science',
-      duration: '3 Years (72 CP)',
-      badgeBg: 'bg-teal-50 text-teal-800 border-teal-200',
-      iconBg: 'bg-teal-700',
-      icon: Database,
-      units: ['MAS183 Statistical Data', 'ICT220 Big Data', 'ICT285 Databases', 'ICT305 Data Viz']
-    },
-    {
-      code: 'B1390-SEC',
-      title: 'Bachelor of IT (Cyber Security & Forensics)',
-      category: 'Cybersecurity',
-      duration: '3 Years (72 CP)',
-      badgeBg: 'bg-rose-50 text-rose-800 border-rose-200',
-      iconBg: 'bg-rose-700',
-      icon: ShieldCheck,
-      units: ['ICT111 Cyber Fundamentals', 'ICT280 Info Security Policy', 'ICT378 Cyber Forensics', 'ICT387 Ethical Hacking']
-    },
-    {
-      code: 'M1220',
-      title: 'Master of Information Technology (Advanced Data Analytics)',
-      category: 'Postgraduate Degree',
-      duration: '2 Years (48 CP)',
-      badgeBg: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-      iconBg: 'bg-indigo-700',
-      icon: Code,
-      units: ['ICT521 IT Practice', 'ICT606 Data Mining', 'ICT610 Cloud Architecture', 'ICT620 Capstone Project']
-    }
+export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [levelFilter, setLevelFilter] = useState('ALL');
+
+  const defaultUnits = [
+    { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2', 'T1', 'T2'] },
+    { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2', 'T1'] },
+    { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2', 'T1', 'T2', 'T3'] },
+    { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, level: 100, prereqs: 'ICT159', offerings: ['S1', 'S2'] },
+    { unit_id: 5, code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2'] },
+    { unit_id: 6, code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2'] },
+    { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2', 'T1'] },
+    { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['S1', 'S2'] },
+    { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, level: 200, prereqs: 'ICT159', offerings: ['S1', 'S2'] },
+    { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, level: 200, prereqs: 'ICT167', offerings: ['S1', 'S2'] },
+    { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, level: 200, prereqs: 'ICT167', offerings: ['S1', 'S2'] },
+    { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, level: 200, prereqs: 'ICT167', offerings: ['S1', 'S2'] },
+    { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['S1', 'S2'] },
+    { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, level: 200, prereqs: 'ICT159', offerings: ['S1', 'S2'] },
+    { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['S1', 'S2'] },
+    { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['S1', 'S2'] },
+    { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2'] },
+    { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, level: 300, prereqs: 'ICT292', offerings: ['S1', 'S2'] },
+    { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, level: 300, prereqs: 'ICT201', offerings: ['S1', 'S2'] },
+    { unit_id: 22, code: 'ICT303', title: 'Advanced Machine Learning', credit_points: 3, level: 300, prereqs: 'ICT202', offerings: ['S1', 'S2'] },
+    { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, level: 300, prereqs: 'ICT203', offerings: ['S1', 'S2'] },
+    { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, level: 300, prereqs: 'ICT202', offerings: ['S1', 'S2'] },
+    { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300, prereqs: 'ICT283', offerings: ['S1', 'S2'] },
+    { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300, prereqs: 'ICT283', offerings: ['S1', 'S2'] },
+    { unit_id: 27, code: 'ICT393', title: 'Advanced Business Intelligence', credit_points: 3, level: 300, prereqs: 'ICT284', offerings: ['S1', 'S2'] },
+    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prereqs: 'ICT285', offerings: ['S1', 'S2'] }
   ];
 
+  const unitsList = catalogUnits && catalogUnits.length > 0
+    ? catalogUnits.map(u => ({
+        unit_id: u.unit_id,
+        code: u.code,
+        title: u.title,
+        credit_points: u.credit_points || 3,
+        level: u.level || 100,
+        prereqs: u.prerequisites && u.prerequisites.length > 0 ? u.prerequisites.map(p => p.prereq_code || p).join(', ') : 'None',
+        offerings: u.offerings || ['S1', 'S2']
+      }))
+    : defaultUnits;
+
+  const filteredUnits = unitsList.filter(u => {
+    const matchesQuery = searchQuery === '' ||
+      u.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.title.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesLevel = levelFilter === 'ALL' ||
+      (levelFilter === '100' && u.level >= 100 && u.level < 200) ||
+      (levelFilter === '200' && u.level >= 200 && u.level < 300) ||
+      (levelFilter === '300' && u.level >= 300);
+
+    return matchesQuery && matchesLevel;
+  });
+
   return (
-    <section className="py-4 font-sans">
-      <div className="flex items-center justify-between mb-4">
+    <section className="py-4 font-sans space-y-5">
+      {/* Header Banner */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-full text-xs font-bold text-[#008652] dark:text-emerald-400 mb-1">
-            <BookOpen className="w-3.5 h-3.5 text-[#008652] dark:text-emerald-400" /> Academic Degree Pathways
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/50 rounded-full text-xs font-bold text-red-700 dark:text-red-300 mb-2">
+            <BookOpen className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+            <span>Section 8 Requirement — Data-Driven Course Unit Catalog</span>
           </div>
-          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Academic Course Catalog & Degree Pathways
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
+            Official Course Unit Catalog & Prerequisites Directory
           </h2>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
-            Official degree structures and required course units offered at PT3 Solutions campuses.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-normal">
+            Explore active degree units, prerequisite progression rules, and teaching period availability. Upload Excel/CSV files to update offerings directly.
           </p>
+        </div>
+
+        {/* CSV/Excel Importer Trigger Button */}
+        <button
+          onClick={onOpenImport}
+          className="px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-2 shrink-0"
+          title="Upload or import unit offerings and prerequisites from CSV / Excel"
+        >
+          <FileSpreadsheet className="w-4 h-4 text-white" />
+          <span>Upload CSV / Excel Dataset</span>
+        </button>
+      </div>
+
+      {/* Search & Filter Controls */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+          <input
+            type="text"
+            placeholder="Search unit by code or title (e.g. ICT159, Machine Learning)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-all placeholder:text-slate-400"
+          />
+        </div>
+
+        {/* Level Filters */}
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs shrink-0">
+          <span className="text-[10px] font-bold text-slate-400 uppercase px-2 flex items-center gap-1">
+            <Filter className="w-3 h-3" /> Level:
+          </span>
+          {['ALL', '100', '200', '300'].map(lvl => (
+            <button
+              key={lvl}
+              onClick={() => setLevelFilter(lvl)}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                levelFilter === lvl
+                  ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {lvl === 'ALL' ? 'All Units' : `Level ${lvl}`}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Clean Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {courses.map((course) => {
-          const IconComponent = course.icon;
-          return (
+      {/* Unit Catalog Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredUnits.length === 0 ? (
+          <div className="col-span-full py-12 text-center bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl">
+            <p className="text-xs text-slate-500">No course units match your search query.</p>
+          </div>
+        ) : (
+          filteredUnits.map(unit => (
             <div
-              key={course.code}
-              className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+              key={unit.unit_id || unit.code}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
             >
               <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div className={`w-10 h-10 rounded-xl ${course.iconBg} text-white flex items-center justify-center shadow-sm`}>
-                    <IconComponent className="w-5 h-5" />
-                  </div>
-                  <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border font-mono ${course.badgeBg}`}>
-                    {course.code}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="bg-red-700 text-white font-bold text-xs px-2.5 py-0.5 rounded-lg shadow-2xs">
+                    {unit.code}
+                  </span>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                    {unit.credit_points || 3} CP
                   </span>
                 </div>
 
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">
-                  {course.category}
-                </span>
-                <h3 className="text-xs font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-[#008652] dark:group-hover:text-emerald-400 transition-colors leading-snug">
-                  {course.title}
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white font-heading mt-1">
+                  {unit.title}
                 </h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">
-                  Duration: {course.duration}
-                </p>
 
-                {/* Key Units Tags */}
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1">
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Key Units Included:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {course.units.map((u, i) => (
-                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold font-mono">
-                        {u}
-                      </span>
-                    ))}
+                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs">
+                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span className="font-semibold">Prerequisite:</span>
+                    <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${
+                      unit.prereqs === 'None'
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                        : 'bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                    }`}>
+                      {unit.prereqs}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span className="font-semibold">Teaching Periods:</span>
+                    <div className="flex gap-1">
+                      {(unit.offerings || ['S1', 'S2']).map((p, idx) => (
+                        <span key={idx} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700">
+                          {p}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Level {unit.level || 100} Core Unit</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Data-Driven
+                </span>
+              </div>
             </div>
-          );
-        })}
+          ))
+        )}
       </div>
     </section>
   );
 }
+

@@ -450,7 +450,10 @@ export default function App() {
 
           {/* View Component: CATALOG (Course Catalog Preview) */}
           {activeTab === 'CATALOG' && (
-            <CourseCatalogPreview />
+            <CourseCatalogPreview
+              catalogUnits={catalogUnits}
+              onOpenImport={() => setShowImportModal(true)}
+            />
           )}
         </main>
       </div>
