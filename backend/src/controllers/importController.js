@@ -53,8 +53,40 @@ export async function importData(req, res) {
                     importedCount++;
                 }
             }
+        } else if (type === 'students') {
+            for (const item of data) {
+                // item: { student_number, first_name, last_name, email, course_code, location }
+                let courseId = 1;
+                let locationId = 2;
+                if (item.course_code) {
+                    const [c] = await connection.query(`SELECT course_id FROM Course WHERE code = ?`, [item.course_code]);
+                    if (c.length > 0) courseId = c[0].course_id;
+                }
+                if (item.location) {
+                    const [l] = await connection.query(`SELECT location_id FROM Location WHERE code LIKE ? OR name LIKE ?`, [`%${item.location}%`, `%${item.location}%`]);
+                    if (l.length > 0) locationId = l[0].location_id;
+                }
+
+                await connection.query(
+                    `INSERT INTO Student (student_number, first_name, last_name, email, course_id, location_id, commencement_year, status)
+                     VALUES (?, ?, ?, ?, ?, ?, 2026, ?)
+                     ON DUPLICATE KEY UPDATE first_name = VALUES(first_name), last_name = VALUES(last_name), email = VALUES(email)`,
+                    [item.student_number, item.first_name, item.last_name, item.email, courseId, locationId, item.status || 'active']
+                );
+                importedCount++;
+            }
+        } else if (type === 'courses') {
+            for (const item of data) {
+                // item: { code, name, degree_level, total_credit_points }
+                await connection.query(
+                    `INSERT INTO Course (code, name, degree_level, total_credit_points) VALUES (?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE name = VALUES(name), degree_level = VALUES(degree_level), total_credit_points = VALUES(total_credit_points)`,
+                    [item.code, item.name, item.degree_level || 'Bachelor', item.total_credit_points || 72]
+                );
+                importedCount++;
+            }
         } else {
-            return res.status(400).json({ error: 'Invalid import type. Use units, offerings, or prerequisites' });
+            return res.status(400).json({ error: 'Invalid import type. Use units, students, offerings, prerequisites, or courses' });
         }
 
         await connection.commit();

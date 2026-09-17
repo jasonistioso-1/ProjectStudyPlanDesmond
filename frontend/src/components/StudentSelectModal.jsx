@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, UserCheck, GraduationCap, Building2, ChevronRight, Sparkles, X, ArrowUpDown } from 'lucide-react';
+import { Search, UserCheck, GraduationCap, Building2, ChevronRight, Sparkles, X, ArrowUpDown, UserPlus, Edit3 } from 'lucide-react';
 
-export default function StudentSelectModal({ students = [], onSelectStudent, onClose, isModal = false }) {
+export default function StudentSelectModal({ students = [], onSelectStudent, onAddStudentClick, onEditStudentClick, onClose, isModal = false }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name'); // 'name' | 'id' | 'course'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'
@@ -52,11 +52,22 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
         <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
           PT3 SOLUTIONS SINGAPORE STUDENT DIRECTORY
         </span>
-        <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-2 font-heading">
-          Select Student Profile
-        </h2>
+        <div className="flex items-center justify-between gap-2 mt-2">
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
+            Select Student Profile
+          </h2>
+          {onAddStudentClick && (
+            <button
+              onClick={onAddStudentClick}
+              className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>+ Add Student</span>
+            </button>
+          )}
+        </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-          Select a student from the 4 registered sample database profiles to view their academic history, active study plan, and progress in either Student View or Academic Chair mode.
+          Select or edit a student profile to view their academic history, active study plan, and degree progress.
         </p>
       </div>
 
@@ -165,6 +176,18 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                {onEditStudentClick && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditStudentClick(student);
+                    }}
+                    className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl transition-all"
+                    title="Edit Student Profile"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

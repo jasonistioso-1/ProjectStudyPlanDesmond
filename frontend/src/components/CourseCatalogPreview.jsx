@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, FileSpreadsheet, Layers, CheckCircle2, ChevronRight, Filter } from 'lucide-react';
+import { BookOpen, Search, FileSpreadsheet, Layers, CheckCircle2, ChevronRight, Filter, Plus } from 'lucide-react';
 
-export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport }) {
+export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, onOpenAddUnit }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState('ALL');
 
@@ -62,32 +62,44 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport }
   return (
     <section className="py-4 font-sans space-y-5">
       {/* Header Banner */}
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl font-sans text-white transition-all relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl font-sans text-slate-900 dark:text-white transition-all relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         {/* Subtle executive background glow */}
         <div className="absolute -right-16 -top-16 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-red-950/80 text-red-300 border border-red-800/60 rounded-full text-xs font-semibold tracking-wide mb-2">
-            <BookOpen className="w-3.5 h-3.5 text-red-400 shrink-0" />
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-red-50 text-red-700 dark:bg-red-950/80 dark:text-red-300 border border-red-200 dark:border-red-800/60 rounded-full text-xs font-semibold tracking-wide mb-2">
+            <BookOpen className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
             <span>Data-Driven Course Unit Catalog & Prerequisites</span>
           </div>
-          <h2 className="text-xl font-extrabold text-white tracking-tight font-heading">
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
             Official Course Unit Catalog & Prerequisites Directory
           </h2>
-          <p className="text-xs text-slate-300 mt-1 font-normal">
-            Explore active degree units, prerequisite progression rules, and teaching period availability. Upload Excel/CSV files to update offerings directly.
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-normal">
+            Explore active degree units, prerequisite progression rules, and teaching period availability.
           </p>
         </div>
 
-        {/* CSV/Excel Importer Trigger Button */}
-        <button
-          onClick={onOpenImport}
-          className="relative z-10 px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-2 shrink-0"
-          title="Upload or import unit offerings and prerequisites from CSV / Excel"
-        >
-          <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
-          <span>Upload CSV / Excel Dataset</span>
-        </button>
+        {/* Actions Bar: Add Unit & Dataset Upload */}
+        <div className="relative z-10 flex flex-wrap items-center gap-2.5 shrink-0">
+          {onOpenAddUnit && (
+            <button
+              onClick={onOpenAddUnit}
+              className="px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5"
+            >
+              <Plus className="w-4 h-4 text-red-400" />
+              <span>+ Add Unit Manually</span>
+            </button>
+          )}
+
+          <button
+            onClick={onOpenImport}
+            className="px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-2 shrink-0"
+            title="Upload or import unit offerings and prerequisites from CSV / Excel"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
+            <span>Upload CSV / Excel Dataset</span>
+          </button>
+        </div>
       </div>
 
       {/* Search & Filter Controls */}

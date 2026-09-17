@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Database, Upload, CheckCircle2, AlertCircle, X, FileSpreadsheet, Download, FileText, Check, AlertTriangle, Users, BookOpen, Layers, Award } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { importSeedData } from '../services/api';
 
 export default function DataImportModal({ onClose }) {
@@ -169,13 +170,33 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
     if (!file) return;
 
     setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target.result;
-      setInputText(content);
-      parseContent(content);
-    };
-    reader.readAsText(file);
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+
+    if (isExcel) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const buffer = event.target.result;
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const csvText = XLSX.utils.sheet_to_csv(worksheet);
+          setInputText(csvText);
+          parseContent(csvText);
+        } catch (err) {
+          setRowErrors([`Failed to parse Excel file '${file.name}': ${err.message}`]);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target.result;
+        setInputText(content);
+        parseContent(content);
+      };
+      reader.readAsText(file);
+    }
   };
 
   const handleDownloadSampleCSV = () => {
