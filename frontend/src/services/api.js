@@ -13,14 +13,56 @@ export async function fetchStudents(search = '') {
                 student_number: 'PT3-2026-001',
                 first_name: 'Alex',
                 last_name: 'Mercer',
-                email: 'alex.mercer@student.pt3solutions.edu.au',
+                email: 'alex.mercer@student.pt3solutions.edu.sg',
                 course_id: 1,
                 course_code: 'PT3-BSIT-01',
                 course_name: 'Bachelor of Information Technology (Major: Software & Systems)',
-                location_id: 1,
+                location_id: 2,
                 location_name: 'PT3 Solutions Singapore Campus',
                 commencement_year: 2026,
                 study_status: 'active'
+            },
+            {
+                student_id: 2,
+                student_number: 'PT3-2026-002',
+                first_name: 'Sarah',
+                last_name: 'Jenkins',
+                email: 'sarah.jenkins@student.pt3solutions.edu.sg',
+                course_id: 2,
+                course_code: 'PT3-BSCS-02',
+                course_name: 'Bachelor of Computer Science (Major: Artificial Intelligence)',
+                location_id: 2,
+                location_name: 'PT3 Solutions Singapore Campus',
+                commencement_year: 2026,
+                study_status: 'active'
+            },
+            {
+                student_id: 3,
+                student_number: 'PT3-2026-003',
+                first_name: 'Michael',
+                last_name: 'Chang',
+                email: 'm.chang@student.pt3solutions.edu.sg',
+                course_id: 3,
+                course_code: 'PT3-BSE-03',
+                course_name: 'Bachelor of Software Engineering (Honours)',
+                location_id: 2,
+                location_name: 'PT3 Solutions Singapore Campus',
+                commencement_year: 2026,
+                study_status: 'active'
+            },
+            {
+                student_id: 4,
+                student_number: 'PT3-2026-004',
+                first_name: 'Emily',
+                last_name: 'Watson',
+                email: 'e.watson@student.pt3solutions.edu.sg',
+                course_id: 4,
+                course_code: 'PT3-BSCY-04',
+                course_name: 'Bachelor of Cyber Security & Digital Forensics',
+                location_id: 2,
+                location_name: 'PT3 Solutions Singapore Campus',
+                commencement_year: 2026,
+                study_status: 'part-time'
             }
         ];
     }

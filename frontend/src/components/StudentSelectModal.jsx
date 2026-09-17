@@ -122,9 +122,9 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
       </div>
 
       {/* Student List Grid */}
-      <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
         {filteredStudents.length === 0 ? (
-          <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+          <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
             <p className="text-xs text-slate-500 dark:text-slate-400">No students match your search query.</p>
           </div>
         ) : (
@@ -132,31 +132,31 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
             <div
               key={student.student_id}
               onClick={() => onSelectStudent(student)}
-              className="group bg-white dark:bg-slate-800/90 hover:bg-slate-50/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-500/60 dark:hover:border-red-500/60 rounded-xl p-4 transition-all duration-200 cursor-pointer shadow-2xs flex items-center justify-between gap-4"
+              className="group bg-white dark:bg-slate-800/90 hover:bg-slate-50/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-red-500/80 dark:hover:border-red-500/80 rounded-xl p-4 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-md flex items-center justify-between gap-4"
             >
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-10 h-10 rounded-lg bg-slate-900 dark:bg-slate-700 text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 group-hover:bg-red-600 transition-colors">
+                <div className="w-11 h-11 rounded-xl bg-slate-900 dark:bg-slate-700 text-white font-mono font-extrabold text-sm flex items-center justify-center shrink-0 group-hover:bg-red-600 transition-colors shadow-2xs">
                   {student.first_name ? student.first_name[0] : 'S'}
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors truncate">
                       {student.first_name} {student.last_name}
                     </h3>
-                    <span className="bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                    <span className="bg-red-50 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">
                       {student.course_code || 'PT3-BSIT'}
                     </span>
-                    <span className="bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                    <span className="bg-amber-100/90 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
                       Sample Student
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal truncate mt-0.5">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium truncate mt-0.5">
                     {student.course_name || 'Bachelor of Information Technology'}
                   </p>
                   <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-1">
                     <span>ID: <strong className="text-slate-700 dark:text-slate-300">{student.student_number}</strong></span>
                     <span>•</span>
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                       <Building2 className="w-3 h-3 text-slate-400 dark:text-slate-500" />
                       Singapore Campus
                     </span>
@@ -170,7 +170,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
                     e.stopPropagation();
                     onSelectStudent(student);
                   }}
-                  className="px-3 py-1.5 bg-slate-900 dark:bg-red-700 group-hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
+                  className="px-3.5 py-2 bg-slate-900 dark:bg-red-700 group-hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-2xs group-hover:shadow-xs"
                 >
                   <span>Select Student</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -182,7 +182,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onC
       </div>
 
       <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-        <span>Total Records Available: <strong className="text-slate-800 dark:text-slate-200">{students.length}</strong></span>
+        <span>Registered Students Available: <strong className="text-slate-900 dark:text-white font-bold">{filteredStudents.length} of {students.length}</strong></span>
         <span className="font-mono text-slate-400 dark:text-slate-500">ICT302 Specification Standard</span>
       </div>
     </div>

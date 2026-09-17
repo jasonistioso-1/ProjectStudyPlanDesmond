@@ -31,10 +31,69 @@ import {
   FileText
 } from 'lucide-react';
 
+const initialSampleStudents = [
+  {
+    student_id: 1,
+    student_number: 'PT3-2026-001',
+    first_name: 'Alex',
+    last_name: 'Mercer',
+    email: 'alex.mercer@student.pt3solutions.edu.sg',
+    course_id: 1,
+    course_code: 'PT3-BSIT-01',
+    course_name: 'Bachelor of Information Technology (Major: Software & Systems)',
+    location_id: 2,
+    location_name: 'PT3 Solutions Singapore Campus',
+    commencement_year: 2026,
+    study_status: 'active'
+  },
+  {
+    student_id: 2,
+    student_number: 'PT3-2026-002',
+    first_name: 'Sarah',
+    last_name: 'Jenkins',
+    email: 'sarah.jenkins@student.pt3solutions.edu.sg',
+    course_id: 2,
+    course_code: 'PT3-BSCS-02',
+    course_name: 'Bachelor of Computer Science (Major: Artificial Intelligence)',
+    location_id: 2,
+    location_name: 'PT3 Solutions Singapore Campus',
+    commencement_year: 2026,
+    study_status: 'active'
+  },
+  {
+    student_id: 3,
+    student_number: 'PT3-2026-003',
+    first_name: 'Michael',
+    last_name: 'Chang',
+    email: 'm.chang@student.pt3solutions.edu.sg',
+    course_id: 3,
+    course_code: 'PT3-BSE-03',
+    course_name: 'Bachelor of Software Engineering (Honours)',
+    location_id: 2,
+    location_name: 'PT3 Solutions Singapore Campus',
+    commencement_year: 2026,
+    study_status: 'active'
+  },
+  {
+    student_id: 4,
+    student_number: 'PT3-2026-004',
+    first_name: 'Emily',
+    last_name: 'Watson',
+    email: 'e.watson@student.pt3solutions.edu.sg',
+    course_id: 4,
+    course_code: 'PT3-BSCY-04',
+    course_name: 'Bachelor of Cyber Security & Digital Forensics',
+    location_id: 2,
+    location_name: 'PT3 Solutions Singapore Campus',
+    commencement_year: 2026,
+    study_status: 'part-time'
+  }
+];
+
 export default function App() {
   const [activeRole, setActiveRole] = useState('chair'); // 'chair' | 'student'
-  const [studentsList, setStudentsList] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentsList, setStudentsList] = useState(initialSampleStudents);
+  const [selectedStudent, setSelectedStudent] = useState(initialSampleStudents[0]);
   const [showStudentSelectModal, setShowStudentSelectModal] = useState(false);
   const [history, setHistory] = useState([]);
   const [catalogUnits, setCatalogUnits] = useState([]);
@@ -86,11 +145,13 @@ export default function App() {
       ]);
       setCatalogUnits(unitsData || []);
       setPeriods(periodsData || []);
-      setStudentsList(studentsData || []);
+      
+      const loadedStudents = (studentsData && studentsData.length > 0) ? studentsData : initialSampleStudents;
+      setStudentsList(loadedStudents);
 
-      // Prompt student selection if list available
-      if (studentsData && studentsData.length > 0) {
-        handleSelectStudent(studentsData[0]);
+      // Select first student if available
+      if (loadedStudents && loadedStudents.length > 0) {
+        handleSelectStudent(loadedStudents[0]);
       }
     } catch (err) {
       console.error('Failed to load initial catalog/students data:', err);
