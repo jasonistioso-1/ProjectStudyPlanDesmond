@@ -165,6 +165,25 @@ export async function fetchTeachingPeriods() {
 
 export const mockClientStudentPlans = {
     1: {
+        plan: { plan_id: 1, student_id: 1, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
+        units: []
+    },
+    2: {
+        plan: { plan_id: 2, student_id: 2, title: 'PT3-BSIT Computer Science Plan 2026', status: 'draft', total_credit_points: 0 },
+        units: []
+    },
+    3: {
+        plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0 },
+        units: []
+    },
+    4: {
+        plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
+        units: []
+    }
+};
+
+export const mockArchivedStudentPlans = {
+    1: {
         plan: { plan_id: 1, student_id: 1, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'approved', total_credit_points: 72 },
         units: [
             { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 1 },

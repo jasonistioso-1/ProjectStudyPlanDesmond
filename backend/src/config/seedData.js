@@ -171,104 +171,30 @@ export const mockStudentPlans = {
             plan_id: 1,
             student_id: 1,
             title: 'PT3-BSIT Artificial Intelligence Plan 2026',
-            status: 'approved',
-            total_credit_points: 72
+            status: 'draft',
+            total_credit_points: 0
         },
-        units: [
-            { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 1 },
-            { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 2 },
-            { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 3 },
-            { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 4 },
-            { unit_id: 5, code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 1 },
-            { unit_id: 6, code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 2 },
-            { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 3 },
-            { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 4 },
-            { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 1 },
-            { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 2 },
-            { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 3 },
-            { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 4 },
-            { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 1 },
-            { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 2 },
-            { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 3 },
-            { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 4 },
-            { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 1 },
-            { unit_id: 22, code: 'ICT303', title: 'Advanced Machine Learning', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 2 },
-            { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 3 },
-            { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 4 },
-            { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 1 },
-            { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 2 },
-            { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 3 },
-            { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 4 }
-        ]
+        units: []
     },
     2: {
         plan: {
             plan_id: 2,
             student_id: 2,
             title: 'PT3-BSIT Computer Science Plan 2026',
-            status: 'agreed',
-            total_credit_points: 72
+            status: 'draft',
+            total_credit_points: 0
         },
-        units: [
-            { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 1 },
-            { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 2 },
-            { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 3 },
-            { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 4 },
-            { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 1 },
-            { unit_id: 6, code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 2 },
-            { unit_id: 18, code: 'MAS164', title: 'Fundamentals of Mathematics', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 3 },
-            { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 4 },
-            { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 1 },
-            { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 2 },
-            { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 3 },
-            { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 4 },
-            { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 1 },
-            { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 2 },
-            { unit_id: 19, code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 3 },
-            { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 4 },
-            { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 1 },
-            { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 2 },
-            { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 3 },
-            { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 4 },
-            { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 1 },
-            { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 2 },
-            { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 3 },
-            { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 4 }
-        ]
+        units: []
     },
     3: {
         plan: {
             plan_id: 3,
             student_id: 3,
             title: 'PT3-BSIT Business Info Systems Plan 2026',
-            status: 'recommended',
-            total_credit_points: 69
+            status: 'draft',
+            total_credit_points: 0
         },
-        units: [
-            { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 1 },
-            { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 2 },
-            { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 3 },
-            { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 4 },
-            { unit_id: 5, code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 1 },
-            { unit_id: 6, code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 2 },
-            { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 3 },
-            { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 4 },
-            { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 1 },
-            { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 2 },
-            { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 3 },
-            { unit_id: 19, code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 4 },
-            { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 1 },
-            { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 2 },
-            { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 3 },
-            { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 4 },
-            { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 1 },
-            { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 2 },
-            { unit_id: 27, code: 'ICT393', title: 'Advanced Business Intelligence', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 3 },
-            { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 4 },
-            { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 1 },
-            { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 2 },
-            { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 3 }
-        ]
+        units: []
     },
     4: {
         plan: {
@@ -276,34 +202,9 @@ export const mockStudentPlans = {
             student_id: 4,
             title: 'PT3-BSIT Artificial Intelligence Plan 2026',
             status: 'draft',
-            total_credit_points: 72
+            total_credit_points: 0
         },
-        units: [
-            { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 1 },
-            { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 2 },
-            { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 3 },
-            { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, year_level: 1, period_id: 1, sequence_order: 4 },
-            { unit_id: 5, code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 1 },
-            { unit_id: 6, code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 2 },
-            { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 3 },
-            { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, year_level: 1, period_id: 2, sequence_order: 4 },
-            { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 1 },
-            { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 2 },
-            { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 3 },
-            { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, year_level: 2, period_id: 1, sequence_order: 4 },
-            { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 1 },
-            { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 2 },
-            { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 3 },
-            { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, year_level: 2, period_id: 2, sequence_order: 4 },
-            { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 1 },
-            { unit_id: 22, code: 'ICT303', title: 'Advanced Machine Learning', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 2 },
-            { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 3 },
-            { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, year_level: 3, period_id: 1, sequence_order: 4 },
-            { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 1 },
-            { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 2 },
-            { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 3 },
-            { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, year_level: 3, period_id: 2, sequence_order: 4 }
-        ]
+        units: []
     }
 };
 

@@ -25,7 +25,10 @@ import {
   GraduationCap,
   Calendar,
   Search,
-  Check
+  Check,
+  Zap,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 
 export default function PlanBuilder({
@@ -297,7 +300,56 @@ export default function PlanBuilder({
     if (onValidate) onValidate(updated);
   };
 
-  // Clear all units from plan
+  // Auto-generate major sequence (72 CP) for student
+  const handleAutoGeneratePlan = () => {
+    const courseCode = student?.course_code || 'PT3-BSIT-AI01';
+    let targetCodes = [
+      'ICT100','ICT159','MAS162','ICT158',
+      'ICT169','ICT170','ICT167','ICT145',
+      'ICT201','ICT202','ICT203','ICT285',
+      'ICT206','BSC203','ICT283','ICT284',
+      'ICT302','ICT303','ICT304','ICT305',
+      'ICT301','ICT373','ICT374','ICT292'
+    ];
+
+    if (courseCode.includes('CS')) {
+      targetCodes = [
+        'ICT100','ICT159','MAS162','ICT158',
+        'ICT167','ICT170','MAS164','ICT145',
+        'ICT283','ICT284','ICT285','ICT201',
+        'ICT374','BSC203','MAS183','ICT292',
+        'ICT373','ICT302','ICT301','ICT203',
+        'ICT305','ICT206','ICT304','ICT394'
+      ];
+    } else if (courseCode.includes('BIS')) {
+      targetCodes = [
+        'ICT100','ICT159','MAS162','ICT158',
+        'ICT169','ICT170','ICT284','ICT145',
+        'ICT201','ICT285','ICT292','MAS183',
+        'BSC203','ICT394','ICT283','ICT167',
+        'ICT301','ICT302','ICT393','ICT305',
+        'ICT373','ICT202','ICT304'
+      ];
+    }
+
+    const generatedUnits = targetCodes.map((code, idx) => {
+      const u = catalogUnits.find(cu => cu.code === code) || { unit_id: idx + 1, code, title: code, credit_points: 3 };
+      return {
+        unit_id: u.unit_id,
+        code: u.code,
+        title: u.title,
+        credit_points: u.credit_points || 3,
+        year_level: Math.floor(idx / 8) + 1,
+        period_id: (Math.floor(idx / 4) % 2 === 0) ? 1 : 2,
+        sequence_order: (idx % 4) + 1
+      };
+    });
+
+    setPlanUnits(generatedUnits);
+    if (onValidate) onValidate(generatedUnits);
+  };
+
+  // Clear all units from plan (Reset to 0 CP)
   const handleClearPlan = () => {
     setPlanUnits([]);
     if (onValidate) onValidate([]);
@@ -527,7 +579,25 @@ export default function PlanBuilder({
           </div>
 
           {/* Stepper Action Buttons */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              onClick={handleAutoGeneratePlan}
+              className="px-3.5 py-2 bg-red-50 dark:bg-red-950/70 hover:bg-red-100 dark:hover:bg-red-900/80 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs"
+              title="Auto-populate recommended 72 CP major unit sequence"
+            >
+              <Zap className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+              <span>Auto-Generate Plan</span>
+            </button>
+
+            <button
+              onClick={handleClearPlan}
+              className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs"
+              title="Clear all units (Reset to 0 CP)"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>Reset (0 CP)</span>
+            </button>
+
             {planStatus === 'draft' && (
               <button
                 onClick={() => onRecommendPlan && onRecommendPlan()}
