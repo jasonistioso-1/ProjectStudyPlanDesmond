@@ -62,7 +62,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
               className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
             >
               <UserPlus className="w-3.5 h-3.5" />
-              <span>+ Add Student</span>
+              <span>Add Student</span>
             </button>
           )}
         </div>

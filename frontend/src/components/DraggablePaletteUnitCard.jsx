@@ -71,16 +71,16 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
       <div className="flex items-center gap-1.5 shrink-0 relative">
         <button
           onClick={() => onAdd(unit)}
-          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-extrabold rounded-xl transition-all shadow-2xs flex items-center gap-1"
-          title="Add to study plan"
+          className="px-3 py-1.5 bg-red-700 hover:bg-red-800 dark:bg-red-700 dark:hover:bg-red-600 text-white text-xs font-extrabold rounded-xl transition-all shadow-xs hover:shadow flex items-center gap-1.5 active:scale-95"
+          title="Add unit to study plan"
         >
-          <Plus className="w-3.5 h-3.5 text-red-400" />
-          <span>+ Add Unit</span>
+          <Plus className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+          <span>Add Unit</span>
         </button>
 
         <button
           onClick={() => setShowPicker(!showPicker)}
-          className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-xl transition-colors"
+          className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-xl transition-all shadow-2xs active:scale-95"
           title="Choose specific target semester"
         >
           <ChevronDown className="w-3.5 h-3.5" />

@@ -87,7 +87,7 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
               className="px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4 text-red-400" />
-              <span>+ Add Unit Manually</span>
+              <span>Add Unit Manually</span>
             </button>
           )}
 

@@ -608,17 +608,17 @@ export default function App() {
 
       {/* Audit Log / Change Log Modal */}
       {showAuditModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border-t-4 border-t-red-600 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-xl w-full shadow-2xl relative font-sans text-slate-900 dark:text-slate-100 transition-colors">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+          <div className="bg-white dark:bg-slate-900 border-t-4 border-t-red-600 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-xl w-full shadow-2xl relative text-slate-900 dark:text-slate-100 transition-colors">
             <button
               onClick={() => setShowAuditModal(false)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-lg"
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shadow-2xs">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
@@ -635,20 +635,20 @@ export default function App() {
             <div className="flex items-center gap-2 mb-4 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
               <button
                 onClick={() => setAuditTab('data_audit')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
                   auditTab === 'data_audit'
-                    ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-extrabold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
                 }`}
               >
                 Study Plan Data Audit Trail (NFR-07)
               </button>
               <button
                 onClick={() => setAuditTab('system_spec')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
                   auditTab === 'system_spec'
-                    ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-extrabold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
                 }`}
               >
                 Specification Change Log (Sec 18)
@@ -659,30 +659,32 @@ export default function App() {
             <div className="space-y-3 max-h-80 overflow-y-auto text-xs font-sans pr-1">
               {auditTab === 'data_audit' ? (
                 auditLogsList.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500 text-xs">No plan data audit logs recorded yet.</div>
+                  <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No plan data audit logs recorded yet.</p>
+                  </div>
                 ) : (
                   auditLogsList.map((log, idx) => (
-                    <div key={log.version_id || idx} className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                    <div key={log.version_id || idx} className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs">
                       <div className="flex items-center justify-between font-mono text-[10px] font-bold">
-                        <span className="bg-red-700 text-white px-2 py-0.5 rounded font-mono">
+                        <span className="bg-red-700 text-white px-2.5 py-0.5 rounded-md font-mono shadow-2xs">
                           v{log.version_number || '1'} · {new Date(log.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <span className={`px-2 py-0.5 rounded uppercase font-bold text-[9px] ${
-                          log.plan_status === 'approved' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300' :
-                          log.plan_status === 'agreed' ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300' :
-                          log.plan_status === 'recommended' ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300' :
-                          'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
+                        <span className={`px-2.5 py-0.5 rounded-md uppercase font-extrabold text-[9px] font-mono border ${
+                          log.plan_status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' :
+                          log.plan_status === 'agreed' ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' :
+                          log.plan_status === 'recommended' ? 'bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' :
+                          'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                         }`}>
                           {log.plan_status || 'STATUS CHANGED'}
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between text-xs font-semibold text-slate-900 dark:text-white">
-                        <span>Student: <strong>{log.first_name || 'Alex'} {log.last_name || 'Mercer'}</strong> ({log.student_number || 'PT3-2026-001'})</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">By: <strong>{log.created_by || 'Academic Chair'}</strong></span>
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
+                        <span>Student: {log.first_name || 'Alex'} {log.last_name || 'Mercer'} <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">({log.student_number || 'PT3-2026-001'})</span></span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium">By: <strong className="text-slate-800 dark:text-slate-200 font-bold">{log.created_by || 'Academic Chair'}</strong></span>
                       </div>
 
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium">
+                      <p className="text-xs text-slate-600 dark:text-slate-300 font-medium pt-0.5">
                         {log.amendment_reason || 'Study plan status update'}
                       </p>
                     </div>
@@ -690,46 +692,46 @@ export default function App() {
                 )
               ) : (
                 <div className="space-y-3 text-xs">
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1">
-                      <span className="bg-red-600 text-white px-2 py-0.5 rounded">v1.1 · 15 SEP 2026</span>
-                      <span className="text-slate-400 dark:text-slate-500">STATUS: ACTIVE RELEASE</span>
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                    <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1.5">
+                      <span className="bg-red-700 text-white px-2.5 py-0.5 rounded-md">v1.1 · 15 SEP 2026</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">ACTIVE RELEASE</span>
                     </div>
-                    <p className="font-bold text-slate-900 dark:text-white font-heading">Executive Navigation & Clean Layout Update</p>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+                    <p className="font-bold text-slate-900 dark:text-white font-heading text-xs">Executive Navigation & Clean Layout Update</p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 font-medium">
                       Integrated direct executive tab navigation and Student View selection sync across Academic Chair.
                     </p>
                   </div>
 
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1">
-                      <span className="bg-slate-800 dark:bg-slate-700 text-white px-2 py-0.5 rounded">v1.0 · 14 SEP 2026</span>
-                      <span className="text-slate-400 dark:text-slate-500">STABLE</span>
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                    <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1.5">
+                      <span className="bg-slate-800 dark:bg-slate-700 text-white px-2.5 py-0.5 rounded-md">v1.0 · 14 SEP 2026</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-bold">STABLE RELEASE</span>
                     </div>
-                    <p className="font-bold text-slate-900 dark:text-white font-heading">Core Engine & Database Release</p>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+                    <p className="font-bold text-slate-900 dark:text-white font-heading text-xs">Core Engine & Database Release</p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 font-medium">
                       Created 11 database tables, rule validation engine, and StudyPlanVersion audit log table.
                     </p>
                   </div>
 
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1">
-                      <span className="bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded">v0.1 · 09 SEP 2026</span>
-                      <span className="text-slate-400 dark:text-slate-500">INITIAL SPEC</span>
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                    <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1.5">
+                      <span className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2.5 py-0.5 rounded-md">v0.1 · 09 SEP 2026</span>
+                      <span className="text-slate-400 dark:text-slate-500 font-bold">INITIAL SPEC</span>
                     </div>
-                    <p className="font-bold text-slate-900 dark:text-white font-heading">Outsourced Development Requirements</p>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
-                      Initial outsourced development requirements document published by PT03.
+                    <p className="font-bold text-slate-900 dark:text-white font-heading text-xs">Outsourced Development Requirements</p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 font-medium">
+                      Initial outsourced development requirements document published by PT3 Solutions.
                     </p>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="mt-5 text-right">
+            <div className="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
               <button
                 onClick={() => setShowAuditModal(false)}
-                className="px-4 py-2 bg-slate-900 dark:bg-red-700 hover:bg-slate-800 dark:hover:bg-red-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-800 text-white text-xs font-extrabold rounded-xl transition-all shadow-xs"
               >
                 Close Audit Log
               </button>
