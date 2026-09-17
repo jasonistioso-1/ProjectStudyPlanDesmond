@@ -9,6 +9,10 @@ export default function DroppablePaletteContainer({
   setUnitFilter,
   selectedLevel,
   setSelectedLevel,
+  showAllCatalogUnits,
+  setShowAllCatalogUnits,
+  totalCatalogCount = 28,
+  scheduledCodesSet = new Set(),
   onAddUnit,
   onAddToSpecificSemester
 }) {
@@ -19,56 +23,74 @@ export default function DroppablePaletteContainer({
   return (
     <div
       ref={setNodeRef}
-      className={`bg-white border rounded-xl shadow-2xs overflow-hidden transition-all ${
+      className={`bg-white border rounded-2xl shadow-2xs overflow-hidden transition-all ${
         isOver
           ? 'border-emerald-500 ring-2 ring-emerald-400/50 bg-emerald-50/20'
           : 'border-slate-200'
       }`}
     >
-      <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
-        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+      <div className="bg-slate-50/80 border-b border-slate-200 px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2 font-heading">
           <BookOpen className="w-4 h-4 text-slate-700" />
-          Available Units
+          Available Unit Offerings
         </h3>
-        <span className="text-xs font-mono font-semibold bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-700">
-          {filteredOfferings.length} units
-        </span>
+        <div className="flex items-center gap-1.5 text-xs font-semibold">
+          <span className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-full text-slate-700 tabular-nums">
+            {filteredOfferings.length} Available / {totalCatalogCount} Master List
+          </span>
+        </div>
       </div>
 
       <div className="p-4 space-y-3">
         {/* Filter Search Box & Level Selector */}
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
             <input
               type="text"
               value={unitFilter}
               onChange={(e) => setUnitFilter(e.target.value)}
-              placeholder="Search code or title..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 font-normal"
+              placeholder="Search unit code or title..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 font-medium transition-all"
             />
           </div>
 
-          {/* Level Filter Pills */}
-          <div className="flex items-center gap-1 text-[11px] font-mono">
-            {[
-              { key: 'ALL', label: 'All' },
-              { key: '100', label: '100 Level' },
-              { key: '200', label: '200 Level' },
-              { key: '300', label: '300 Level' }
-            ].map(lvl => (
+          {/* Level Filter Pills + Show All Toggle */}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-sans">
+            <div className="flex items-center gap-1">
+              {[
+                { key: 'ALL', label: 'All Levels' },
+                { key: '100', label: '100 Level' },
+                { key: '200', label: '200 Level' },
+                { key: '300', label: '300 Level' }
+              ].map(lvl => (
+                <button
+                  key={lvl.key}
+                  onClick={() => setSelectedLevel(lvl.key)}
+                  className={`px-2.5 py-1 rounded-lg border transition-all text-xs ${
+                    selectedLevel === lvl.key
+                      ? 'bg-slate-900 text-white border-slate-900 font-bold shadow-2xs'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 font-medium'
+                  }`}
+                >
+                  {lvl.label}
+                </button>
+              ))}
+            </div>
+
+            {setShowAllCatalogUnits && (
               <button
-                key={lvl.key}
-                onClick={() => setSelectedLevel(lvl.key)}
-                className={`px-2 py-0.5 rounded border transition-all ${
-                  selectedLevel === lvl.key
-                    ? 'bg-slate-900 text-white border-slate-900 font-bold'
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                onClick={() => setShowAllCatalogUnits(!showAllCatalogUnits)}
+                className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
+                  showAllCatalogUnits
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold'
+                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                 }`}
+                title="Toggle showing units that are already scheduled in the study plan"
               >
-                {lvl.label}
+                {showAllCatalogUnits ? 'Showing All 28 Units' : 'Hide Scheduled Units'}
               </button>
-            ))}
+            )}
           </div>
         </div>
 

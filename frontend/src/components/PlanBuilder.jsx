@@ -229,9 +229,14 @@ export default function PlanBuilder({
     if (onValidate) onValidate(updated);
   };
 
+  const [showAllCatalogUnits, setShowAllCatalogUnits] = useState(false);
+
+  const scheduledCodesSet = new Set(planUnits.map(pu => pu.code));
+
   // Filtered available offerings
   const filteredOfferings = catalogUnits.filter(unit => {
-    if (planUnits.some(pu => pu.code === unit.code)) return false;
+    const isAlreadyScheduled = scheduledCodesSet.has(unit.code);
+    if (!showAllCatalogUnits && isAlreadyScheduled) return false;
     if (selectedLevel !== 'ALL' && String(unit.level) !== selectedLevel) return false;
     if (unitFilter.trim()) {
       const query = unitFilter.toLowerCase();
@@ -624,6 +629,10 @@ export default function PlanBuilder({
                   setUnitFilter={setUnitFilter}
                   selectedLevel={selectedLevel}
                   setSelectedLevel={setSelectedLevel}
+                  showAllCatalogUnits={showAllCatalogUnits}
+                  setShowAllCatalogUnits={setShowAllCatalogUnits}
+                  totalCatalogCount={catalogUnits.length}
+                  scheduledCodesSet={scheduledCodesSet}
                   onAddUnit={handleAddUnitFromPalette}
                   onAddToSpecificSemester={handleAddToSpecificSemester}
                 />
