@@ -132,7 +132,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                       <div>
                         {/* Sem 1 Header */}
                         <div className="bg-slate-100 border-b border-slate-900 px-3 py-1 flex justify-between font-extrabold text-xs">
-                          <span>Semester 1 Units <span className="font-normal text-[10px] text-slate-600">(Max 12 CP)</span></span>
+                          <span>Semester 1 Units</span>
                           <span className="font-mono">CP</span>
                         </div>
                         {/* Sem 1 Units List */}
@@ -146,7 +146,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                                   <strong className="font-mono text-slate-900 mr-1.5 font-bold">{u.code}</strong>
                                   <span className="text-slate-700">{u.title}</span>
                                 </span>
-                                <span className="font-mono text-slate-900 font-bold ml-2 shrink-0">{u.credit_points || 3}</span>
+                                <span className="font-mono text-slate-900 font-bold ml-2 shrink-0">{u.credit_points || 3} CP</span>
                               </div>
                             ))
                           )}
@@ -155,8 +155,8 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
 
                       {/* Sem 1 Total Footer */}
                       <div className="border-t border-slate-900 px-3 py-1 flex justify-between font-bold text-xs bg-slate-50">
-                        <span>Total <span className="font-normal text-[10px] text-slate-500">(Max 12 CP)</span></span>
-                        <span className="font-mono">{sem1CP} / 12</span>
+                        <span>Total</span>
+                        <span className="font-mono">{sem1CP} CP</span>
                       </div>
                     </div>
 
@@ -165,7 +165,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                       <div>
                         {/* Sem 2 Header */}
                         <div className="bg-slate-100 border-b border-slate-900 px-3 py-1 flex justify-between font-extrabold text-xs">
-                          <span>Semester 2 Units <span className="font-normal text-[10px] text-slate-600">(Max 12 CP)</span></span>
+                          <span>Semester 2 Units</span>
                           <span className="font-mono">CP</span>
                         </div>
                         {/* Sem 2 Units List */}
@@ -179,7 +179,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                                   <strong className="font-mono text-slate-900 mr-1.5 font-bold">{u.code}</strong>
                                   <span className="text-slate-700">{u.title}</span>
                                 </span>
-                                <span className="font-mono text-slate-900 font-bold ml-2 shrink-0">{u.credit_points || 3}</span>
+                                <span className="font-mono text-slate-900 font-bold ml-2 shrink-0">{u.credit_points || 3} CP</span>
                               </div>
                             ))
                           )}
@@ -188,8 +188,8 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
 
                       {/* Sem 2 Total Footer */}
                       <div className="border-t border-slate-900 px-3 py-1 flex justify-between font-bold text-xs bg-slate-50">
-                        <span>Total <span className="font-normal text-[10px] text-slate-500">(Max 12 CP)</span></span>
-                        <span className="font-mono">{sem2CP} / 12</span>
+                        <span>Total</span>
+                        <span className="font-mono">{sem2CP} CP</span>
                       </div>
                     </div>
                   </div>
@@ -201,7 +201,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
             <div className="flex justify-end mb-4">
               <div className="bg-slate-200 border-2 border-slate-900 px-6 py-2 flex items-center gap-4 text-xs font-black">
                 <span className="uppercase tracking-wide">TOTAL CREDIT POINTS</span>
-                <span className="font-mono text-base text-slate-900">{planUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)}</span>
+                <span className="font-mono text-base text-slate-900">{planUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP</span>
               </div>
             </div>
 
