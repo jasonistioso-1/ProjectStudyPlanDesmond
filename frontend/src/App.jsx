@@ -43,6 +43,21 @@ import {
 
 const initialSampleStudents = [
   {
+    student_id: 0,
+    student_number: 'ADMIN-CHAIR-01',
+    first_name: 'Dr. Aris',
+    last_name: 'Thorne (Academic Chair)',
+    email: 'academic.chair@pt3solutions.edu.sg',
+    course_id: 1,
+    course_code: 'PT3-ADMIN',
+    course_name: 'Academic Chair & System Administrator',
+    location_id: 2,
+    location_name: 'PT3 Solutions Singapore Campus',
+    commencement_year: 2026,
+    study_status: 'active',
+    account_category: 'admin'
+  },
+  {
     student_id: 1,
     student_number: 'PT3-2026-001',
     first_name: 'Alex',
@@ -54,7 +69,8 @@ const initialSampleStudents = [
     location_id: 2,
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
-    study_status: 'active'
+    study_status: 'active',
+    account_category: 'existing_student'
   },
   {
     student_id: 2,
@@ -68,7 +84,8 @@ const initialSampleStudents = [
     location_id: 2,
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
-    study_status: 'active'
+    study_status: 'active',
+    account_category: 'existing_student'
   },
   {
     student_id: 3,
@@ -82,7 +99,8 @@ const initialSampleStudents = [
     location_id: 2,
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
-    study_status: 'active'
+    study_status: 'active',
+    account_category: 'new_student'
   },
   {
     student_id: 4,
@@ -90,13 +108,14 @@ const initialSampleStudents = [
     first_name: 'Emily',
     last_name: 'Watson',
     email: 'e.watson@student.pt3solutions.edu.sg',
-    course_id: 4,
+    course_id: 1,
     course_code: 'PT3-BSIT-AI04',
     course_name: 'Bachelor of Information Technology (Major: Artificial Intelligence)',
     location_id: 2,
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
-    study_status: 'part-time'
+    study_status: 'part-time',
+    account_category: 'new_student'
   }
 ];
 
@@ -463,7 +482,7 @@ export default function App() {
                       <BookOpen className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
                       <span>Major: {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
                         ? selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()
-                        : 'Artificial Intelligence'}</span>
+                        : (selectedStudent?.course_code || 'IT Specialization')}</span>
                     </span>
 
                     {currentPlan?.status === 'approved' && (

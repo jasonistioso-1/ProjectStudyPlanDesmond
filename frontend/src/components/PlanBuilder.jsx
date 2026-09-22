@@ -27,8 +27,7 @@ import {
   Search,
   Check,
   Zap,
-  RotateCcw,
-  Sparkles
+  RotateCcw
 } from 'lucide-react';
 
 export default function PlanBuilder({

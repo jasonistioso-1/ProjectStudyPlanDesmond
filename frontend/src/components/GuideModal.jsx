@@ -19,8 +19,7 @@ import {
   Building2,
   Calendar,
   Lock,
-  RotateCcw,
-  Sparkles
+  RotateCcw
 } from 'lucide-react';
 
 export default function GuideModal({ isOpen, onClose }) {

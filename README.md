@@ -146,16 +146,22 @@ erDiagram
 
 ---
 
-## 📊 Pre-Loaded Registered Student Profiles
+## 📊 Pre-Loaded Premade Test Accounts (5 Accounts)
 
-The system comes pre-configured with registered student profiles for testing:
+The system comes pre-seeded with 5 accounts for testing and demonstration:
 
-| Student ID | Student Name | Course & Major | Governance Status | Location |
-|---|---|---|---|---|
-| `PT3-2026-001` | **Alex Mercer** | PT3-BSIT-AI01 (Artificial Intelligence) | **APPROVED v2.0** | Singapore Campus |
-| `PT3-2026-002` | **Sarah Jenkins** | PT3-BSIT-CS02 (Computer Science) | **STUDENT AGREED v1.0** | Singapore Campus |
-| `PT3-2026-003` | **Michael Chang** | PT3-BSIT-BIS03 (Business Info Systems) | **RECOMMENDED v1.0** | Singapore Campus |
-| `PT3-2026-004` | **Emily Watson** | PT3-BSIT-AI04 (Artificial Intelligence) | **DRAFT v3.3** | Singapore Campus |
+| Account Type | Account ID | User / Student Name | Course & Major | Category / Scope | Location |
+|---|---|---|---|---|---|
+| **1 x Administrator** | `ADMIN-CHAIR-01` | **Dr. Aris Thorne** | Academic Chair & Administrator | System Admin & Governance | Singapore Campus |
+| **2 x Existing Student** | `PT3-2026-001` | **Alex Mercer** | PT3-BSIT-AI01 (Artificial Intelligence) | Existing Student (Active Plan & History) | Singapore Campus |
+| **2 x Existing Student** | `PT3-2026-002` | **Sarah Jenkins** | PT3-BSIT-CS02 (Computer Science) | Existing Student (Agreed Plan & History) | Singapore Campus |
+| **2 x New Student** | `PT3-2026-003` | **Michael Chang** | PT3-BSIT-BIS03 (Business Info Systems) | New Student (Fresh Enrolment) | Singapore Campus |
+| **2 x New Student** | `PT3-2026-004` | **Emily Watson** | PT3-BSIT-AI04 (Artificial Intelligence) | New Student (Fresh Enrolment) | Singapore Campus |
+
+### 🇸🇬 Singapore Campus Scope & Trimester-Only Focus
+- **Trimester Focus**: Singapore enrolment operates strictly on **Trimesters (T1, T2, T3)**. Trimester layout is the default and fully active operational view.
+- **Semester Layout**: Preserved as an inactive layout option in the UI for future scalability (Perth Main Campus compatibility).
+- **Specializations**: Subjects and offerings are strictly mapped to 3 IT majors: **Artificial Intelligence**, **Computer Science**, and **Business Information Systems**.
 
 ---
 

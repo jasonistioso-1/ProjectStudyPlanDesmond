@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, UserCheck, GraduationCap, Building2, ChevronRight, Sparkles, X, ArrowUpDown, UserPlus, Edit3 } from 'lucide-react';
+import { Search, UserCheck, GraduationCap, Building2, ChevronRight, X, ArrowUpDown, UserPlus, Edit3 } from 'lucide-react';
 
 export default function StudentSelectModal({ students = [], onSelectStudent, onAddStudentClick, onEditStudentClick, onClose, isModal = false }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,9 +157,19 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
                     <span className="bg-red-50 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md">
                       {student.course_code || 'PT3-BSIT'}
                     </span>
-                    <span className="bg-amber-100/90 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
-                      Dummy
-                    </span>
+                    {student.account_category === 'admin' ? (
+                      <span className="bg-purple-100/90 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                        Administrator (Admin)
+                      </span>
+                    ) : student.account_category === 'new_student' ? (
+                      <span className="bg-emerald-100/90 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                        New Student
+                      </span>
+                    ) : (
+                      <span className="bg-blue-100/90 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                        Existing Student
+                      </span>
+                    )}
                   </div>
                   <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium truncate mt-0.5">
                     {student.course_name || 'Bachelor of Information Technology'}
