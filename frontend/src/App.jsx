@@ -255,7 +255,18 @@ export default function App() {
 
     setSelectedStudent(student);
     setShowStudentSelectModal(false);
-    showToast(`Selected student ${student.first_name} ${student.last_name}`);
+    
+    // Auto-switch role based on selected account
+    if (student.account_category === 'admin' || student.student_id === 0) {
+      setActiveRole('chair');
+    } else {
+      setActiveRole('student');
+      if (activeTab === 'STORED' || activeTab === 'CATALOG') {
+        setActiveTab('STUDY_PLAN');
+      }
+    }
+
+    showToast(`Loaded profile for ${student.first_name} ${student.last_name} (${student.account_category === 'admin' ? 'Administrator' : student.account_category === 'new_student' ? 'New Student' : 'Existing Student'})`);
 
     // 2. If student ALREADY has a working draft in memory, load it directly to prevent wiping data!
     if (allStudentPlansMap[student.student_id]) {
@@ -430,8 +441,17 @@ export default function App() {
           activeRole={activeRole}
           onRoleChange={(newRole) => {
             setActiveRole(newRole);
-            if (newRole === 'student' && (activeTab === 'STORED' || activeTab === 'CATALOG')) {
-              setActiveTab('STUDY_PLAN');
+            if (newRole === 'chair') {
+              const adminAcc = studentsList.find(s => s.account_category === 'admin' || s.student_id === 0);
+              if (adminAcc) handleSelectStudent(adminAcc);
+            } else {
+              if (activeTab === 'STORED' || activeTab === 'CATALOG') {
+                setActiveTab('STUDY_PLAN');
+              }
+              if (selectedStudent && (selectedStudent.account_category === 'admin' || selectedStudent.student_id === 0)) {
+                const firstStudent = studentsList.find(s => s.account_category !== 'admin' && s.student_id !== 0);
+                if (firstStudent) handleSelectStudent(firstStudent);
+              }
             }
           }}
           activeTab={activeTab}

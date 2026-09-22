@@ -598,24 +598,46 @@ export default function PlanBuilder({
               <span>Reset Canvas (0 CP)</span>
             </button>
 
-            {(planStatus === 'draft' || planStatus === 'recommended') && (
-              <button
-                onClick={() => onRecommendPlan && onRecommendPlan()}
-                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
-              >
-                <span>{planStatus === 'recommended' ? 'Update & Re-Recommend' : 'Recommend to Student'}</span>
-                <ArrowRight className="w-4 h-4 text-emerald-300" />
-              </button>
-            )}
+            {isChair ? (
+              <>
+                {(planStatus === 'draft' || planStatus === 'recommended') && (
+                  <button
+                    onClick={() => onRecommendPlan && onRecommendPlan()}
+                    className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
+                  >
+                    <span>{planStatus === 'recommended' ? 'Update & Re-Recommend' : 'Recommend to Student'}</span>
+                    <ArrowRight className="w-4 h-4 text-emerald-300" />
+                  </button>
+                )}
 
-            {planStatus === 'agreed' && (
-              <button
-                onClick={() => onApprovePlan && onApprovePlan()}
-                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
-              >
-                <ShieldCheck className="w-4 h-4" />
-                <span>Final Approve Plan</span>
-              </button>
+                {planStatus === 'agreed' && (
+                  <button
+                    onClick={() => onApprovePlan && onApprovePlan()}
+                    className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Final Approve Plan</span>
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                {(planStatus === 'draft' || planStatus === 'recommended') && (
+                  <button
+                    onClick={() => onAgreePlan && onAgreePlan()}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                    <span>Agree & Sign-Off Study Plan</span>
+                  </button>
+                )}
+                {planStatus === 'agreed' && (
+                  <span className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold shadow-2xs flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <span>Signed-Off (Awaiting Chair Approval)</span>
+                  </span>
+                )}
+              </>
             )}
 
             <button

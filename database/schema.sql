@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS Student (
     location_id INT NOT NULL,
     commencement_year INT NOT NULL DEFAULT 2026,
     study_status ENUM('active', 'inactive', 'graduated', 'suspended') NOT NULL DEFAULT 'active',
+    account_category ENUM('admin', 'existing_student', 'new_student') NOT NULL DEFAULT 'existing_student',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (course_id) REFERENCES Course(course_id) ON DELETE RESTRICT,
     FOREIGN KEY (location_id) REFERENCES Location(location_id) ON DELETE RESTRICT

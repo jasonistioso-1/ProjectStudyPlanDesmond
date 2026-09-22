@@ -109,12 +109,12 @@ INSERT INTO Prerequisite (unit_id, prereq_unit_id, min_grade, is_concurrent_allo
 ((SELECT unit_id FROM Unit WHERE code = 'ICT394'), (SELECT unit_id FROM Unit WHERE code = 'ICT285'), 'P', FALSE);
 
 -- 7. Seed Students (5 Premade Demo Accounts: 1 Admin, 2 Existing Students, 2 New Students)
-INSERT INTO Student (student_id, student_number, first_name, last_name, email, course_id, location_id, commencement_year, study_status) VALUES
-(0, 'ADMIN-CHAIR-01', 'Dr. Aris', 'Thorne (Academic Chair)', 'academic.chair@pt3solutions.edu.sg', 1, 2, 2026, 'active'),
-(1, 'PT3-2026-001', 'Alex', 'Mercer', 'alex.mercer@student.pt3solutions.edu.sg', 1, 2, 2026, 'active'),
-(2, 'PT3-2026-002', 'Sarah', 'Jenkins', 'sarah.jenkins@student.pt3solutions.edu.sg', 2, 2, 2026, 'active'),
-(3, 'PT3-2026-003', 'Michael', 'Chang', 'm.chang@student.pt3solutions.edu.sg', 3, 2, 2026, 'active'),
-(4, 'PT3-2026-004', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.sg', 1, 2, 2026, 'part-time');
+INSERT INTO Student (student_id, student_number, first_name, last_name, email, course_id, location_id, commencement_year, study_status, account_category) VALUES
+(0, 'ADMIN-CHAIR-01', 'Dr. Aris', 'Thorne (Academic Chair)', 'academic.chair@pt3solutions.edu.sg', 1, 2, 2026, 'active', 'admin'),
+(1, 'PT3-2026-001', 'Alex', 'Mercer', 'alex.mercer@student.pt3solutions.edu.sg', 1, 2, 2026, 'active', 'existing_student'),
+(2, 'PT3-2026-002', 'Sarah', 'Jenkins', 'sarah.jenkins@student.pt3solutions.edu.sg', 2, 2, 2026, 'active', 'existing_student'),
+(3, 'PT3-2026-003', 'Michael', 'Chang', 'm.chang@student.pt3solutions.edu.sg', 3, 2, 2026, 'active', 'new_student'),
+(4, 'PT3-2026-004', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.sg', 1, 2, 2026, 'part-time', 'new_student');
 
 -- 8. Seed Student Unit History
 INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period_id, year_taken) VALUES

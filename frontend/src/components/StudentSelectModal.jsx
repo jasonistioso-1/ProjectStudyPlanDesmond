@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import { Search, UserCheck, GraduationCap, Building2, ChevronRight, X, ArrowUpDown, UserPlus, Edit3 } from 'lucide-react';
 
 export default function StudentSelectModal({ students = [], onSelectStudent, onAddStudentClick, onEditStudentClick, onClose, isModal = false }) {
+  const [categoryFilter, setCategoryFilter] = useState('ALL'); // 'ALL' | 'admin' | 'existing_student' | 'new_student'
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name'); // 'name' | 'id' | 'course'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'
 
   const filteredStudents = students
     .filter(s => {
+      if (categoryFilter !== 'ALL') {
+        const cat = s.account_category || (s.student_id === 0 ? 'admin' : 'existing_student');
+        if (cat !== categoryFilter) return false;
+      }
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
       const fullName = `${s.first_name || ''} ${s.last_name || ''}`.toLowerCase();
@@ -69,6 +74,50 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
           Select or edit a student profile to view their academic history, active study plan, and degree progress.
         </p>
+      </div>
+
+      {/* Account Category Filter Tabs */}
+      <div className="flex flex-wrap items-center justify-center gap-1.5 mb-4 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+        <button
+          onClick={() => setCategoryFilter('ALL')}
+          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+            categoryFilter === 'ALL'
+              ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
+          }`}
+        >
+          All Demo Accounts ({students.length})
+        </button>
+        <button
+          onClick={() => setCategoryFilter('admin')}
+          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+            categoryFilter === 'admin'
+              ? 'bg-purple-700 text-white shadow-2xs'
+              : 'text-purple-700 dark:text-purple-300 hover:bg-purple-100/50 dark:hover:bg-purple-950/50 font-medium'
+          }`}
+        >
+          Administrator (1)
+        </button>
+        <button
+          onClick={() => setCategoryFilter('existing_student')}
+          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+            categoryFilter === 'existing_student'
+              ? 'bg-blue-700 text-white shadow-2xs'
+              : 'text-blue-700 dark:text-blue-300 hover:bg-blue-100/50 dark:hover:bg-blue-950/50 font-medium'
+          }`}
+        >
+          Existing Students (2)
+        </button>
+        <button
+          onClick={() => setCategoryFilter('new_student')}
+          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+            categoryFilter === 'new_student'
+              ? 'bg-emerald-700 text-white shadow-2xs'
+              : 'text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/50 font-medium'
+          }`}
+        >
+          New Students (2)
+        </button>
       </div>
 
       {/* Search Input & Sort Controls */}
