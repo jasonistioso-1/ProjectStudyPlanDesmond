@@ -858,37 +858,25 @@ export default function PlanBuilder({
                     <Layers className="w-4 h-4 text-red-600 dark:text-red-400" />
                     Official 3-Year Study Plan Grid
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-normal">
-                    Drag & drop units to structure semester and trimester study sequences across 3 academic years.
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-sans font-medium">
+                    Structure 72 CP unit sequences across Year 1, Year 2, and Year 3 trimesters.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Semester vs Trimester Layout Switcher */}
-                  <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 text-xs">
-                    <button
-                      onClick={() => setLayoutType('trimester')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        layoutType === 'trimester'
-                          ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-extrabold'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
-                      }`}
-                    >
+                  {/* Trimester Active Badge & Semester Inactive Indicator */}
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-1 text-xs">
+                    <div className="px-3 py-1 rounded-lg text-xs font-extrabold bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs flex items-center gap-1.5 font-sans">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                       <span>Trimester (Singapore Active)</span>
-                    </button>
+                    </div>
 
-                    <button
-                      onClick={() => setLayoutType('semester')}
-                      title="Semester layout (Inactive - Future Scalability)"
-                      className={`px-3 py-1 rounded-lg text-xs transition-all flex items-center gap-1.5 ${
-                        layoutType === 'semester'
-                          ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-white shadow-2xs font-bold'
-                          : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium'
-                      }`}
+                    <div
+                      title="Semester layout is inactive. Singapore enrolment strictly uses the Trimester system."
+                      className="px-3 py-1 rounded-lg text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-slate-800/40 border border-slate-300/40 dark:border-slate-700/40 cursor-not-allowed select-none font-sans"
                     >
                       <span>Semester (Inactive Layout)</span>
-                    </button>
+                    </div>
                   </div>
 
                   {onOpenOfficialDocument && (

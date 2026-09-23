@@ -58,15 +58,15 @@ export default function DroppablePeriod({ id, yearLevel, period, units, onRemove
       <SortableContext items={unitIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-2 flex-1 min-h-[140px] flex flex-col justify-start">
           {units.length === 0 ? (
-            <div className="h-full border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-red-500/80 dark:hover:border-red-500/80 text-slate-400 dark:text-slate-500 text-xs py-7 rounded-xl flex flex-col items-center justify-center bg-slate-50/60 dark:bg-slate-800/30 hover:bg-red-50/20 dark:hover:bg-red-950/20 transition-all cursor-pointer select-none group">
+            <div className="h-full border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-red-500/80 dark:hover:border-red-500/80 text-slate-400 dark:text-slate-500 text-xs py-7 rounded-2xl flex flex-col items-center justify-center bg-slate-50/60 dark:bg-slate-800/30 hover:bg-red-50/20 dark:hover:bg-red-950/20 transition-all cursor-pointer select-none group font-sans">
               <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:text-red-600 dark:group-hover:text-red-400 flex items-center justify-center mb-1.5 transition-colors shadow-2xs">
                 <Plus className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors">
-                Drag & Drop Unit Here
+              <span className="text-xs font-extrabold text-slate-700 dark:text-slate-300 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors font-heading">
+                Schedule Unit for {period.name}
               </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-                Drop unit to schedule {period.name}
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                Drag unit here or use + Add Unit button
               </span>
             </div>
           ) : (
