@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, UserCheck, GraduationCap, Building2, ChevronRight, X, ArrowUpDown, UserPlus, Edit3, ArrowLeft } from 'lucide-react';
 
 export default function StudentSelectModal({ students = [], onSelectStudent, onAddStudentClick, onEditStudentClick, onClose, isModal = false }) {
-  const [categoryFilter, setCategoryFilter] = useState('ALL'); // 'ALL' | 'admin' | 'existing_student' | 'new_student'
+  const [categoryFilter, setCategoryFilter] = useState('ALL'); // 'ALL' | 'existing_student' | 'new_student'
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name'); // 'name' | 'id' | 'course'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'
@@ -17,10 +17,13 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  const filteredStudents = students
+  // Exclusively filter out Admin/Chair profile from Student Selection Modal
+  const studentOnlyList = students.filter(s => s.account_category !== 'admin' && s.student_id !== 0);
+
+  const filteredStudents = studentOnlyList
     .filter(s => {
       if (categoryFilter !== 'ALL') {
-        const cat = s.account_category || (s.student_id === 0 ? 'admin' : 'existing_student');
+        const cat = s.account_category || 'existing_student';
         if (cat !== categoryFilter) return false;
       }
       if (!searchQuery.trim()) return true;
@@ -98,17 +101,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
           }`}
         >
-          All Demo Accounts ({students.length})
-        </button>
-        <button
-          onClick={() => setCategoryFilter('admin')}
-          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-            categoryFilter === 'admin'
-              ? 'bg-purple-700 text-white shadow-2xs'
-              : 'text-purple-700 dark:text-purple-300 hover:bg-purple-100/50 dark:hover:bg-purple-950/50 font-medium'
-          }`}
-        >
-          Administrator (1)
+          All Students ({studentOnlyList.length})
         </button>
         <button
           onClick={() => setCategoryFilter('existing_student')}
@@ -118,7 +111,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
               : 'text-blue-700 dark:text-blue-300 hover:bg-blue-100/50 dark:hover:bg-blue-950/50 font-medium'
           }`}
         >
-          Existing Students (2)
+          Existing Students ({studentOnlyList.filter(s => s.account_category === 'existing_student').length})
         </button>
         <button
           onClick={() => setCategoryFilter('new_student')}
@@ -128,7 +121,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
               : 'text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/50 font-medium'
           }`}
         >
-          New Students (2)
+          New Students ({studentOnlyList.filter(s => s.account_category === 'new_student').length})
         </button>
       </div>
 
@@ -276,7 +269,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
       </div>
 
       <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-        <span>Registered Students Available: <strong className="text-slate-900 dark:text-white font-bold">{filteredStudents.length} of {students.length}</strong></span>
+        <span>Registered Students Available: <strong className="text-slate-900 dark:text-white font-bold">{filteredStudents.length} of {studentOnlyList.length}</strong></span>
         {isModal && onClose ? (
           <button
             onClick={onClose}
