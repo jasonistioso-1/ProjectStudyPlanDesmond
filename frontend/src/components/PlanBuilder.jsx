@@ -809,6 +809,7 @@ export default function PlanBuilder({
               scheduledCodesSet={scheduledCodesSet}
               onAddUnit={handleAddUnitFromPalette}
               onAddToSpecificSemester={handleAddToSpecificSemester}
+              layoutType={layoutType}
             />
 
             {/* Box 2: Rule Engine Validation Console */}

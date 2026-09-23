@@ -14,7 +14,8 @@ export default function DroppablePaletteContainer({
   totalCatalogCount = 28,
   scheduledCodesSet = new Set(),
   onAddUnit,
-  onAddToSpecificSemester
+  onAddToSpecificSemester,
+  layoutType = 'trimester'
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'available_units_dropzone'
@@ -96,6 +97,7 @@ export default function DroppablePaletteContainer({
                 unit={unit}
                 onAdd={onAddUnit}
                 onAddToSpecificSemester={onAddToSpecificSemester}
+                layoutType={layoutType}
               />
             ))
           )}
