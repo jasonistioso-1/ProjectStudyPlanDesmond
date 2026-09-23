@@ -418,16 +418,16 @@ export default function PlanBuilder({
     return (
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-2xs font-sans max-w-[1440px] mx-auto space-y-6 transition-colors">
         {/* Student View Banner Header */}
-        <div className="bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
           <div>
-            <span className="text-[10px] font-mono font-bold bg-amber-600 text-white px-2.5 py-0.5 rounded uppercase tracking-wide">
+            <span className="inline-flex items-center gap-1.5 bg-amber-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-2xs font-sans">
               STUDENT AGREEMENT & SIGN-OFF PORTAL
             </span>
-            <h2 className="text-base font-extrabold text-slate-900 dark:text-amber-100 tracking-tight flex items-center gap-2 mt-1.5">
+            <h2 className="text-base font-extrabold text-slate-900 dark:text-amber-100 tracking-tight flex items-center gap-2 mt-2 font-heading">
               <FileCheck className="w-5 h-5 text-amber-700 dark:text-amber-400" />
               Proposed Study Plan Review ({stCourse})
             </h2>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-normal">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-normal leading-relaxed">
               Please review the unit sequence proposed by your Academic Chair. Check your credit load balance before digitally signing below.
             </p>
           </div>
@@ -436,13 +436,13 @@ export default function PlanBuilder({
             {onOpenStudentSelectModal && (
               <button
                 onClick={onOpenStudentSelectModal}
-                className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-amber-300 dark:border-slate-700 px-3 py-1.5 rounded-lg text-left shadow-2xs flex items-center gap-2 transition-colors shrink-0"
+                className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-amber-300/80 dark:border-slate-700 px-3.5 py-2 rounded-xl text-left shadow-2xs flex items-center gap-2.5 transition-all shrink-0"
                 title="Click to view/switch between registered sample database students"
               >
                 <User className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
                 <div>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block">Student Profile</span>
-                  <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block font-sans">Student Profile</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1 font-sans">
                     {stName}
                     <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold underline">(Change)</span>
                   </span>
@@ -452,20 +452,20 @@ export default function PlanBuilder({
             {onOpenOfficialDocument && (
               <button
                 onClick={onOpenOfficialDocument}
-                className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 shrink-0"
+                className="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-2 shrink-0"
                 title="Export official Study Plan as PDF or PNG image"
               >
                 <BookOpen className="w-4 h-4 text-amber-200" />
                 <span>Export PDF / Image</span>
               </button>
             )}
-            <div className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-right shadow-2xs">
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block">Current Status</span>
-              <span className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase">{planStatus}</span>
+            <div className="bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-slate-700 px-3.5 py-2 rounded-xl text-right shadow-2xs">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block font-sans">Current Status</span>
+              <span className="text-xs font-extrabold text-amber-900 dark:text-amber-300 uppercase tracking-wide font-sans">{planStatus}</span>
             </div>
-            <div className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-right shadow-2xs">
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block">Planned Load</span>
-              <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">{totalCP} / 72 CP</span>
+            <div className="bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-slate-700 px-3.5 py-2 rounded-xl text-right shadow-2xs">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block font-sans">Planned Load</span>
+              <span className="text-xs font-extrabold text-slate-900 dark:text-white font-sans tabular-nums">{totalCP} / 72 CP</span>
             </div>
           </div>
         </div>
@@ -678,21 +678,21 @@ export default function PlanBuilder({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 text-[10px] font-bold px-2 py-0.5 rounded uppercase font-mono">
+                  <span className="bg-amber-200/90 dark:bg-amber-900/90 text-amber-900 dark:text-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider font-sans shadow-2xs">
                     Academic Chair Advisory
                   </span>
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-100">
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-100 font-heading">
                     Please Select a Target Student Profile
                   </h4>
                 </div>
-                <p className="text-xs text-amber-800 dark:text-amber-300 mt-1 max-w-xl leading-relaxed">
+                <p className="text-xs text-amber-800 dark:text-amber-300 mt-1 max-w-xl leading-relaxed font-sans">
                   You are currently logged in as <strong>Academic Chair (Dr. Aris Thorne)</strong>. To structure, recommend, or approve a study plan, please select a student profile (e.g. Alex Mercer, Michael Chang, etc.) from the directory below.
                 </p>
               </div>
             </div>
             <button
               onClick={onOpenStudentSelectModal}
-              className="px-4 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-2 shrink-0"
+              className="px-4 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-2 shrink-0 font-sans"
             >
               <UserCheck className="w-4 h-4" />
               <span>Select Student Profile to Manage</span>
@@ -709,15 +709,15 @@ export default function PlanBuilder({
                   <HelpCircle className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
                     {isChair ? 'Academic Chair System Workflow & SOP' : 'Student Study Plan Review & Sign-Off Guide'}
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
                     {isChair ? 'Step-by-step operating guide for structuring, validating, and approving student study plans.' : 'Step-by-step guide for reviewing recommended subjects and digitally signing your study plan.'}
                   </p>
                 </div>
               </div>
-              <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold font-mono uppercase border ${
+              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider font-sans border ${
                 isChair
                   ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800'
                   : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'

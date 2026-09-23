@@ -568,14 +568,14 @@ export default function App() {
 
                   return (
                     <div className="bg-slate-50/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 p-5 rounded-2xl text-right shrink-0 min-w-[260px] shadow-sm relative backdrop-blur-xs">
-                      <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        <span className="font-bold">Degree Load Progress</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-extrabold font-mono text-xs">{progressPct}%</span>
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
+                        <span>Degree Load Progress</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs font-sans tabular-nums">{progressPct}%</span>
                       </div>
 
-                      <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-baseline justify-end gap-1.5 my-1">
-                        <span className="tabular-nums font-mono font-black">{calculatedCP}</span>
-                        <span className="text-slate-500 dark:text-slate-400 font-bold text-xs font-mono">/ 72 CP</span>
+                      <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-baseline justify-end gap-1.5 my-1 font-heading">
+                        <span className="tabular-nums font-extrabold font-sans">{calculatedCP}</span>
+                        <span className="text-slate-500 dark:text-slate-400 font-bold text-xs font-sans">/ 72 CP</span>
                       </div>
 
                       {/* Dynamic Gradient Progress Bar */}
@@ -586,9 +586,9 @@ export default function App() {
                         />
                       </div>
 
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-between font-sans">
                         <span className="font-semibold">Target: 72 CP</span>
-                        <span className="text-slate-700 dark:text-slate-300 font-bold font-mono">{Math.max(0, 72 - calculatedCP)} CP remaining</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-bold tabular-nums">{Math.max(0, 72 - calculatedCP)} CP remaining</span>
                       </div>
                     </div>
                   );

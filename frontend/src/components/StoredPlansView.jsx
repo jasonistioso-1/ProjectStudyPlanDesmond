@@ -146,9 +146,9 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
                     <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                       <span>{plan.student_name}</span>
                       {isNewStudent ? (
-                        <span className="bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono">New Student</span>
+                        <span className="bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded-full font-sans uppercase tracking-wider">New Student</span>
                       ) : (
-                        <span className="bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono">Existing Student</span>
+                        <span className="bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-[9px] font-bold px-2 py-0.5 rounded-full font-sans uppercase tracking-wider">Existing Student</span>
                       )}
                     </div>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{plan.student_number}</span>
