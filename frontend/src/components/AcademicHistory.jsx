@@ -1,7 +1,27 @@
 import React from 'react';
-import { History, CheckCircle2, Clock, XCircle, AlertTriangle, GraduationCap } from 'lucide-react';
+import { History, CheckCircle2, Clock, XCircle, AlertTriangle, GraduationCap, UserCheck } from 'lucide-react';
 
-export default function AcademicHistory({ history }) {
+export default function AcademicHistory({ history, student }) {
+  if (student && (student.account_category === 'admin' || student.student_id === 0)) {
+    return (
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm transition-colors text-center max-w-2xl mx-auto space-y-3 my-4 font-sans">
+        <div className="w-12 h-12 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 rounded-xl flex items-center justify-center mx-auto shadow-2xs">
+          <UserCheck className="w-6 h-6" />
+        </div>
+        <div>
+          <span className="inline-block bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2 font-mono">
+            Administrator (Academic Chair Profile)
+          </span>
+          <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Staff Account — No Student Academic History
+          </h2>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-md mx-auto leading-relaxed">
+            Dr. Aris Thorne is the Academic Chair & System Administrator. Academic history records are reserved exclusively for enrolled student profiles.
+          </p>
+        </div>
+      </div>
+    );
+  }
   if (!history || history.length === 0) {
     return (
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm transition-colors text-center max-w-2xl mx-auto space-y-4 my-4 font-sans">

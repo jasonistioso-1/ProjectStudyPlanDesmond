@@ -27,7 +27,11 @@ import {
   Search,
   Check,
   Zap,
-  RotateCcw
+  RotateCcw,
+  HelpCircle,
+  ChevronDown,
+  UserCheck,
+  FileText
 } from 'lucide-react';
 
 export default function PlanBuilder({
@@ -55,6 +59,7 @@ export default function PlanBuilder({
   const [agreedConfirmed, setAgreedConfirmed] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState(null);
   const [showAllCatalogUnits, setShowAllCatalogUnits] = useState(false);
+  const [showWorkflowGuide, setShowWorkflowGuide] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -590,6 +595,20 @@ export default function PlanBuilder({
           {/* Stepper Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
+              onClick={() => setShowWorkflowGuide(prev => !prev)}
+              className={`px-3 py-2 border rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs ${
+                showWorkflowGuide
+                  ? 'bg-red-700 text-white border-red-800'
+                  : 'bg-red-50 dark:bg-red-950/60 hover:bg-red-100 dark:hover:bg-red-900/80 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
+              }`}
+              title="Toggle System Workflow & User Guide"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>{showWorkflowGuide ? 'Hide User Guide' : 'System User Guide'}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showWorkflowGuide ? 'rotate-180' : ''}`} />
+            </button>
+
+            <button
               onClick={handleClearPlan}
               className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs"
               title="Clear all units (Reset to 0 CP)"
@@ -649,6 +668,127 @@ export default function PlanBuilder({
             </button>
           </div>
         </div>
+
+        {/* Academic Chair Advisory Alert - When Admin profile is selected */}
+        {isChair && (!student || student.account_category === 'admin' || student.student_id === 0) && (
+          <div className="bg-amber-50 dark:bg-amber-950/60 border-2 border-amber-300 dark:border-amber-800 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-sans text-amber-900 dark:text-amber-100 animate-in fade-in duration-200">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/80 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold shrink-0 mt-0.5">
+                <UserCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 text-[10px] font-bold px-2 py-0.5 rounded uppercase font-mono">
+                    Academic Chair Advisory
+                  </span>
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-100">
+                    Please Select a Target Student Profile
+                  </h4>
+                </div>
+                <p className="text-xs text-amber-800 dark:text-amber-300 mt-1 max-w-xl leading-relaxed">
+                  You are currently logged in as <strong>Academic Chair (Dr. Aris Thorne)</strong>. To structure, recommend, or approve a study plan, please select a student profile (e.g. Alex Mercer, Michael Chang, etc.) from the directory below.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onOpenStudentSelectModal}
+              className="px-4 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-2 shrink-0"
+            >
+              <UserCheck className="w-4 h-4" />
+              <span>Select Student Profile to Manage</span>
+            </button>
+          </div>
+        )}
+
+        {/* Embedded Role-Tailored System Workflow & User Guide Panel */}
+        {showWorkflowGuide && (
+          <div className="bg-white dark:bg-slate-900 border-2 border-red-500/80 dark:border-red-600/80 rounded-2xl p-6 shadow-xl space-y-4 font-sans text-slate-900 dark:text-white animate-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 flex items-center justify-center font-bold">
+                  <HelpCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    {isChair ? 'Academic Chair System Workflow & SOP' : 'Student Study Plan Review & Sign-Off Guide'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {isChair ? 'Step-by-step operating guide for structuring, validating, and approving student study plans.' : 'Step-by-step guide for reviewing recommended subjects and digitally signing your study plan.'}
+                  </p>
+                </div>
+              </div>
+              <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold font-mono uppercase border ${
+                isChair
+                  ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800'
+                  : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
+              }`}>
+                {isChair ? 'Academic Chair Role' : 'Student Role'}
+              </span>
+            </div>
+
+            {isChair ? (
+              /* ACADEMIC CHAIR WORKFLOW GUIDE */
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5" /> 1. Select Student Profile
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                    Click <strong>Select Student</strong> in top bar or directory modal to select a student account (Alex Mercer, Sarah Jenkins, Michael Chang, Emily Watson).
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5" /> 2. Structure 72 CP Plan
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                    Drag & drop units from the left palette into Year 1, Year 2, and Year 3 Trimesters (T1, T2, T3) to build a compliant 72 CP sequence.
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5" /> 3. Recommend & Approve
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                    Verify validation rules on the left console, click <strong>Recommend to Student</strong>, then click <strong>Final Approve Plan</strong> after student sign-off.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* STUDENT WORKFLOW GUIDE */
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                  <div className="font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5" /> 1. Review Recommended Plan
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                    Inspect the scheduled subjects across Year 1, Year 2, and Year 3 Trimesters prepared for your degree major by the Academic Chair.
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                  <div className="font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> 2. Digital Sign-Off
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                    Check the confirmation box acknowledging credit load rules and click <strong>Agree & Sign-Off Study Plan</strong>.
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
+                  <div className="font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5" /> 3. Export Certified Document
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                    Click <strong>Export Document</strong> to generate or print your official certified 72 CP Study Plan document for university record.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 2-COLUMN MAIN WORKSPACE */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

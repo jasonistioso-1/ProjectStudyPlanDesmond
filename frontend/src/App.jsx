@@ -332,7 +332,16 @@ export default function App() {
 
   // Recommend Plan
   const handleRecommendPlan = async () => {
-    if (!selectedStudent) return;
+    if (!selectedStudent || selectedStudent.account_category === 'admin' || selectedStudent.student_id === 0) {
+      showToast('⚠️ Target Student Not Selected: Please select a target student profile from the directory before sending a study plan recommendation.');
+      setShowStudentSelectModal(true);
+      return;
+    }
+    if (!planUnits || planUnits.length === 0) {
+      showToast('⚠️ Cannot Recommend Empty Plan: You must add at least one course unit (minimum 3 CP) to the study plan before recommending to student.');
+      return;
+    }
+
     const updatedPlan = { ...currentPlan, status: 'recommended' };
     setCurrentPlan(updatedPlan);
     setAllStudentPlansMap(prev => ({
@@ -342,7 +351,7 @@ export default function App() {
         units: planUnits
       }
     }));
-    showToast('Plan recommended to student! Switch to Student View to review & agree.');
+    showToast(`Plan successfully recommended to ${selectedStudent.first_name} ${selectedStudent.last_name} (${selectedStudent.student_number})!`);
     try {
       const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
       await recommendPlan(planId, 'Academic Chair');

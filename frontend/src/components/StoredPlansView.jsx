@@ -103,9 +103,6 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
             <Database className="w-5 h-5 text-red-600 dark:text-red-400" />
             Stored Study Plans Repository
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Retrieve, review version history, and amend previously archived student study plans.
-          </p>
         </div>
 
         <div className="relative w-full md:w-72">
@@ -137,6 +134,7 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredPlans.map(plan => {
               const matchedStudent = students.find(s => String(s.student_id) === String(plan.student_id));
+              const isNewStudent = plan.student_id === 3 || plan.student_id === 4 || matchedStudent?.account_category === 'new_student';
 
               return (
                 <tr key={plan.plan_id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors">
@@ -147,7 +145,11 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
                   <td className="p-3.5">
                     <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                       <span>{plan.student_name}</span>
-                      <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono">Sample Student</span>
+                      {isNewStudent ? (
+                        <span className="bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono">New Student</span>
+                      ) : (
+                        <span className="bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono">Existing Student</span>
+                      )}
                     </div>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{plan.student_number}</span>
                   </td>

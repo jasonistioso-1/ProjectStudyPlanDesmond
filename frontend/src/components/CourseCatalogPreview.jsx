@@ -74,9 +74,6 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
           <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
             Official Course Unit Catalog & Prerequisites Directory
           </h2>
-          <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-normal">
-            Explore active degree units, prerequisite progression rules, and teaching period availability.
-          </p>
         </div>
 
         {/* Actions Bar: Add Unit & Dataset Upload */}

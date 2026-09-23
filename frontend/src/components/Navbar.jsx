@@ -113,15 +113,6 @@ export default function Navbar({
             )}
           </button>
 
-          {/* System Guide & Handover Modal Button */}
-          <button
-            onClick={onOpenGuide}
-            className="px-3 py-1.5 bg-red-50 dark:bg-red-950/60 hover:bg-red-100 dark:hover:bg-red-900/80 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg text-xs font-bold shadow-2xs flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap"
-            title="Open User Guide, Workflows & Handover Instructions"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-            <span className="whitespace-nowrap">User Guide</span>
-          </button>
 
           {/* Role Switcher Pill */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 text-xs shrink-0 whitespace-nowrap">
