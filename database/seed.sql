@@ -122,16 +122,7 @@ INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period
 (1, (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'completed', 'C', 68.00, 1, 2026),
 (1, (SELECT unit_id FROM Unit WHERE code = 'ICT169'), 'attempted', 'F', 42.00, 1, 2026),
 (1, (SELECT unit_id FROM Unit WHERE code = 'ICT164'), 'current', NULL, NULL, 2, 2026),
-(1, (SELECT unit_id FROM Unit WHERE code = 'ICT111'), 'current', NULL, NULL, 2, 2026),
-
-(3, (SELECT unit_id FROM Unit WHERE code = 'ICT100'), 'completed', 'P', 55.00, 1, 2025),
-(3, (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'completed', 'P', 52.00, 1, 2025),
-(3, (SELECT unit_id FROM Unit WHERE code = 'ICT167'), 'attempted', 'F', 38.00, 2, 2025),
-
-(5, (SELECT unit_id FROM Unit WHERE code = 'ICT100'), 'completed', 'HD', 86.00, 1, 2024),
-(5, (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'completed', 'D', 81.00, 1, 2024),
-(5, (SELECT unit_id FROM Unit WHERE code = 'ICT167'), 'completed', 'D', 79.00, 2, 2024),
-(5, (SELECT unit_id FROM Unit WHERE code = 'ICT202'), 'completed', 'HD', 89.00, 1, 2025);
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT111'), 'current', NULL, NULL, 2, 2026);
 
 -- 9. Seed Sample Study Plans (Distinct per Student)
 INSERT INTO StudyPlan (plan_id, student_id, title, status, total_credit_points, created_by, recommended_at, agreed_at, approved_at) VALUES

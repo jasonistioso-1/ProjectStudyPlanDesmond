@@ -25,6 +25,17 @@ import {
 export default function GuideModal({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('chair_workflow');
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const databaseEntities = [
@@ -42,8 +53,14 @@ export default function GuideModal({ isOpen, onClose }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200 font-sans">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden transition-colors">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200 font-sans"
+      onClick={onClose}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()} 
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden transition-colors"
+      >
         
         {/* Header */}
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, BookOpen, Plus } from 'lucide-react';
 
 export default function AddUnitModal({ onAddUnit, onClose }) {
@@ -9,6 +9,16 @@ export default function AddUnitModal({ onAddUnit, onClose }) {
   const [prereqs, setPrereqs] = useState('');
   const [offerings, setOfferings] = useState(['T1', 'T2', 'T3']);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const handleToggleOffering = (term) => {
     setOfferings(prev => 
@@ -42,8 +52,14 @@ export default function AddUnitModal({ onAddUnit, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative font-sans text-slate-900 dark:text-slate-100 transition-colors">
+    <div 
+      className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()} 
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative font-sans text-slate-900 dark:text-slate-100 transition-colors my-auto"
+      >
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 transition-colors"

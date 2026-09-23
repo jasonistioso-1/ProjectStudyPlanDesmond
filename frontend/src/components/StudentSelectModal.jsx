@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
-import { Search, UserCheck, GraduationCap, Building2, ChevronRight, X, ArrowUpDown, UserPlus, Edit3 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, UserCheck, GraduationCap, Building2, ChevronRight, X, ArrowUpDown, UserPlus, Edit3, ArrowLeft } from 'lucide-react';
 
 export default function StudentSelectModal({ students = [], onSelectStudent, onAddStudentClick, onEditStudentClick, onClose, isModal = false }) {
   const [categoryFilter, setCategoryFilter] = useState('ALL'); // 'ALL' | 'admin' | 'existing_student' | 'new_student'
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name'); // 'name' | 'id' | 'course'
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const filteredStudents = students
     .filter(s => {
@@ -43,9 +53,11 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
       {isModal && onClose && (
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
+          className="absolute right-4 top-4 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/60 border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-1 text-xs font-bold shadow-2xs"
+          title="Close Modal (ESC or click outside)"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
+          <span>Exit</span>
         </button>
       )}
 
@@ -265,15 +277,30 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
 
       <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
         <span>Registered Students Available: <strong className="text-slate-900 dark:text-white font-bold">{filteredStudents.length} of {students.length}</strong></span>
-        <span className="font-mono text-slate-400 dark:text-slate-500">ICT302 Specification Standard</span>
+        {isModal && onClose ? (
+          <button
+            onClick={onClose}
+            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
+            <span>Back to Study Plan</span>
+          </button>
+        ) : (
+          <span className="font-mono text-slate-400 dark:text-slate-500">Singapore Trimester Focus</span>
+        )}
       </div>
     </div>
   );
 
   if (isModal) {
     return (
-      <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-        {content}
+      <div 
+        className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+        onClick={onClose}
+      >
+        <div onClick={(e) => e.stopPropagation()} className="w-full max-w-2xl my-auto">
+          {content}
+        </div>
       </div>
     );
   }

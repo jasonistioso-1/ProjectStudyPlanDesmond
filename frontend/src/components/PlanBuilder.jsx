@@ -51,7 +51,7 @@ export default function PlanBuilder({
   const isChair = activeRole === 'chair';
   const [unitFilter, setUnitFilter] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('ALL');
-  const [layoutType, setLayoutType] = useState('semester'); // 'semester' | 'trimester'
+  const [layoutType, setLayoutType] = useState('trimester'); // Default to Singapore Trimester Focus
   const [agreedConfirmed, setAgreedConfirmed] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState(null);
   const [showAllCatalogUnits, setShowAllCatalogUnits] = useState(false);
@@ -726,24 +726,27 @@ export default function PlanBuilder({
                   {/* Semester vs Trimester Layout Switcher */}
                   <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 text-xs">
                     <button
-                      onClick={() => setLayoutType('semester')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                        layoutType === 'semester'
-                          ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-extrabold'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
-                      }`}
-                    >
-                      Semester
-                    </button>
-                    <button
                       onClick={() => setLayoutType('trimester')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                         layoutType === 'trimester'
                           ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-extrabold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
                       }`}
                     >
-                      Trimester
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                      <span>Trimester (Singapore Active)</span>
+                    </button>
+
+                    <button
+                      onClick={() => setLayoutType('semester')}
+                      title="Semester layout (Inactive - Future Scalability)"
+                      className={`px-3 py-1 rounded-lg text-xs transition-all flex items-center gap-1.5 ${
+                        layoutType === 'semester'
+                          ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-white shadow-2xs font-bold'
+                          : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium'
+                      }`}
+                    >
+                      <span>Semester (Inactive Layout)</span>
                     </button>
                   </div>
 

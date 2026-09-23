@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Award, CheckCircle, Printer, X } from 'lucide-react';
 
 export default function CertificateModal({ certificate, onClose }) {
+  useEffect(() => {
+    if (!certificate) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [certificate, onClose]);
+
   if (!certificate) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white border-2 border-emerald-700 rounded-2xl p-8 max-w-2xl w-full shadow-2xl relative text-slate-900 my-8 font-sans">
+    <div 
+      className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()} 
+        className="bg-white border-2 border-emerald-700 rounded-2xl p-8 max-w-2xl w-full shadow-2xl relative text-slate-900 my-8 font-sans"
+      >
         {/* Close button */}
         <button
           onClick={onClose}

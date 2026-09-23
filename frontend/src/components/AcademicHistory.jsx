@@ -1,14 +1,27 @@
 import React from 'react';
-import { History, CheckCircle2, Clock, XCircle, AlertTriangle } from 'lucide-react';
+import { History, CheckCircle2, Clock, XCircle, AlertTriangle, GraduationCap } from 'lucide-react';
 
 export default function AcademicHistory({ history }) {
   if (!history || history.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm transition-colors">
-        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-          <History className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Academic History
-        </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">No prior academic history recorded for this student.</p>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm transition-colors text-center max-w-2xl mx-auto space-y-4 my-4 font-sans">
+        <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-center mx-auto shadow-2xs">
+          <GraduationCap className="w-6 h-6" />
+        </div>
+        <div>
+          <span className="inline-block bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2 font-mono">
+            Fresh Enrolment — New Student Profile
+          </span>
+          <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
+            No Prior Academic History Recorded
+          </h2>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-md mx-auto leading-relaxed">
+            This student is entering their <strong>first trimester</strong> of enrolment (0 CP completed). There are no previously passed or failed subjects on record.
+          </p>
+        </div>
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs font-mono text-slate-500 dark:text-slate-400">
+          Ready to construct a 72 CP trimester degree plan starting from <strong>Year 1 Trimester 1</strong>.
+        </div>
       </div>
     );
   }

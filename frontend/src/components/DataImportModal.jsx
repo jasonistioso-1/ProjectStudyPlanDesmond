@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Database, Upload, CheckCircle2, AlertCircle, X, FileSpreadsheet, Download, FileText, Check, AlertTriangle, Users, BookOpen, Layers, Award } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { importSeedData } from '../services/api';
@@ -11,6 +11,16 @@ export default function DataImportModal({ onClose }) {
   const [rowErrors, setRowErrors] = useState([]);
   const [status, setStatus] = useState({ loading: false, success: null, error: null });
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   // Sample CSV templates for all database entity schemas:
   const sampleTemplates = {
@@ -227,8 +237,14 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-4xl w-full shadow-2xl relative font-sans text-slate-900 dark:text-slate-100 transition-colors max-h-[90vh] flex flex-col">
+    <div 
+      className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()} 
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-4xl w-full shadow-2xl relative font-sans text-slate-900 dark:text-slate-100 transition-colors max-h-[90vh] flex flex-col my-auto"
+      >
         
         {/* Close Button */}
         <button

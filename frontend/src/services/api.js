@@ -118,12 +118,13 @@ export async function fetchStudentHistory(id) {
         return await res.json();
     } catch (err) {
         console.warn('API fetchStudentHistory fallback activated:', err.message);
+        if (id == 0 || id == 3 || id == 4) return [];
         return [
-            { history_id: 1, student_id: 1, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'D', mark: 78.5, period_id: 1, period_code: 'S1', year_taken: 2026 },
-            { history_id: 2, student_id: 1, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'C', mark: 68.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
-            { history_id: 3, student_id: 1, unit_id: 5, unit_code: 'ICT169', unit_title: 'Foundations of Data Communications', status: 'attempted', grade: 'F', mark: 42.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
-            { history_id: 4, student_id: 1, unit_id: 17, unit_code: 'MAS162', unit_title: 'Discrete Mathematics', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 },
-            { history_id: 5, student_id: 1, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 }
+            { history_id: 1, student_id: 1, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'D', mark: 78.5, period_id: 1, period_code: 'T1', year_taken: 2026 },
+            { history_id: 2, student_id: 1, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'C', mark: 68.0, period_id: 1, period_code: 'T1', year_taken: 2026 },
+            { history_id: 3, student_id: 1, unit_id: 5, unit_code: 'ICT169', unit_title: 'Foundations of Data Communications', status: 'attempted', grade: 'F', mark: 42.0, period_id: 1, period_code: 'T1', year_taken: 2026 },
+            { history_id: 4, student_id: 1, unit_id: 17, unit_code: 'MAS162', unit_title: 'Discrete Mathematics', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'T2', year_taken: 2026 },
+            { history_id: 5, student_id: 1, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'T2', year_taken: 2026 }
         ];
     }
 }

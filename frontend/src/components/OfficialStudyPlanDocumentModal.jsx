@@ -1,9 +1,20 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Printer, Download, X, CheckCircle2, FileText, ExternalLink } from 'lucide-react';
 
 export default function OfficialStudyPlanDocumentModal({ student, planUnits = [], currentPlan, onClose }) {
   const documentRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    if (!student) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [student, onClose]);
 
   if (!student) return null;
 
@@ -47,8 +58,14 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
   const courseTitle = `${student.course_code || 'B1390'} ${student.course_name || 'Bachelor of Information Technology'} (Major: ${student.major || 'Software & Data Systems'})`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto font-sans">
-      <div className="bg-white rounded-2xl max-w-5xl w-full shadow-2xl relative my-6 flex flex-col max-h-[92vh] overflow-hidden border border-slate-200">
+    <div 
+      className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto font-sans"
+      onClick={onClose}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()} 
+        className="bg-white rounded-2xl max-w-5xl w-full shadow-2xl relative my-6 flex flex-col max-h-[92vh] overflow-hidden border border-slate-200"
+      >
         
         {/* Top Control Bar (Hidden on print) */}
         <div className="no-print bg-slate-900 text-white px-6 py-3.5 flex items-center justify-between gap-4 border-b border-slate-800 shrink-0">
