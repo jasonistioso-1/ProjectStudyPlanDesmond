@@ -31,7 +31,6 @@ export default function Navbar({
 
   const chairNavItems = [
     { id: 'STUDY_PLAN', label: 'Plan Builder', icon: Layers },
-    { id: 'ACADEMIC_HISTORY', label: 'Academic History', icon: History },
     { id: 'STORED', label: `Stored Plans (${storedPlansCount})`, icon: Database },
     { id: 'CATALOG', label: 'Course Catalog', icon: BookOpen }
   ];

@@ -728,31 +728,40 @@ export default function PlanBuilder({
 
             {isChair ? (
               /* ACADEMIC CHAIR WORKFLOW GUIDE */
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
-                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5">
-                    <UserCheck className="w-3.5 h-3.5" /> 1. Select Student Profile
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs font-sans">
+                <div className="bg-slate-50/90 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 shadow-2xs">
+                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5 font-heading">
+                    <UserCheck className="w-4 h-4 shrink-0" /> 1. Select Target Student
                   </div>
                   <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
-                    Click <strong>Select Student</strong> in top bar or directory modal to select a student account (Alex Mercer, Sarah Jenkins, Michael Chang, Emily Watson).
+                    Click <strong>Select Student</strong> to load a student profile (Alex Mercer, Sarah Jenkins, Michael Chang, Emily Watson) to manage.
                   </p>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
-                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5" /> 2. Structure 72 CP Plan
+                <div className="bg-slate-50/90 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 shadow-2xs">
+                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5 font-heading">
+                    <Layers className="w-4 h-4 shrink-0" /> 2. Drag & Drop / Auto Add
                   </div>
                   <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
-                    Drag & drop units from the left palette into Year 1, Year 2, and Year 3 Trimesters (T1, T2, T3) to build a compliant 72 CP sequence.
+                    <strong>Drag & drop</strong> units into Year 1, 2, or 3 Trimesters (T1, T2, T3), or click <strong>+ Add Unit</strong> for automated trimester placement.
                   </p>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5">
-                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5" /> 3. Recommend & Approve
+                <div className="bg-slate-50/90 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 shadow-2xs">
+                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5 font-heading">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" /> 3. Rule Validation Check
                   </div>
                   <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
-                    Verify validation rules on the left console, click <strong>Recommend to Student</strong>, then click <strong>Final Approve Plan</strong> after student sign-off.
+                    Verify validation rules on the left console (BR-01 Singapore Trimester availability & BR-02 Prerequisite progression).
+                  </p>
+                </div>
+
+                <div className="bg-slate-50/90 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 shadow-2xs">
+                  <div className="font-extrabold text-red-700 dark:text-red-400 flex items-center gap-1.5 font-heading">
+                    <ShieldCheck className="w-4 h-4 shrink-0" /> 4. Recommend & Approve
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                    Click <strong>Recommend to Student</strong>. After student digital sign-off, click <strong>Final Approve Plan</strong> to archive.
                   </p>
                 </div>
               </div>
