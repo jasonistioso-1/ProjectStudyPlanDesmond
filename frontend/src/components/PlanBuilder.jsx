@@ -482,40 +482,40 @@ export default function PlanBuilder({
             <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
               <div className="flex items-center gap-1.5 font-extrabold text-slate-900 dark:text-white font-heading text-[11px]">
                 <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">1</span>
-                Tinjau Rencana Dosen
+                Review Proposed Sequence
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-normal">
-                Lihat susunan unit di Trimester 1, 2, 3 pada Year 1–3 yang telah dirancang Academic Chair.
+                Review the unit sequence for Trimester 1, 2, 3 across Year 1–3 proposed by your Academic Chair.
               </p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
               <div className="flex items-center gap-1.5 font-extrabold text-slate-900 dark:text-white font-heading text-[11px]">
                 <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">2</span>
-                Verifikasi Beban & Prasyarat
+                Verify Load & Prerequisites
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-normal">
-                Pastikan beban per semester maks 12 CP (Total 72 CP) dan syarat prasyarat terpenuhi.
+                Ensure maximum 12 CP load per trimester (72 CP degree target) and verify prerequisite requirements.
               </p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
               <div className="flex items-center gap-1.5 font-extrabold text-slate-900 dark:text-white font-heading text-[11px]">
                 <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">3</span>
-                Digital Sign-Off
+                Digital Sign-Off Confirmation
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-normal">
-                Centang persetujuan digital dan klik <strong>Sign & Agree</strong> (Status: <em>STUDENT AGREED</em>).
+                Tick the digital confirmation box and click <strong>Sign & Agree</strong> (Status: <em>STUDENT AGREED</em>).
               </p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
               <div className="flex items-center gap-1.5 font-extrabold text-slate-900 dark:text-white font-heading text-[11px]">
                 <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">4</span>
-                Cetak Dokumen Resmi
+                Export Official Document
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-normal">
-                Setelah Dosen menyetujui (Approved), klik <strong>Export PDF / Image</strong> untuk mengunduh dokumen.
+                Once approved by the Academic Chair, click <strong>Export PDF / Image</strong> to view or download your official document.
               </p>
             </div>
           </div>
