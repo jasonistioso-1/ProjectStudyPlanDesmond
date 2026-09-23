@@ -256,14 +256,10 @@ export default function App() {
     setSelectedStudent(student);
     setShowStudentSelectModal(false);
     
-    // Auto-switch role based on selected account
-    if (student.account_category === 'admin' || student.student_id === 0) {
-      setActiveRole('chair');
-    } else {
-      setActiveRole('student');
-      if (activeTab === 'STORED' || activeTab === 'CATALOG') {
-        setActiveTab('STUDY_PLAN');
-      }
+    // Do NOT auto-switch activeRole when a student profile is selected.
+    // If the Academic Chair selects a student, they stay in Academic Chair view to manage that student's plan.
+    if (activeTab === 'STORED' || activeTab === 'CATALOG') {
+      setActiveTab('STUDY_PLAN');
     }
 
     showToast(`Loaded profile for ${student.first_name} ${student.last_name} (${student.account_category === 'admin' ? 'Administrator' : student.account_category === 'new_student' ? 'New Student' : 'Existing Student'})`);
