@@ -9,8 +9,14 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: true,
     proxy: {
-      '/api': 'http://localhost:5000'
+      '/api': {
+        target: process.env.VITE_BACKEND_URL || 'http://backend:5000',
+        changeOrigin: true,
+        secure: false
+      }
     }
   }
 });
+
