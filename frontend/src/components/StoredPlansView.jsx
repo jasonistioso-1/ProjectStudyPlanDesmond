@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Database, Search, FileEdit, CheckCircle2, Clock, Calendar, ArrowRight, UserCheck, Eye, Layers } from 'lucide-react';
 
-export default function StoredPlansView({ students = [], onSelectStudentAndRetrievePlan, onTabChange }) {
+export default function StoredPlansView({ students = [], storedPlans, onSelectStudentAndRetrievePlan, onTabChange }) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Sample Stored Plans list matching seed data & stored plans
-  const storedPlansList = [
+  // Default fallback sample Stored Plans list
+  const defaultStoredPlans = [
     {
       plan_id: 101,
       student_id: 1,
@@ -64,27 +64,29 @@ export default function StoredPlansView({ students = [], onSelectStudentAndRetri
     }
   ];
 
-  const filteredPlans = storedPlansList.filter(p => {
+  const activePlansList = (storedPlans && storedPlans.length > 0) ? storedPlans : defaultStoredPlans;
+
+  const filteredPlans = activePlansList.filter(p => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
-      p.student_name.toLowerCase().includes(q) ||
-      p.student_number.toLowerCase().includes(q) ||
-      p.course_code.toLowerCase().includes(q) ||
-      p.title.toLowerCase().includes(q)
+      (p.student_name && p.student_name.toLowerCase().includes(q)) ||
+      (p.student_number && p.student_number.toLowerCase().includes(q)) ||
+      (p.course_code && p.course_code.toLowerCase().includes(q)) ||
+      (p.title && p.title.toLowerCase().includes(q))
     );
   });
 
   const getStatusBadge = (status) => {
     switch (status) {
       case 'approved':
-        return <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 font-mono font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase">Approved</span>;
+        return <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 font-sans font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Approved</span>;
       case 'agreed':
-        return <span className="bg-blue-100 text-blue-800 border border-blue-300 font-mono font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase">Student Agreed</span>;
+        return <span className="bg-blue-50 text-blue-800 border border-blue-300 font-sans font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Student Agreed</span>;
       case 'recommended':
-        return <span className="bg-amber-100 text-amber-800 border border-amber-300 font-mono font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase">Recommended</span>;
+        return <span className="bg-amber-50 text-amber-800 border border-amber-300 font-sans font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Recommended</span>;
       default:
-        return <span className="bg-slate-100 text-slate-700 border border-slate-300 font-mono font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase">Draft</span>;
+        return <span className="bg-slate-100 text-slate-700 border border-slate-300 font-sans font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Draft</span>;
     }
   };
 

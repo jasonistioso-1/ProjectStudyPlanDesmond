@@ -139,6 +139,66 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('STUDY_PLAN');
   const [storedPlansCount, setStoredPlansCount] = useState(4);
 
+  // Stored Plans List State (Dynamic Last Updated, Version, & Status tracking)
+  const [storedPlansList, setStoredPlansList] = useState([
+    {
+      plan_id: 101,
+      student_id: 1,
+      student_name: 'Alex Mercer',
+      student_number: 'PT3-2026-001',
+      course_code: 'PT3-BSIT-AI01',
+      title: 'PT3-BSIT Artificial Intelligence Plan',
+      status: 'approved',
+      version_number: 2,
+      total_cp: 72,
+      created_by: 'Academic Chair',
+      updated_at: '2026-09-15 08:30',
+      location: 'Singapore Campus'
+    },
+    {
+      plan_id: 102,
+      student_id: 2,
+      student_name: 'Sarah Jenkins',
+      student_number: 'PT3-2026-002',
+      course_code: 'PT3-BSIT-CS02',
+      title: 'PT3-BSIT Computer Science Plan',
+      status: 'agreed',
+      version_number: 1,
+      total_cp: 72,
+      created_by: 'Academic Chair',
+      updated_at: '2026-09-14 16:45',
+      location: 'Singapore Campus'
+    },
+    {
+      plan_id: 103,
+      student_id: 3,
+      student_name: 'Michael Chang',
+      student_number: 'PT3-2026-003',
+      course_code: 'PT3-BSIT-BIS03',
+      title: 'PT3-BSIT Business Info Systems Plan',
+      status: 'recommended',
+      version_number: 1,
+      total_cp: 69,
+      created_by: 'Academic Chair',
+      updated_at: '2026-09-14 11:20',
+      location: 'Singapore Campus'
+    },
+    {
+      plan_id: 104,
+      student_id: 4,
+      student_name: 'Emily Watson',
+      student_number: 'PT3-2026-004',
+      course_code: 'PT3-BSIT-AI04',
+      title: 'PT3-BSIT Artificial Intelligence Plan',
+      status: 'draft',
+      version_number: 3,
+      total_cp: 72,
+      created_by: 'Academic Chair',
+      updated_at: '2026-09-13 14:10',
+      location: 'Singapore Campus'
+    }
+  ]);
+
   // Theme State
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('spr_theme') || 'light';
@@ -326,6 +386,71 @@ export default function App() {
     runValidation(selectedStudent.student_id, selectedStudent.location_id, updatedUnits);
   };
 
+  const formatCurrentDateTime = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${mins}`;
+  };
+
+  const updatePlanRecordAndLogAudit = (newStatus, reason, authorName) => {
+    if (!selectedStudent) return;
+    const nowFormatted = formatCurrentDateTime();
+    const nowIso = new Date().toISOString();
+
+    setStoredPlansList(prev => {
+      const existingIdx = prev.findIndex(p => String(p.student_id) === String(selectedStudent.student_id));
+      if (existingIdx !== -1) {
+        const existing = prev[existingIdx];
+        const nextVer = (existing.version_number || 1) + 1;
+        const updatedItem = {
+          ...existing,
+          status: newStatus,
+          version_number: nextVer,
+          updated_at: nowFormatted,
+          total_cp: (planUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0)
+        };
+        const newList = [...prev];
+        newList[existingIdx] = updatedItem;
+        return newList;
+      } else {
+        const newItem = {
+          plan_id: Math.floor(Math.random() * 900) + 100,
+          student_id: selectedStudent.student_id,
+          student_name: `${selectedStudent.first_name} ${selectedStudent.last_name}`,
+          student_number: selectedStudent.student_number,
+          course_code: selectedStudent.course_code || 'PT3-BSIT',
+          title: `${selectedStudent.course_code || 'PT3-BSIT'} Study Plan`,
+          status: newStatus,
+          version_number: 1,
+          total_cp: (planUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0),
+          created_by: authorName,
+          updated_at: nowFormatted,
+          location: selectedStudent.location_name || 'Singapore Campus'
+        };
+        return [newItem, ...prev];
+      }
+    });
+
+    const newAuditLog = {
+      version_id: Date.now(),
+      plan_id: currentPlan?.plan_id || selectedStudent.student_id,
+      version_number: (currentPlan?.version_number || 1) + 1,
+      student_number: selectedStudent.student_number,
+      first_name: selectedStudent.first_name,
+      last_name: selectedStudent.last_name,
+      plan_title: `${selectedStudent.course_code || 'PT3-BSIT'} Study Plan`,
+      amendment_reason: reason,
+      created_by: authorName,
+      created_at: nowIso,
+      plan_status: newStatus
+    };
+    setAuditLogsList(prev => [newAuditLog, ...prev]);
+  };
+
   // Recommend Plan
   const handleRecommendPlan = async () => {
     if (!selectedStudent || selectedStudent.account_category === 'admin' || selectedStudent.student_id === 0) {
@@ -338,7 +463,7 @@ export default function App() {
       return;
     }
 
-    const updatedPlan = { ...currentPlan, status: 'recommended' };
+    const updatedPlan = { ...currentPlan, status: 'recommended', updated_at: formatCurrentDateTime(), version_number: (currentPlan?.version_number || 1) + 1 };
     setCurrentPlan(updatedPlan);
     setAllStudentPlansMap(prev => ({
       ...prev,
@@ -347,6 +472,7 @@ export default function App() {
         units: planUnits
       }
     }));
+    updatePlanRecordAndLogAudit('recommended', 'Study plan marked as RECOMMENDED to student for review', 'Academic Chair');
     showToast(`Plan successfully recommended to ${selectedStudent.first_name} ${selectedStudent.last_name} (${selectedStudent.student_number})!`);
     try {
       const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
@@ -359,7 +485,7 @@ export default function App() {
   // Student Agree Plan
   const handleAgreePlan = async () => {
     if (!selectedStudent) return;
-    const updatedPlan = { ...currentPlan, status: 'agreed' };
+    const updatedPlan = { ...currentPlan, status: 'agreed', updated_at: formatCurrentDateTime(), version_number: (currentPlan?.version_number || 1) + 1 };
     setCurrentPlan(updatedPlan);
     setAllStudentPlansMap(prev => ({
       ...prev,
@@ -368,6 +494,7 @@ export default function App() {
         units: planUnits
       }
     }));
+    updatePlanRecordAndLogAudit('agreed', 'Student agreed and digitally signed proposed study plan', `Student: ${selectedStudent.first_name} ${selectedStudent.last_name}`);
     showToast('Study plan agreed and digitally signed by student!');
     try {
       const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
@@ -380,7 +507,7 @@ export default function App() {
   // Chair Approve & Finalise Plan
   const handleApprovePlan = async () => {
     if (!selectedStudent) return;
-    const updatedPlan = { ...currentPlan, status: 'approved' };
+    const updatedPlan = { ...currentPlan, status: 'approved', updated_at: formatCurrentDateTime(), version_number: (currentPlan?.version_number || 1) + 1 };
     setCurrentPlan(updatedPlan);
     setAllStudentPlansMap(prev => ({
       ...prev,
@@ -389,6 +516,7 @@ export default function App() {
         units: planUnits
       }
     }));
+    updatePlanRecordAndLogAudit('approved', 'Study Plan officially APPROVED & finalized by Academic Chair', 'Academic Chair');
     showToast('Study Plan officially approved and finalized by Academic Chair!');
     try {
       const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
@@ -401,7 +529,7 @@ export default function App() {
   // Save & Store Plan in Repository
   const handleSavePlan = async () => {
     if (!selectedStudent) return;
-    const updatedPlan = { ...currentPlan, status: 'stored' };
+    const updatedPlan = { ...currentPlan, status: 'stored', updated_at: formatCurrentDateTime(), version_number: (currentPlan?.version_number || 1) + 1 };
     setCurrentPlan(updatedPlan);
     setAllStudentPlansMap(prev => ({
       ...prev,
@@ -411,6 +539,7 @@ export default function App() {
       }
     }));
     setStoredPlansCount(prev => prev + 1);
+    updatePlanRecordAndLogAudit('stored', 'Study Plan saved & archived in Stored Plans Repository', 'Academic Chair');
     showToast('Study Plan saved & archived in Stored Plans Repository!');
     try {
       await saveStudyPlan({
@@ -628,6 +757,7 @@ export default function App() {
           {activeTab === 'STORED' && (
             <StoredPlansView
               students={studentsList}
+              storedPlans={storedPlansList}
               onSelectStudentAndRetrievePlan={(st) => {
                 handleSelectStudent(st);
                 setActiveTab('STUDY_PLAN');

@@ -69,9 +69,12 @@ export default function PlanBuilder({
     })
   );
 
-  // Completed unit codes
+  // Completed & Attempted (Failed) unit codes from student history
   const completedUnitCodes = new Set(
     (history || []).filter(h => h.status === 'completed').map(h => h.unit_code)
+  );
+  const attemptedUnitCodes = new Set(
+    (history || []).filter(h => h.status === 'attempted').map(h => h.unit_code)
   );
 
   // Teaching Periods list according to layoutType (FR-05 Semester vs Trimester)
@@ -156,7 +159,7 @@ export default function PlanBuilder({
       }
     }
 
-    // BR-02 Prerequisite Check
+    // BR-02 Prerequisite & Failed Unit Check
     const prereqCode = prereqMap[unit.code];
     if (prereqCode) {
       const isCompleted = completedUnitCodes.has(prereqCode);
@@ -167,7 +170,13 @@ export default function PlanBuilder({
         return false;
       });
 
-      if (!isCompleted && !isScheduledPrior) {
+      if (attemptedUnitCodes.has(prereqCode) && !isCompleted && !isScheduledPrior) {
+        const msg = `Prerequisite Subject ${prereqCode} was FAILED in student history. You must re-enroll and pass ${prereqCode} before taking ${unit.code}.`;
+        if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
+        if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-02_PREREQUISITE_FAILED')) {
+          warningsList.push({ type: 'BR-02_PREREQUISITE_FAILED', severity: 'error', unitCode: unit.code, prereqCode, message: msg });
+        }
+      } else if (!isCompleted && !isScheduledPrior) {
         const msg = `Unit ${unit.code} requires prerequisite ${prereqCode}, which is neither completed in history nor scheduled in a prior teaching period.`;
         if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
         if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-02_PREREQUISITE_UNMET')) {
@@ -183,85 +192,54 @@ export default function PlanBuilder({
     if (activeId.startsWith('palette_')) {
       const code = activeId.replace('palette_', '');
       const unit = catalogUnits.find(u => String(u.unit_id || u.code) === code || u.code === code);
-      setActiveDragItem(unit);
-    } else {
-      const unit = planUnits.find(u => String(u.unit_id || u.code) === activeId || u.code === activeId);
-      setActiveDragItem(unit);
+      if (unit) setActiveDragItem(unit);
     }
   };
 
-  // Handle Drag End event
+  // Handle Drag End
   const handleDragEnd = (event) => {
-    setActiveDragItem(null);
     const { active, over } = event;
+    setActiveDragItem(null);
+    if (!over) return;
+
     const activeId = String(active.id);
-
-    if (!over) {
-      if (!activeId.startsWith('palette_')) {
-        handleRemoveUnit(activeId);
-      }
-      return;
-    }
-
     const overId = String(over.id);
 
-    if (overId === 'available_units_dropzone') {
-      if (!activeId.startsWith('palette_')) {
-        handleRemoveUnit(activeId);
-      }
-      return;
-    }
-
     let targetYear = 1;
-    let targetPeriodId = 1;
+    let targetPeriod = 3; // Default T1
 
-    if (overId.startsWith('year_')) {
-      const parts = overId.split('_');
-      targetYear = Number(parts[1]);
-      targetPeriodId = Number(parts[3]);
-    } else {
-      const overUnit = planUnits.find(u => String(u.unit_id || u.code) === overId);
-      if (overUnit) {
-        targetYear = overUnit.year_level;
-        targetPeriodId = overUnit.period_id;
-      }
+    if (overId.includes('_p')) {
+      const parts = overId.split('_p');
+      targetYear = parseInt(parts[0].replace('y', ''), 10);
+      targetPeriod = parseInt(parts[1], 10);
+    } else if (overId.startsWith('year_')) {
+      targetYear = parseInt(overId.replace('year_', ''), 10);
+      targetPeriod = layoutType === 'trimester' ? 3 : 1;
     }
 
     if (activeId.startsWith('palette_')) {
-      const paletteCode = activeId.replace('palette_', '');
-      const catalogUnit = catalogUnits.find(u => String(u.unit_id || u.code) === paletteCode || u.code === paletteCode);
-
-      if (catalogUnit && !planUnits.some(u => String(u.code) === String(catalogUnit.code))) {
-        const newPlanUnit = {
-          unit_id: catalogUnit.unit_id,
-          code: catalogUnit.code,
-          title: catalogUnit.title,
-          credit_points: catalogUnit.credit_points || 3,
-          period_id: targetPeriodId,
-          year_level: targetYear,
-          sequence_order: planUnits.length + 1
-        };
-
-        const updated = [...planUnits, newPlanUnit];
+      const code = activeId.replace('palette_', '');
+      const unit = catalogUnits.find(u => String(u.unit_id || u.code) === code || u.code === code);
+      if (unit) {
+        const exists = planUnits.some(u => u.code === unit.code);
+        let updated;
+        if (exists) {
+          updated = planUnits.map(u =>
+            u.code === unit.code ? { ...u, year_level: targetYear, period_id: targetPeriod } : u
+          );
+        } else {
+          updated = [
+            ...planUnits,
+            {
+              ...unit,
+              year_level: targetYear,
+              period_id: targetPeriod
+            }
+          ];
+        }
         setPlanUnits(updated);
         if (onValidate) onValidate(updated);
       }
-    } else {
-      setPlanUnits(prevUnits => {
-        const updated = prevUnits.map(unit => {
-          if (String(unit.unit_id || unit.code) === activeId) {
-            return {
-              ...unit,
-              year_level: targetYear,
-              period_id: targetPeriodId
-            };
-          }
-          return unit;
-        });
-
-        if (onValidate) onValidate(updated);
-        return updated;
-      });
     }
   };
 
@@ -269,7 +247,7 @@ export default function PlanBuilder({
   const handleAddUnitFromPalette = (unit) => {
     if (planUnits.some(u => u.code === unit.code)) return;
 
-    const defaultPeriod = defaultPeriodList[0] ? defaultPeriodList[0].period_id : 1;
+    const defaultPeriod = defaultPeriodList[0] ? defaultPeriodList[0].period_id : 3;
     const newPlanUnit = {
       unit_id: unit.unit_id,
       code: unit.code,
@@ -304,48 +282,64 @@ export default function PlanBuilder({
     if (onValidate) onValidate(updated);
   };
 
-  // Auto-generate major sequence (72 CP) for student
-  const handleAutoGeneratePlan = () => {
-    const courseCode = student?.course_code || 'PT3-BSIT-AI01';
-    let targetCodes = [
-      'ICT100','ICT159','MAS162','ICT158',
-      'ICT169','ICT170','ICT167','ICT145',
-      'ICT201','ICT202','ICT203','ICT285',
-      'ICT206','BSC203','ICT283','ICT284',
-      'ICT302','ICT303','ICT304','ICT305',
-      'ICT301','ICT373','ICT374','ICT292'
+  // Preset 3-Year Singapore Trimester Fast-Track Plan (72 CP across 3 Years)
+  const handleGeneratePresetPlan = () => {
+    const isNewStudent = !history || history.length === 0;
+
+    const singaporeStandardUnits = [
+      { code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 3 },
+      { code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, year_level: 1, period_id: 3 },
+      { code: 'ICT158', title: 'Intro to Computer Systems', credit_points: 3, year_level: 1, period_id: 3 },
+
+      { code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, year_level: 1, period_id: 4 },
+      { code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, year_level: 1, period_id: 4 },
+      { code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, year_level: 1, period_id: 4 },
+
+      { code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, year_level: 1, period_id: 5 },
+      { code: 'ICT145', title: 'Python Programming', credit_points: 3, year_level: 1, period_id: 5 },
+
+      { code: 'ICT201', title: 'IT Project Management', credit_points: 3, year_level: 2, period_id: 3 },
+      { code: 'ICT202', title: 'Data Analytics & Processing', credit_points: 3, year_level: 2, period_id: 3 },
+      { code: 'ICT285', title: 'Databases', credit_points: 3, year_level: 2, period_id: 3 },
+
+      { code: 'ICT203', title: 'Software Architecture & Design', credit_points: 3, year_level: 2, period_id: 4 },
+      { code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, year_level: 2, period_id: 4 },
+      { code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, year_level: 2, period_id: 4 },
+
+      { code: 'ICT206', title: 'Distributed Systems', credit_points: 3, year_level: 2, period_id: 5 },
+      { code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, year_level: 2, period_id: 5 },
+      { code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, year_level: 2, period_id: 5 },
+
+      { code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, year_level: 3, period_id: 3 },
+      { code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, year_level: 3, period_id: 3 },
+      { code: 'ICT305', title: 'Data Visualisation', credit_points: 3, year_level: 3, period_id: 3 },
+
+      { code: 'ICT303', title: 'Cloud Infrastructure & DevOps', credit_points: 3, year_level: 3, period_id: 4 },
+      { code: 'ICT304', title: 'Enterprise Software Systems', credit_points: 3, year_level: 3, period_id: 4 },
+      { code: 'ICT374', title: 'Operating Systems', credit_points: 3, year_level: 3, period_id: 4 },
+
+      { code: 'ICT373', title: 'Software Architecture', credit_points: 3, year_level: 3, period_id: 5 }
     ];
 
-    if (courseCode.includes('CS')) {
-      targetCodes = [
-        'ICT100','ICT159','MAS162','ICT158',
-        'ICT167','ICT170','MAS164','ICT145',
-        'ICT283','ICT284','ICT285','ICT201',
-        'ICT374','BSC203','MAS183','ICT292',
-        'ICT373','ICT302','ICT301','ICT203',
-        'ICT305','ICT206','ICT304','ICT394'
-      ];
-    } else if (courseCode.includes('BIS')) {
-      targetCodes = [
-        'ICT100','ICT159','MAS162','ICT158',
-        'ICT169','ICT170','ICT284','ICT145',
-        'ICT201','ICT285','ICT292','MAS183',
-        'BSC203','ICT394','ICT283','ICT167',
-        'ICT301','ICT302','ICT393','ICT305',
-        'ICT373','ICT202','ICT304'
-      ];
-    }
+    const completedCodesSet = new Set(
+      (history || []).filter(h => h.status === 'completed').map(h => h.unit_code)
+    );
 
-    const generatedUnits = targetCodes.map((code, idx) => {
-      const u = catalogUnits.find(cu => cu.code === code) || { unit_id: idx + 1, code, title: code, credit_points: 3 };
+    const generatedUnits = singaporeStandardUnits.filter(u => {
+      if (!isNewStudent && completedCodesSet.has(u.code)) {
+        return false;
+      }
+      return true;
+    }).map(u => {
+      const match = catalogUnits.find(c => c.code === u.code);
       return {
-        unit_id: u.unit_id,
+        unit_id: match?.unit_id || Math.floor(Math.random() * 1000) + 100,
         code: u.code,
-        title: u.title,
-        credit_points: u.credit_points || 3,
-        year_level: Math.floor(idx / 8) + 1,
-        period_id: (Math.floor(idx / 4) % 2 === 0) ? 1 : 2,
-        sequence_order: (idx % 4) + 1
+        title: match?.title || u.title,
+        credit_points: match?.credit_points || u.credit_points || 3,
+        level: match?.level || (u.year_level === 1 ? 100 : u.year_level === 2 ? 200 : 300),
+        year_level: u.year_level,
+        period_id: u.period_id
       };
     });
 
@@ -466,6 +460,63 @@ export default function PlanBuilder({
             <div className="bg-white dark:bg-slate-800 border border-amber-200/80 dark:border-slate-700 px-3.5 py-2 rounded-xl text-right shadow-2xs">
               <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block font-sans">Planned Load</span>
               <span className="text-xs font-extrabold text-slate-900 dark:text-white font-sans tabular-nums">{totalCP} / 72 CP</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Student System User Guide & SOP Banner */}
+        <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4.5 rounded-2xl space-y-3 shadow-2xs">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400" />
+              <h3 className="text-xs font-extrabold text-slate-900 dark:text-white font-heading uppercase tracking-wider">
+                Student SOP & Review Procedure Guide
+              </h3>
+            </div>
+            <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+              Student Workflow SOP
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="flex items-center gap-1.5 font-extrabold text-slate-900 dark:text-white font-heading text-[11px]">
+                <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">1</span>
+                Tinjau Rencana Dosen
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-normal">
+                Lihat susunan unit di Trimester 1, 2, 3 pada Year 1–3 yang telah dirancang Academic Chair.
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="flex items-center gap-1.5 font-extrabold text-slate-900 dark:text-white font-heading text-[11px]">
+                <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">2</span>
+                Verifikasi Beban & Prasyarat
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-normal">
+                Pastikan beban per semester maks 12 CP (Total 72 CP) dan syarat prasyarat terpenuhi.
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="flex items-center gap-1.5 font-extrabold text-slate-900 dark:text-white font-heading text-[11px]">
+                <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">3</span>
+                Digital Sign-Off
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-normal">
+                Centang persetujuan digital dan klik <strong>Sign & Agree</strong> (Status: <em>STUDENT AGREED</em>).
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+              <div className="flex items-center gap-1.5 font-extrabold text-slate-900 dark:text-white font-heading text-[11px]">
+                <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">4</span>
+                Cetak Dokumen Resmi
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-normal">
+                Setelah Dosen menyetujui (Approved), klik <strong>Export PDF / Image</strong> untuk mengunduh dokumen.
+              </p>
             </div>
           </div>
         </div>

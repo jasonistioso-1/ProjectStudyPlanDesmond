@@ -9,13 +9,13 @@ export default function AcademicHistory({ history, student }) {
           <UserCheck className="w-6 h-6" />
         </div>
         <div>
-          <span className="inline-block bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2 font-mono">
+          <span className="inline-block bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-2 font-sans">
             Administrator (Academic Chair Profile)
           </span>
-          <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
             Staff Account — No Student Academic History
           </h2>
-          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-md mx-auto leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-md mx-auto leading-relaxed font-medium">
             Dr. Aris Thorne is the Academic Chair & System Administrator. Academic history records are reserved exclusively for enrolled student profiles.
           </p>
         </div>
@@ -29,17 +29,17 @@ export default function AcademicHistory({ history, student }) {
           <GraduationCap className="w-6 h-6" />
         </div>
         <div>
-          <span className="inline-block bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2 font-mono">
+          <span className="inline-block bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-2 font-sans">
             Fresh Enrolment — New Student Profile
           </span>
-          <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
             No Prior Academic History Recorded
           </h2>
-          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-md mx-auto leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-md mx-auto leading-relaxed font-medium">
             This student is entering their <strong>first trimester</strong> of enrolment (0 CP completed). There are no previously passed or failed subjects on record.
           </p>
         </div>
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs font-mono text-slate-500 dark:text-slate-400">
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400">
           Ready to construct a 72 CP trimester degree plan starting from <strong>Year 1 Trimester 1</strong>.
         </div>
       </div>
@@ -51,17 +51,17 @@ export default function AcademicHistory({ history, student }) {
   const attempted = history.filter(h => h.status === 'attempted');
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm transition-colors">
-      <div className="flex flex-wrap justify-between items-center mb-4 pb-2 border-b border-slate-200 dark:border-slate-800 gap-2">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm transition-colors font-sans max-w-[1440px] mx-auto space-y-4">
+      <div className="flex flex-wrap justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800 gap-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 font-heading">
             <History className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Student Academic History Breakdown
           </h2>
-          <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md font-mono">
+          <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md font-sans uppercase tracking-wider">
             Official Student Record
           </span>
         </div>
-        <div className="flex gap-2 text-xs font-mono font-bold">
+        <div className="flex gap-2 text-xs font-sans font-bold tabular-nums">
           <span className="px-2.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
             Passed: {completed.length}
           </span>
@@ -76,23 +76,23 @@ export default function AcademicHistory({ history, student }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Completed Units */}
-        <div className="bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-lg p-3">
-          <h3 className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+        <div className="bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-xl p-3.5 shadow-2xs">
+          <h3 className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 font-sans">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Passed / Completed Units
           </h3>
-          <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
             {completed.length === 0 ? (
               <p className="text-xs text-slate-400 dark:text-slate-500 italic">None completed</p>
             ) : (
               completed.map(item => (
-                <div key={item.history_id} className="bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800/80 p-2.5 rounded shadow-sm text-xs flex justify-between items-center">
+                <div key={item.history_id} className="bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800/80 p-2.5 rounded-lg shadow-2xs text-xs flex justify-between items-center font-sans">
                   <div>
                     <span className="font-extrabold text-slate-900 dark:text-white">{item.unit_code}</span>
                     <p className="text-[11px] text-slate-600 dark:text-slate-300 truncate max-w-[150px] font-medium">{item.unit_title}</p>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono text-emerald-700 dark:text-emerald-400 font-extrabold">{item.grade || 'P'}</span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono">{item.year_taken} {item.period_code}</span>
+                    <span className="text-emerald-700 dark:text-emerald-400 font-extrabold text-xs">{item.grade || 'P'}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold tabular-nums">{item.year_taken} {item.period_code}</span>
                   </div>
                 </div>
               ))
@@ -101,21 +101,21 @@ export default function AcademicHistory({ history, student }) {
         </div>
 
         {/* Current Enrolled Units */}
-        <div className="bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg p-3">
-          <h3 className="text-xs font-extrabold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+        <div className="bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl p-3.5 shadow-2xs">
+          <h3 className="text-xs font-extrabold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 font-sans">
             <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" /> Currently Enrolled
           </h3>
-          <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
             {current.length === 0 ? (
               <p className="text-xs text-slate-400 dark:text-slate-500 italic">None currently enrolled</p>
             ) : (
               current.map(item => (
-                <div key={item.history_id} className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800/80 p-2.5 rounded shadow-sm text-xs flex justify-between items-center">
+                <div key={item.history_id} className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800/80 p-2.5 rounded-lg shadow-2xs text-xs flex justify-between items-center font-sans">
                   <div>
                     <span className="font-extrabold text-slate-900 dark:text-white">{item.unit_code}</span>
                     <p className="text-[11px] text-slate-600 dark:text-slate-300 truncate max-w-[150px] font-medium">{item.unit_title}</p>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono font-bold border border-amber-300 dark:border-amber-800">
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-800 tabular-nums">
                     {item.period_code} {item.year_taken}
                   </span>
                 </div>
@@ -125,16 +125,16 @@ export default function AcademicHistory({ history, student }) {
         </div>
 
         {/* Attempted / Failed Units */}
-        <div className="bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-lg p-3">
-          <h3 className="text-xs font-extrabold text-rose-800 dark:text-rose-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+        <div className="bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-xl p-3.5 shadow-2xs">
+          <h3 className="text-xs font-extrabold text-rose-800 dark:text-rose-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 font-sans">
             <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" /> Unsuccessful / Failed Units
           </h3>
-          <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
             {attempted.length === 0 ? (
               <p className="text-xs text-slate-400 dark:text-slate-500 italic">No failed units recorded</p>
             ) : (
               attempted.map(item => (
-                <div key={item.history_id} className="bg-white dark:bg-slate-800 border border-rose-300 dark:border-rose-800/80 p-2.5 rounded shadow-sm text-xs flex justify-between items-center">
+                <div key={item.history_id} className="bg-white dark:bg-slate-800 border border-rose-300 dark:border-rose-800/80 p-2.5 rounded-lg shadow-2xs text-xs flex justify-between items-center font-sans">
                   <div>
                     <div className="flex items-center gap-1">
                       <span className="font-extrabold text-slate-900 dark:text-white">{item.unit_code}</span>
@@ -142,9 +142,9 @@ export default function AcademicHistory({ history, student }) {
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-300 truncate max-w-[150px] font-medium">{item.unit_title}</p>
                   </div>
-                  <div className="text-right">
-                    <span className="font-mono text-rose-700 dark:text-rose-400 font-extrabold">{item.grade || 'F'} ({item.mark || 0}%)</span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono">{item.year_taken} {item.period_code}</span>
+                  <div className="text-right font-sans">
+                    <span className="text-rose-700 dark:text-rose-400 font-extrabold text-xs block tabular-nums">{item.grade || 'F'} ({item.mark || 0}%)</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-semibold tabular-nums">{item.year_taken} {item.period_code}</span>
                   </div>
                 </div>
               ))
