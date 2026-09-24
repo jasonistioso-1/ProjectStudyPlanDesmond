@@ -119,6 +119,14 @@ export async function fetchStudentHistory(id) {
     } catch (err) {
         console.warn('API fetchStudentHistory fallback activated:', err.message);
         if (id == 0 || id == 3 || id == 4) return [];
+        if (id == 2) {
+            // Sarah Jenkins (Existing Student - CS Major: Completed Year 1 Trimester 1 - 9 CP)
+            return [
+                { history_id: 10, student_id: 2, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'HD', mark: 85.0, period_id: 3, period_code: 'T1', year_taken: 2025 },
+                { history_id: 11, student_id: 2, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'completed', grade: 'D', mark: 78.0, period_id: 3, period_code: 'T1', year_taken: 2025 },
+                { history_id: 12, student_id: 2, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'HD', mark: 88.0, period_id: 3, period_code: 'T1', year_taken: 2025 }
+            ];
+        }
         return [
             { history_id: 1, student_id: 1, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'D', mark: 78.5, period_id: 1, period_code: 'T1', year_taken: 2026 },
             { history_id: 2, student_id: 1, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'C', mark: 68.0, period_id: 1, period_code: 'T1', year_taken: 2026 },

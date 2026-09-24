@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, ShieldCheck, CheckCircle2, Lock } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -21,21 +21,6 @@ export default function Footer() {
               © 2026 PT3 Solutions Singapore. Academic Decision Support System.
             </p>
           </div>
-        </div>
-
-        {/* Middle: Governance & System Compliance Status */}
-        <div className="flex items-center gap-4 text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 px-3.5 py-2 rounded-lg">
-          <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Offering & Prerequisite Verified</span>
-          </div>
-          <span className="text-slate-300 dark:text-slate-600">|</span>
-          <span>Version: <strong className="text-slate-800 dark:text-slate-200">v1.1 Stable</strong></span>
-          <span className="text-slate-300 dark:text-slate-600">|</span>
-          <span className="flex items-center gap-1">
-            <Lock className="w-3 h-3 text-slate-400 dark:text-slate-500" />
-            <span>Role-Based Access</span>
-          </span>
         </div>
 
         {/* Right: Singapore Campus Partnership Notice */}

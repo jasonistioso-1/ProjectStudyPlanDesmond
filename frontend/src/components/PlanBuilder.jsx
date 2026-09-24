@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   DndContext,
   PointerSensor,
   useSensor,
   useSensors,
   pointerWithin,
+  rectIntersection,
   DragOverlay
 } from '@dnd-kit/core';
 import DroppablePeriod from './DroppablePeriod';
@@ -31,6 +32,8 @@ import {
   RotateCcw,
   HelpCircle,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   UserCheck,
   FileText
 } from 'lucide-react';
@@ -57,6 +60,8 @@ export default function PlanBuilder({
   const [unitFilter, setUnitFilter] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('ALL');
   const [layoutType, setLayoutType] = useState('trimester'); // Default to Singapore Trimester Focus
+  const [activeYearLevel, setActiveYearLevel] = useState(1); // 1: Year 1 (2026), 2: Year 2 (2027), 3: Year 3 (2028)
+  const [viewMode, setViewMode] = useState('single'); // 'single' = Single Year Focus Slide, 'all' = All Years Grid
   const [agreedConfirmed, setAgreedConfirmed] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState(null);
   const [showAllCatalogUnits, setShowAllCatalogUnits] = useState(false);
@@ -92,32 +97,47 @@ export default function PlanBuilder({
 
   const defaultPeriodList = layoutType === 'trimester' ? trimesterPeriods : semesterPeriods;
 
-  // Data-driven Prerequisite Map & Unit Offering Rules
-  const prereqMap = {
-    'ICT167': 'ICT159',
-    'ICT201': 'ICT158',
-    'ICT202': 'ICT159',
-    'ICT203': 'ICT167',
-    'ICT206': 'ICT167',
-    'ICT283': 'ICT167',
-    'ICT284': 'ICT158',
-    'ICT285': 'ICT159',
-    'ICT292': 'ICT158',
-    'BSC203': 'ICT158',
-    'ICT301': 'ICT292',
-    'ICT302': 'ICT201',
-    'ICT303': 'ICT202',
-    'ICT304': 'ICT203',
-    'ICT305': 'ICT202',
-    'ICT373': 'ICT283',
-    'ICT374': 'ICT283',
-    'ICT393': 'ICT284',
-    'ICT394': 'ICT285'
-  };
+  // Data-driven Prerequisite Map & Unit Offering Rules (Derived dynamically from seed/sample catalogUnits data)
+  const prereqMap = useMemo(() => {
+    const map = {
+      'ICT167': 'ICT159', 'ICT201': 'ICT158', 'ICT202': 'ICT159', 'ICT203': 'ICT167',
+      'ICT206': 'ICT167', 'ICT283': 'ICT167', 'ICT284': 'ICT158', 'ICT285': 'ICT159',
+      'ICT292': 'ICT158', 'BSC203': 'ICT158', 'ICT301': 'ICT292', 'ICT302': 'ICT201',
+      'ICT303': 'ICT202', 'ICT304': 'ICT203', 'ICT305': 'ICT202', 'ICT373': 'ICT283',
+      'ICT374': 'ICT283', 'ICT393': 'ICT284', 'ICT394': 'ICT285'
+    };
+    (catalogUnits || []).forEach(u => {
+      if (u.code) {
+        if (u.prerequisite_code) map[u.code] = u.prerequisite_code;
+        else if (u.prereq_code) map[u.code] = u.prereq_code;
+      }
+    });
+    return map;
+  }, [catalogUnits]);
 
-  const t3RestrictedUnits = new Set(['ICT302', 'ICT373', 'ICT374', 'ICT303', 'ICT304', 'ICT203', 'ICT206']);
-  const s1OnlyUnits = new Set(['ICT158', 'ICT145', 'MAS162', 'ICT201', 'ICT202', 'ICT283', 'ICT301', 'ICT373', 'ICT393']);
-  const s2OnlyUnits = new Set(['ICT167', 'ICT169', 'ICT170', 'ICT203', 'ICT206', 'ICT292', 'BSC203', 'ICT304', 'ICT374', 'ICT394']);
+  const t3RestrictedUnits = useMemo(() => {
+    const set = new Set(['ICT302', 'ICT373', 'ICT374', 'ICT303', 'ICT304', 'ICT203', 'ICT206']);
+    (catalogUnits || []).forEach(u => {
+      if (u.code && u.restricted_t3) set.add(u.code);
+    });
+    return set;
+  }, [catalogUnits]);
+
+  const s1OnlyUnits = useMemo(() => {
+    const set = new Set(['ICT158', 'ICT145', 'MAS162', 'ICT201', 'ICT202', 'ICT283', 'ICT301', 'ICT373', 'ICT393']);
+    (catalogUnits || []).forEach(u => {
+      if (u.code && u.offering_period === 'S1') set.add(u.code);
+    });
+    return set;
+  }, [catalogUnits]);
+
+  const s2OnlyUnits = useMemo(() => {
+    const set = new Set(['ICT167', 'ICT169', 'ICT170', 'ICT203', 'ICT206', 'ICT292', 'BSC203', 'ICT304', 'ICT374', 'ICT394']);
+    (catalogUnits || []).forEach(u => {
+      if (u.code && u.offering_period === 'S2') set.add(u.code);
+    });
+    return set;
+  }, [catalogUnits]);
 
   // Complete Warnings List & Unit-level Warning Map
   const warningsByUnit = {};
@@ -187,6 +207,32 @@ export default function PlanBuilder({
     }
   });
 
+  // BR-04 Credit Load Validation (> 12 CP per period)
+  const periodTotalsMap = {};
+  planUnits.forEach(u => {
+    const key = `y${u.year_level}_p${u.period_id}`;
+    periodTotalsMap[key] = (periodTotalsMap[key] || 0) + Number(u.credit_points || 3);
+  });
+
+  Object.entries(periodTotalsMap).forEach(([key, totalPeriodCP]) => {
+    if (totalPeriodCP > 12) {
+      const parts = key.split('_p');
+      const yLvl = parts[0].replace('y', '');
+      const pId = Number(parts[1]);
+      const pName = pId === 1 ? 'Semester 1' : pId === 2 ? 'Semester 2' : pId === 3 ? 'Trimester 1' : pId === 4 ? 'Trimester 2' : 'Trimester 3';
+      const msg = `Year ${yLvl} ${pName} load (${totalPeriodCP} CP) EXCEEDS the maximum allowed 12 CP limit! Please reduce or reassign units.`;
+      
+      planUnits.forEach(u => {
+        if (String(u.year_level) === String(yLvl) && Number(u.period_id) === pId) {
+          if (!warningsByUnit[u.code]) warningsByUnit[u.code] = msg;
+        }
+      });
+      if (!warningsList.some(w => w.type === 'BR-04_CREDIT_LOAD_EXCEEDED' && w.message === msg)) {
+        warningsList.push({ type: 'BR-04_CREDIT_LOAD_EXCEEDED', severity: 'warning', message: msg });
+      }
+    }
+  });
+
   // Handle Drag Start
   const handleDragStart = (event) => {
     const activeId = String(event.active.id);
@@ -194,6 +240,15 @@ export default function PlanBuilder({
       const code = activeId.replace('palette_', '');
       const unit = catalogUnits.find(u => String(u.unit_id || u.code) === code || u.code === code);
       if (unit) setActiveDragItem(unit);
+    } else {
+      const unit = planUnits.find(u => String(u.unit_id || u.code) === activeId || u.code === activeId);
+      if (unit) {
+        setActiveDragItem(unit);
+      } else {
+        const code = activeId;
+        const catalogUnit = catalogUnits.find(u => String(u.unit_id || u.code) === code || u.code === code);
+        if (catalogUnit) setActiveDragItem(catalogUnit);
+      }
     }
   };
 
@@ -206,17 +261,31 @@ export default function PlanBuilder({
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    let targetYear = 1;
-    let targetPeriod = 3; // Default T1
+    let targetYear = null;
+    let targetPeriod = null;
 
-    if (overId.includes('_p')) {
-      const parts = overId.split('_p');
-      targetYear = parseInt(parts[0].replace('y', ''), 10);
+    if (overId.startsWith('year_') && overId.includes('_period_')) {
+      const clean = overId.replace('year_', '');
+      const parts = clean.split('_period_');
+      targetYear = parseInt(parts[0], 10);
+      targetPeriod = parseInt(parts[1], 10);
+    } else if (overId.includes('_p')) {
+      const clean = overId.replace('year_', '').replace('y', '');
+      const parts = clean.split('_p');
+      targetYear = parseInt(parts[0], 10);
       targetPeriod = parseInt(parts[1], 10);
     } else if (overId.startsWith('year_')) {
       targetYear = parseInt(overId.replace('year_', ''), 10);
       targetPeriod = layoutType === 'trimester' ? 3 : 1;
+    } else {
+      const overPlanUnit = planUnits.find(u => String(u.unit_id || u.code) === overId || u.code === overId);
+      if (overPlanUnit) {
+        targetYear = overPlanUnit.year_level;
+        targetPeriod = overPlanUnit.period_id;
+      }
     }
+
+    if (!targetYear || !targetPeriod || isNaN(targetYear) || isNaN(targetPeriod)) return;
 
     if (activeId.startsWith('palette_')) {
       const code = activeId.replace('palette_', '');
@@ -234,10 +303,23 @@ export default function PlanBuilder({
             {
               ...unit,
               year_level: targetYear,
-              period_id: targetPeriod
+              period_id: targetPeriod,
+              sequence_order: planUnits.length + 1
             }
           ];
         }
+        setPlanUnits(updated);
+        if (onValidate) onValidate(updated);
+      }
+    } else {
+      // Dragging an existing unit card within the plan canvas to reposition
+      const existingUnit = planUnits.find(u => String(u.unit_id || u.code) === activeId || u.code === activeId);
+      if (existingUnit) {
+        const updated = planUnits.map(u =>
+          (String(u.unit_id || u.code) === activeId || u.code === existingUnit.code)
+            ? { ...u, year_level: targetYear, period_id: targetPeriod }
+            : u
+        );
         setPlanUnits(updated);
         if (onValidate) onValidate(updated);
       }
@@ -588,141 +670,55 @@ export default function PlanBuilder({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={(args) => {
+        const pointerCollisions = pointerWithin(args);
+        if (pointerCollisions.length > 0) return pointerCollisions;
+        return rectIntersection(args);
+      }}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <div className="font-sans max-w-[1440px] mx-auto space-y-5">
-        
-        {/* TOP: EXECUTIVE GOVERNANCE ACTION BAR */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4 transition-colors">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-sans">
-              Plan Status:
-            </span>
-            <span className={`px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider font-sans border ${
-              planStatus === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700' :
-              planStatus === 'agreed' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700' :
-              planStatus === 'recommended' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700' :
-              'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700'
-            }`}>
-              {planStatus === 'draft' ? 'Drafting Sequence' : planStatus}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-normal hidden lg:inline">
-              {planStatus === 'draft' && 'Academic Chair can structure units and click Recommend when ready.'}
-              {planStatus === 'recommended' && 'Recommended to student. Waiting for student digital sign-off.'}
-              {planStatus === 'agreed' && 'Student has signed. Academic Chair can grant Final Approval.'}
-              {planStatus === 'approved' && 'Plan officially approved and archived in repository.'}
-            </span>
-          </div>
 
-          {/* Stepper Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        {/* TOP: EXECUTIVE GOVERNANCE ADVISORY BAR */}
+        {(!isChair || (student && student.account_category !== 'admin' && student.student_id !== 0)) && (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-2xl shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors font-sans">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                Plan Status:
+              </span>
+              <span className={`px-3 py-0.5 rounded-xl text-xs font-bold uppercase tracking-wider font-sans border ${
+                planStatus === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700' :
+                planStatus === 'agreed' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700' :
+                planStatus === 'recommended' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700' :
+                'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700'
+              }`}>
+                {planStatus === 'draft' ? 'Drafting Sequence' : planStatus}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal hidden lg:inline">
+                {planStatus === 'draft' && 'Structure units below and click Recommend to Student at the bottom when ready.'}
+                {planStatus === 'recommended' && 'Recommended to student. Awaiting student digital sign-off.'}
+                {planStatus === 'agreed' && 'Student has signed. Academic Chair can grant Final Approval below.'}
+                {planStatus === 'approved' && 'Plan officially approved and archived in repository.'}
+              </span>
+            </div>
+
             <button
               onClick={() => setShowWorkflowGuide(prev => !prev)}
-              className={`px-3 py-2 border rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs ${
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer ${
                 showWorkflowGuide
-                  ? 'bg-red-700 text-white border-red-800'
-                  : 'bg-red-50 dark:bg-red-950/60 hover:bg-red-100 dark:hover:bg-red-900/80 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
+                  ? 'bg-red-700 text-white border border-red-800 shadow-xs'
+                  : 'bg-red-50 dark:bg-red-950/60 hover:bg-red-100 dark:hover:bg-red-900/80 text-red-700 dark:text-red-300 border border-red-200/80 dark:border-red-800'
               }`}
               title="Toggle System Workflow & User Guide"
             >
               <HelpCircle className="w-3.5 h-3.5" />
               <span>{showWorkflowGuide ? 'Hide User Guide' : 'System User Guide'}</span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showWorkflowGuide ? 'rotate-180' : ''}`} />
-            </button>
-
-            <button
-              onClick={handleClearPlan}
-              className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs"
-              title="Clear all units (Reset to 0 CP)"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-              <span>Reset Canvas (0 CP)</span>
-            </button>
-
-            {isChair ? (
-              <>
-                {(planStatus === 'draft' || planStatus === 'recommended') && (
-                  <button
-                    onClick={() => onRecommendPlan && onRecommendPlan()}
-                    className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
-                  >
-                    <span>{planStatus === 'recommended' ? 'Update & Re-Recommend' : 'Recommend to Student'}</span>
-                    <ArrowRight className="w-4 h-4 text-emerald-300" />
-                  </button>
-                )}
-
-                {planStatus === 'agreed' && (
-                  <button
-                    onClick={() => onApprovePlan && onApprovePlan()}
-                    className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Final Approve Plan</span>
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                {(planStatus === 'draft' || planStatus === 'recommended') && (
-                  <button
-                    onClick={() => onAgreePlan && onAgreePlan()}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-                    <span>Agree & Sign-Off Study Plan</span>
-                  </button>
-                )}
-                {planStatus === 'agreed' && (
-                  <span className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold shadow-2xs flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                    <span>Signed-Off (Awaiting Chair Approval)</span>
-                  </span>
-                )}
-              </>
-            )}
-
-            <button
-              onClick={() => onSavePlan && onSavePlan()}
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5"
-            >
-              <Save className="w-4 h-4 text-emerald-400" />
-              <span>Save & Archive</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Academic Chair Advisory Alert - When Admin profile is selected */}
-        {isChair && (!student || student.account_category === 'admin' || student.student_id === 0) && (
-          <div className="bg-amber-50 dark:bg-amber-950/60 border-2 border-amber-300 dark:border-amber-800 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-sans text-amber-900 dark:text-amber-100 animate-in fade-in duration-200">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/80 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold shrink-0 mt-0.5">
-                <UserCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-200/90 dark:bg-amber-900/90 text-amber-900 dark:text-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider font-sans shadow-2xs">
-                    Academic Chair Advisory
-                  </span>
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-100 font-heading">
-                    Please Select a Target Student Profile
-                  </h4>
-                </div>
-                <p className="text-xs text-amber-800 dark:text-amber-300 mt-1 max-w-xl leading-relaxed font-sans">
-                  You are currently logged in as <strong>Academic Chair (Dr. Aris Thorne)</strong>. To structure, recommend, or approve a study plan, please select a student profile (e.g. Alex Mercer, Michael Chang, etc.) from the directory below.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onOpenStudentSelectModal}
-              className="px-4 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-2 shrink-0 font-sans"
-            >
-              <UserCheck className="w-4 h-4" />
-              <span>Select Student Profile to Manage</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showWorkflowGuide ? 'rotate-180' : ''}`} />
             </button>
           </div>
         )}
+
 
         {/* Embedded Role-Tailored System Workflow & User Guide Panel */}
         {showWorkflowGuide && (
@@ -741,11 +737,10 @@ export default function PlanBuilder({
                   </p>
                 </div>
               </div>
-              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider font-sans border ${
-                isChair
+              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider font-sans border ${isChair
                   ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800'
                   : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
-              }`}>
+                }`}>
                 {isChair ? 'Academic Chair Role' : 'Student Role'}
               </span>
             </div>
@@ -824,173 +819,437 @@ export default function PlanBuilder({
         )}
 
         {/* 2-COLUMN MAIN WORKSPACE */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
-          {/* LEFT COLUMN: 4/12 WIDTH (~1/3 SIDEBAR) - AVAILABLE UNIT OFFERINGS & VALIDATION CONSOLE */}
-          <div className="lg:col-span-4 space-y-5">
-            
-            {/* Box 1: Available Unit Offerings Palette */}
-            <DroppablePaletteContainer
-              filteredOfferings={filteredOfferings}
-              unitFilter={unitFilter}
-              setUnitFilter={setUnitFilter}
-              selectedLevel={selectedLevel}
-              setSelectedLevel={setSelectedLevel}
-              showAllCatalogUnits={showAllCatalogUnits}
-              setShowAllCatalogUnits={setShowAllCatalogUnits}
-              totalCatalogCount={catalogUnits.length}
-              scheduledCodesSet={scheduledCodesSet}
-              onAddUnit={handleAddUnitFromPalette}
-              onAddToSpecificSemester={handleAddToSpecificSemester}
-              layoutType={layoutType}
-            />
-
-            {/* Box 2: Rule Engine Validation Console */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-3 transition-colors">
-              <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white font-heading">
-                    Validation Summary
-                  </h3>
-                </div>
-                <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                  Singapore Campus
-                </span>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                {warningsList && warningsList.length > 0 ? (
-                  warningsList.map((w, idx) => (
-                    <div key={idx} className="flex items-start gap-2 p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-200 text-xs font-medium rounded-xl">
-                      <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold">{w.unitCode ? `${w.unitCode}: ` : ''}</span>{w.message}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex items-center gap-2 p-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-emerald-900 dark:text-emerald-300 font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>All prerequisite, unit offering, and 12 CP load rules satisfied!</span>
-                  </div>
-                )}
-              </div>
+        {isChair && (!student || student.account_category === 'admin' || student.student_id === 0) ? (
+          <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-amber-300 dark:border-amber-900/60 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-2xs font-sans animate-in fade-in duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 flex items-center justify-center shadow-xs">
+              <UserCheck className="w-8 h-8" />
             </div>
-
+            <div className="space-y-1.5 max-w-md">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
+                Plan Builder Workspace Locked
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-sans leading-relaxed">
+                No target student profile selected. Please select a student profile from the directory (e.g. Alex Mercer, Sarah Jenkins, Michael Chang, etc.) to view and structure their 72 CP study plan.
+              </p>
+            </div>
+            <button
+              onClick={onOpenStudentSelectModal}
+              className="mt-2 px-5 py-2.5 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 font-sans cursor-pointer"
+            >
+              <UserCheck className="w-4 h-4" />
+              <span>Select Student Profile to Manage</span>
+            </button>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-          {/* RIGHT COLUMN: 8/12 WIDTH (~2/3 CANVAS) - 3-YEAR STUDY PLAN GRID */}
-          <div className="lg:col-span-8 space-y-5">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-5 transition-colors">
-              
-              {/* Grid Canvas Header & Toolbar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 font-heading">
-                    <Layers className="w-4 h-4 text-red-600 dark:text-red-400" />
-                    Official 3-Year Study Plan Grid
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-sans font-medium">
-                    Structure 72 CP unit sequences across Year 1, Year 2, and Year 3 trimesters.
-                  </p>
+            {/* LEFT COLUMN: 4/12 WIDTH (~1/3 SIDEBAR) - AVAILABLE UNIT OFFERINGS & VALIDATION CONSOLE */}
+            <div className="lg:col-span-4 space-y-5">
+
+              {/* Box 1: Available Unit Offerings Palette */}
+              <DroppablePaletteContainer
+                filteredOfferings={filteredOfferings}
+                unitFilter={unitFilter}
+                setUnitFilter={setUnitFilter}
+                selectedLevel={selectedLevel}
+                setSelectedLevel={setSelectedLevel}
+                showAllCatalogUnits={showAllCatalogUnits}
+                setShowAllCatalogUnits={setShowAllCatalogUnits}
+                totalCatalogCount={catalogUnits.length}
+                scheduledCodesSet={scheduledCodesSet}
+                onAddUnit={handleAddUnitFromPalette}
+                onAddToSpecificSemester={handleAddToSpecificSemester}
+                layoutType={layoutType}
+              />
+
+              {/* Box 2: Rule Engine Validation Console */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-3 transition-colors">
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white font-heading">
+                      Validation Summary
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                    Singapore Campus
+                  </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Trimester Active Badge & Semester Inactive Indicator */}
-                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-1 text-xs">
-                    <div className="px-3 py-1 rounded-lg text-xs font-extrabold bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs flex items-center gap-1.5 font-sans">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                      <span>Trimester (Singapore Active)</span>
+                <div className="space-y-2 text-xs">
+                  {warningsList && warningsList.length > 0 ? (
+                    warningsList.map((w, idx) => (
+                      <div key={idx} className="flex items-start gap-2 p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-200 text-xs font-medium rounded-xl">
+                        <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold">{w.unitCode ? `${w.unitCode}: ` : ''}</span>{w.message}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center gap-2 p-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-emerald-900 dark:text-emerald-300 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>All prerequisite, unit offering, and 12 CP load rules satisfied!</span>
                     </div>
-
-                    <div
-                      title="Semester layout is inactive. Singapore enrolment strictly uses the Trimester system."
-                      className="px-3 py-1 rounded-lg text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-slate-800/40 border border-slate-300/40 dark:border-slate-700/40 cursor-not-allowed select-none font-sans"
-                    >
-                      <span>Semester (Inactive Layout)</span>
-                    </div>
-                  </div>
-
-                  {onOpenOfficialDocument && (
-                    <button
-                      onClick={onOpenOfficialDocument}
-                      className="px-3.5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white border border-slate-800 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
-                    >
-                      <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Export Document</span>
-                    </button>
                   )}
-
-                  <button
-                    onClick={onSavePlan}
-                    className="px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
-                  >
-                    <Save className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                    <span>Save Draft</span>
-                  </button>
-
-                  <button
-                    onClick={handleClearPlan}
-                    className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs transition-colors"
-                    title="Clear all units from study plan"
-                  >
-                    Clear Canvas
-                  </button>
                 </div>
               </div>
 
-              {/* 3-Year Drag & Drop Grid */}
-              <div className="space-y-5">
-                {years.map(yearObj => {
-                  let yearTagStyle = 'bg-slate-900 dark:bg-slate-800 text-white';
+            </div>
 
-                  return (
-                    <div key={yearObj.level} className="bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 md:p-5 shadow-2xs space-y-3 transition-colors">
-                      <div className="flex items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-800">
-                        <span className={`text-xs font-extrabold font-heading px-3 py-1 rounded-lg shadow-xs ${yearTagStyle}`}>
-                          {yearObj.yearName}
-                        </span>
-                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                          Max 12 CP / Period
-                        </span>
+            {/* RIGHT COLUMN: 8/12 WIDTH (~2/3 CANVAS) - 3-YEAR STUDY PLAN GRID */}
+            <div className="lg:col-span-8 space-y-5">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-5 transition-colors">
+
+                {/* Grid Canvas Header & Toolbar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 font-heading">
+                      <Layers className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      Official 3-Year Study Plan Grid
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-sans font-medium">
+                      Structure 72 CP unit sequences across Year 1, Year 2, and Year 3 trimesters.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+
+                    {onOpenOfficialDocument && (
+                      <button
+                        onClick={onOpenOfficialDocument}
+                        className="px-3.5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white border border-slate-800 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Export Document</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={onSavePlan}
+                      className="px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
+                    >
+                      <Save className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                      <span>Save Draft</span>
+                    </button>
+
+                    <button
+                      onClick={handleClearPlan}
+                      className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs transition-colors"
+                      title="Clear all units from study plan"
+                    >
+                      Clear Canvas
+                    </button>
+                  </div>
+                </div>
+
+                {/* Year Slide Navigation Control Bar */}
+                <div className="bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-2.5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs font-sans">
+                  
+                  {/* Left & Right Slide Controls & Year Tabs */}
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewMode('single');
+                        setActiveYearLevel(prev => (typeof prev === 'number' && prev > 1 ? prev - 1 : 1));
+                      }}
+                      disabled={viewMode === 'single' && activeYearLevel === 1}
+                      className={`p-2 rounded-xl border transition-all flex items-center justify-center shrink-0 ${
+                        viewMode === 'single' && activeYearLevel === 1
+                          ? 'opacity-40 cursor-not-allowed bg-slate-200/50 dark:bg-slate-800/50 text-slate-400 border-transparent'
+                          : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-white border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs cursor-pointer active:scale-95'
+                      }`}
+                      title="Slide to Previous Academic Year"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    {years.map(y => {
+                      const isActive = viewMode === 'single' && activeYearLevel === y.level;
+                      const yearCP = planUnits
+                        .filter(u => u.year_level === y.level)
+                        .reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+
+                      return (
+                        <button
+                          key={y.level}
+                          type="button"
+                          onClick={() => {
+                            setViewMode('single');
+                            setActiveYearLevel(y.level);
+                          }}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+                            isActive
+                              ? 'bg-gradient-to-r from-red-700 via-red-600 to-rose-700 text-white shadow-xs font-heading'
+                              : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <span>{y.yearName}</span>
+                          <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md ${
+                            isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                          }`}>
+                            {yearCP} CP
+                          </span>
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewMode('single');
+                        setActiveYearLevel(prev => (typeof prev === 'number' && prev < 3 ? prev + 1 : 3));
+                      }}
+                      disabled={viewMode === 'single' && activeYearLevel === 3}
+                      className={`p-2 rounded-xl border transition-all flex items-center justify-center shrink-0 ${
+                        viewMode === 'single' && activeYearLevel === 3
+                          ? 'opacity-40 cursor-not-allowed bg-slate-200/50 dark:bg-slate-800/50 text-slate-400 border-transparent'
+                          : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-white border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs cursor-pointer active:scale-95'
+                      }`}
+                      title="Slide to Next Academic Year"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Mode Switcher: Year Slide Mode vs View All Years */}
+                  <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1 text-xs shrink-0 font-sans shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('single')}
+                      className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                        viewMode === 'single'
+                          ? 'bg-red-700 text-white dark:bg-red-700 dark:text-white font-heading shadow-2xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      Year Slide Focus
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('all')}
+                      className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                        viewMode === 'all'
+                          ? 'bg-red-700 text-white dark:bg-red-700 dark:text-white font-heading shadow-2xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      View All 3 Years
+                    </button>
+                  </div>
+                </div>
+
+                {/* Drag & Drop Year Grid Canvas */}
+                <div className="space-y-5">
+                  {(viewMode === 'all' ? years : years.filter(y => y.level === activeYearLevel)).map(yearObj => {
+                    let yearTagStyle = 'bg-slate-900 dark:bg-slate-800 text-white';
+
+                    return (
+                      <div
+                        key={yearObj.level}
+                        className={`bg-white dark:bg-slate-900 border transition-all rounded-3xl p-5 md:p-6 shadow-sm space-y-4 ${
+                          viewMode === 'single'
+                            ? 'border-slate-300 dark:border-slate-700/80 ring-1 ring-slate-200 dark:ring-slate-800 animate-in fade-in slide-in-from-right-3 duration-300'
+                            : 'border-slate-200/90 dark:border-slate-800'
+                        }`}
+                      >
+
+                        {/* Year Block Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className="text-xs font-extrabold font-heading text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-1.5">
+                              <Calendar className="w-4 h-4 text-red-600 dark:text-red-400" />
+                              <span>{yearObj.yearName}</span>
+                            </span>
+
+                            {/* Active Official Trimester Layout & Inactive Semester Layout (Out of Scope for this Build) */}
+                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-0.5 text-xs font-sans">
+                              <button
+                                type="button"
+                                className="px-3 py-1 rounded-lg text-xs font-extrabold bg-red-700 text-white dark:bg-red-700 dark:text-white shadow-2xs font-heading flex items-center gap-1.5 cursor-default"
+                                title="Active Official Layout: 3 Trimesters per year"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span>Trimester Layout</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled
+                                className="px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-500"
+                                title="Semester views can remain in the UI as inactive/untouched layouts for future scalability, but are out of scope for this build."
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                <span>Semester Layout</span>
+                                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 uppercase tracking-tight">
+                                  Inactive
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-2.5 py-0.5 rounded-md font-mono self-start sm:self-center">
+                            Max 12 CP / Period
+                          </span>
+                        </div>
+
+                        <div className={`grid grid-cols-1 ${layoutType === 'trimester' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+                          {defaultPeriodList.map(period => {
+                            const droppableId = `year_${yearObj.level}_period_${period.period_id}`;
+                            const unitsInPeriod = planUnits.filter(
+                              u => u.year_level === yearObj.level && u.period_id === period.period_id
+                            );
+
+                            return (
+                              <DroppablePeriod
+                                key={droppableId}
+                                id={droppableId}
+                                yearLevel={yearObj.level}
+                                period={period}
+                                units={unitsInPeriod}
+                                onRemoveUnit={handleRemoveUnit}
+                                warningsByUnit={warningsByUnit}
+                                completedUnitCodes={completedUnitCodes}
+                              />
+                            );
+                          })}
+                        </div>
+
+                        {/* Slide Left / Right Bottom Navigation Bar in Single Year Focus Mode */}
+                        {viewMode === 'single' && (
+                          <div className="flex items-center justify-between pt-3 border-t border-slate-200/80 dark:border-slate-800 font-sans text-xs">
+                            <button
+                              type="button"
+                              onClick={() => setActiveYearLevel(prev => Math.max(1, prev - 1))}
+                              disabled={activeYearLevel === 1}
+                              className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-all ${
+                                activeYearLevel === 1
+                                  ? 'opacity-30 cursor-not-allowed text-slate-400 bg-slate-100 dark:bg-slate-800/50'
+                                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer shadow-2xs active:scale-95'
+                              }`}
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                              <span>{activeYearLevel > 1 ? `Previous (${years[activeYearLevel - 2].yearName})` : 'Previous Year'}</span>
+                            </button>
+
+                            <span className="text-slate-400 dark:text-slate-500 text-[11px] font-medium font-sans">
+                              Showing {yearObj.yearName} • Slide {activeYearLevel} of 3
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => setActiveYearLevel(prev => Math.min(3, prev + 1))}
+                              disabled={activeYearLevel === 3}
+                              className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-all ${
+                                activeYearLevel === 3
+                                  ? 'opacity-30 cursor-not-allowed text-slate-400 bg-slate-100 dark:bg-slate-800/50'
+                                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer shadow-2xs active:scale-95'
+                              }`}
+                            >
+                              <span>{activeYearLevel < 3 ? `Next (${years[activeYearLevel].yearName})` : 'Next Year'}</span>
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
+                    );
+                  })}
+                </div>
 
-                      <div className={`grid grid-cols-1 ${layoutType === 'trimester' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
-                        {defaultPeriodList.map(period => {
-                          const droppableId = `year_${yearObj.level}_period_${period.period_id}`;
-                          const unitsInPeriod = planUnits.filter(
-                            u => u.year_level === yearObj.level && u.period_id === period.period_id
-                          );
-
-                          return (
-                            <DroppablePeriod
-                              key={droppableId}
-                              id={droppableId}
-                              yearLevel={yearObj.level}
-                              period={period}
-                              units={unitsInPeriod}
-                              onRemoveUnit={handleRemoveUnit}
-                              warningsByUnit={warningsByUnit}
-                              completedUnitCodes={completedUnitCodes}
-                            />
-                          );
-                        })}
-                      </div>
+                {/* Canvas Bottom Executive Governance & Recommendation Footer */}
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 font-sans">
+                  
+                  {/* Left Side: Credit Points Progress Meter & Status */}
+                  <div className="space-y-1.5 flex-1 max-w-md">
+                    <div className="flex items-center justify-between text-xs font-sans">
+                      <span className="font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 font-heading">
+                        <Layers className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                        <span>Total Planned Load:</span>
+                        <strong className="text-red-700 dark:text-red-400 text-sm font-black font-mono">{totalCP} / 72 CP</strong>
+                      </span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider font-sans border ${
+                        planStatus === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700' :
+                        planStatus === 'agreed' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700' :
+                        planStatus === 'recommended' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700' :
+                        'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+                      }`}>
+                        STATUS: {planStatus === 'draft' ? 'DRAFTING' : planStatus.toUpperCase()}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
 
-              {/* Canvas Bottom Summary */}
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
-                <span>Total Planned Credit Points: <strong className="text-slate-900 dark:text-white font-extrabold">{totalCP} / 72 CP</strong></span>
-                <span className="uppercase font-bold text-emerald-600 dark:text-emerald-400">Status: {planStatus}</span>
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden flex shadow-inner">
+                      <div
+                        className="h-full transition-all duration-300 bg-gradient-to-r from-red-600 via-rose-600 to-emerald-500 rounded-full"
+                        style={{ width: `${Math.min(100, Math.round((totalCP / 72) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Side: Primary Recommend to Student / Approve Action Buttons */}
+                  <div className="flex flex-wrap items-center gap-2.5 shrink-0 font-sans">
+                    <button
+                      onClick={handleClearPlan}
+                      className="px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                      title="Clear all units (Reset to 0 CP)"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Reset Canvas</span>
+                    </button>
+
+                    <button
+                      onClick={onSavePlan}
+                      className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white border border-slate-800 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    >
+                      <Save className="w-4 h-4 text-emerald-400" />
+                      <span>Save Draft</span>
+                    </button>
+
+                    {isChair ? (
+                      <>
+                        {(planStatus === 'draft' || planStatus === 'recommended') && (
+                          <button
+                            onClick={() => onRecommendPlan && onRecommendPlan()}
+                            className="px-6 py-2.5 bg-gradient-to-r from-red-700 via-red-600 to-rose-700 hover:from-red-800 hover:via-red-700 hover:to-rose-800 text-white rounded-xl font-black text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 font-heading"
+                          >
+                            <span>{planStatus === 'recommended' ? 'Update & Re-Recommend' : 'Recommend to Student'}</span>
+                            <ArrowRight className="w-4 h-4 text-rose-200" />
+                          </button>
+                        )}
+
+                        {planStatus === 'agreed' && (
+                          <button
+                            onClick={() => onApprovePlan && onApprovePlan()}
+                            className="px-6 py-2.5 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white rounded-xl font-black text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 font-heading"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-emerald-200" />
+                            <span>Final Approve Plan</span>
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {(planStatus === 'draft' || planStatus === 'recommended') && (
+                          <button
+                            onClick={() => onAgreePlan && onAgreePlan()}
+                            className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-black text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 font-heading"
+                          >
+                            <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                            <span>Agree & Sign-Off Study Plan</span>
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-        </div>
+          </div>
+        )}
 
         {/* Drag Overlay Floating Drag Card Preview */}
         <DragOverlay>

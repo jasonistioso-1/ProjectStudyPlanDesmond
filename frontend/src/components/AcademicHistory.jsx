@@ -60,6 +60,9 @@ export default function AcademicHistory({ history, student }) {
           <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md font-sans uppercase tracking-wider">
             Official Student Record
           </span>
+          <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-md font-sans uppercase tracking-wider flex items-center gap-1">
+            (Dummy / Sample Data)
+          </span>
         </div>
         <div className="flex gap-2 text-xs font-sans font-bold tabular-nums">
           <span className="px-2.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">

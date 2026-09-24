@@ -13,7 +13,7 @@ The **Study Plan Repository (SPR)** is an executive web application designed for
 ### Core Business Rules Enforced
 - **BR-01 (Unit Offering Validation)**: Verifies whether proposed units are officially offered at the selected campus (Singapore Campus) and teaching period (e.g. Capstone `ICT302` restricted from Tri-Semester 3).
 - **BR-02 (Prerequisite Validation)**: Ensures students have satisfied prerequisite units with passing grades (`P`, `C`, `D`, `HD`) before enrolling in advanced units.
-- **Credit Point Load Control**: Enforces maximum **12 Credit Points per teaching period** limit with dynamic meter bars and warning banners.
+- **BR-04 / Credit Point Load Control**: Enforces maximum **12 Credit Points per teaching period** limit with real-time validation warnings and visual meter bars.
 
 ---
 
@@ -27,12 +27,29 @@ According to the Section 8 curriculum specification, the system supports 3 offic
 
 ---
 
+## 📋 Deliverable & Acceptance Matrix
+
+| Deliverable | Acceptance Expectation | Implementation Details |
+|---|---|---|
+| **Complete Source Code** | Full frontend/backend code with no missing private modules. | Modular React 18 (Vite) frontend + Node.js Express REST API backend with zero hidden external dependencies. |
+| **Database Schema** | SQL migrations/schema plus seed/sample data. | [`database/schema.sql`](file:///d:/ProjectDesmondandTeam/database/schema.sql) (11 DDL tables) & [`database/seed.sql`](file:///d:/ProjectDesmondandTeam/database/seed.sql) (catalog, 5 student profiles & plans). |
+| **README** | How to install, configure, run, test and deploy. | Complete end-to-end setup instructions for Docker Desktop and standalone Node.js environments. |
+| **Environment Template** | `.env.example` with variable names only; no secrets. | [`.env.example`](file:///d:/ProjectDesmondandTeam/.env.example) configured with standard placeholder values. |
+| **Architecture Notes** | Short explanation of stack, components, database and design decisions. | Layered architecture diagram, state management details, drag-and-drop design rationale. |
+| **ERD** | Updated ERD matching the implemented database. | Mermaid ERD diagram representing all 11 core database tables and relationships. |
+| **Test Evidence** | Test cases/results for core requirements. | Comprehensive test matrix verifying BR-01..04, FR-01..19, and NFR-07. |
+| **Deployment Guide** | Steps to deploy the app using accounts controlled by PT3. | Step-by-step Docker Compose deployment guide for server hosting. |
+| **User Guide** | Basic instructions for Academic Chair / Student workflow. | Walkthrough for plan recommendation, student sign-off, final approval, and PDF/Print export. |
+| **Handover Session** | Codebase walk-through, database, deployment, and known limitations. | System overview notes, database schema layout, deployment guide, and future roadmap. |
+
+---
+
 ## 🚀 Quick Start & Installation
 
 ### Option 1: One-Command Docker Launch (Recommended)
 Make sure Docker Desktop is installed and running, then execute:
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 Access the application at: **`http://localhost:3000`** (Backend API at `http://localhost:5000`).
 
@@ -103,6 +120,11 @@ LOG_LEVEL=info
 +-----------------------------------------------------------------------+
 ```
 
+### Key Design Decisions
+1. **Interactive Drag and Drop (@dnd-kit)**: Built using `@dnd-kit/core` with `pointerWithin` and `rectIntersection` algorithms to ensure accurate unit snapping into trimester slots.
+2. **Year Focus Slider**: Supports viewing individual study years (Year 1, Year 2, Year 3) or displaying all 3 years side-by-side for maximum editing clarity.
+3. **Governance Workflow Engine**: Implements the 4-stage governance pipeline (`Draft` $\rightarrow$ `Recommended` $\rightarrow$ `Student Agreed` $\rightarrow$ `Approved`) with digital sign-off.
+
 ---
 
 ## 🗄️ Relational Database Model (11 Core Entities)
@@ -154,14 +176,31 @@ The system comes pre-seeded with 5 accounts for testing and demonstration:
 |---|---|---|---|---|---|
 | **1 x Administrator** | `ADMIN-CHAIR-01` | **Dr. Aris Thorne** | Academic Chair & Administrator | System Admin & Governance | Singapore Campus |
 | **2 x Existing Student** | `PT3-2026-001` | **Alex Mercer** | PT3-BSIT-AI01 (Artificial Intelligence) | Existing Student (Active Plan & History) | Singapore Campus |
-| **2 x Existing Student** | `PT3-2026-002` | **Sarah Jenkins** | PT3-BSIT-CS02 (Computer Science) | Existing Student (Agreed Plan & History) | Singapore Campus |
-| **2 x New Student** | `PT3-2026-003` | **Michael Chang** | PT3-BSIT-BIS03 (Business Info Systems) | New Student (Fresh Enrolment) | Singapore Campus |
-| **2 x New Student** | `PT3-2026-004` | **Emily Watson** | PT3-BSIT-AI04 (Artificial Intelligence) | New Student (Fresh Enrolment) | Singapore Campus |
+| **2 x Existing Student** | `PT3-2026-002` | **Sarah Jenkins** | PT3-BSIT-CS02 (Computer Science) | Existing Student (Completed Y1 T1 - 9 CP) | Singapore Campus |
+| **2 x New Student** | `PT3-2026-003` | **Michael Chang** | PT3-BSIT-BIS03 (Business Info Systems) | New Student (Fresh Enrolment - 0 CP) | Singapore Campus |
+| **2 x New Student** | `PT3-2026-004` | **Emily Watson** | PT3-BSIT-AI04 (Artificial Intelligence) | New Student (Fresh Enrolment - 0 CP) | Singapore Campus |
 
 ### 🇸🇬 Singapore Campus Scope & Trimester-Only Focus
 - **Trimester Focus**: Singapore enrolment operates strictly on **Trimesters (T1, T2, T3)**. Trimester layout is the default and fully active operational view.
 - **Semester Layout**: Preserved as an inactive layout option in the UI for future scalability (Perth Main Campus compatibility).
 - **Specializations**: Subjects and offerings are strictly mapped to 3 IT majors: **Artificial Intelligence**, **Computer Science**, and **Business Information Systems**.
+
+---
+
+## 📖 User Guide & Operational Workflows
+
+### 1. Academic Chair Workflow
+1. Log in as **Dr. Aris Thorne (Academic Chair)** using the top navigation profile dropdown.
+2. Select a student (e.g. **Sarah Jenkins** or **Michael Chang**).
+3. Use the **Course Catalog Sidebar** to drag and drop units into Year 1, Year 2, and Year 3 Trimesters.
+4. Verify real-time prerequisite (BR-02) and unit offering (BR-01) warnings.
+5. Click **"Recommend to Student"** in the bottom canvas bar to submit the plan to the student.
+
+### 2. Student Workflow
+1. Switch role/user to **Student View** (e.g. Sarah Jenkins).
+2. Review the recommended study plan layout and academic history.
+3. Click **"Agree & Digitally Sign Plan"** to accept the recommended plan.
+4. Switch back to **Academic Chair** role to perform the final **"Approve & Lock Plan"** action.
 
 ---
 
@@ -171,7 +210,7 @@ The system comes pre-seeded with 5 accounts for testing and demonstration:
 |---|---|---|---|---|
 | **TC-01** | Drag capstone `ICT302` into Trimester 3 | BR-01 Offering | Warning banner: Unit not offered in T3 | **PASS** |
 | **TC-02** | Add `ICT283` without completing `ICT167` | BR-02 Prerequisite | Warning banner: Prerequisite ICT167 unmet | **PASS** |
-| **TC-03** | Schedule 5 units (15 CP) in single period | Max 12 CP Limit | Alert banner: Exceeds 12 CP limit | **PASS** |
+| **TC-03** | Schedule 5 units (15 CP) in single period | BR-04 Max 12 CP Limit | Alert banner: Exceeds 12 CP limit | **PASS** |
 | **TC-04** | Switch between Semester & Trimester mode | FR-05 Period Switch | Canvas updates grid layout smoothly | **PASS** |
 | **TC-05** | Student Digital Sign-Off | FR-10 Sign-Off | Plan status updates to `STUDENT AGREED` | **PASS** |
 | **TC-06** | Export Official Study Plan Document | FR-15 Document Export | Clean formatted document modal opens | **PASS** |
@@ -180,19 +219,16 @@ The system comes pre-seeded with 5 accounts for testing and demonstration:
 
 ---
 
-## 🚢 Deployment & Server Handover
+## 🤝 System Handover Notes & Known Limitations
 
-1. **Clone Codebase**:
-   ```bash
-   git clone https://github.com/jasonistioso-1/ProjectStudyPlanDesmond.git
-   cd ProjectStudyPlanDesmond
-   ```
-2. **Configure Environment**:
-   ```bash
-   cp .env.example .env
-   ```
-3. **Deploy Docker Containers**:
-   ```bash
-   docker-compose up -d --build
-   ```
-4. **Verify Application Status**: Open `http://localhost:3000` to confirm live application availability.
+1. **Database Persistence**:
+   - Production Docker deployments persist data in MySQL container volumes (`spr_db_data`).
+   - In-memory API fallback mode provides seed data if MySQL connection is offline.
+2. **Semester vs Trimester Operational Bounds**:
+   - Current Singapore campus deployment operates on Trimesters (T1, T2, T3). Semester view remains an inactive UI layout for future Perth campus integration.
+3. **No Private Third-Party Modules**:
+   - All modules use standard open-source npm dependencies specified in `package.json`.
+
+---
+
+© 2026 PT3 Solutions Singapore. Academic Decision Support System.

@@ -569,9 +569,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased flex flex-col justify-between transition-colors duration-200">
       <div>
-        {/* Toast Notification Banner */}
+        {/* Toast Notification Banner - Centered Viewport */}
         {notificationMsg && (
-          <div className="fixed top-4 right-4 z-50 bg-[#008652] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-bold transition-all border border-emerald-700 animate-bounce">
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-700 dark:bg-emerald-800 text-white px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-bold transition-all border border-emerald-600 dark:border-emerald-700 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-300 font-sans max-w-md text-center">
             <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
             <span>{notificationMsg}</span>
           </div>
@@ -628,18 +628,19 @@ export default function App() {
             />
           )}
 
-          {/* Executive Student Course Info Header (Shown only on STUDY_PLAN & ACADEMIC_HISTORY tabs) */}
-          {(activeTab === 'STUDY_PLAN' || activeTab === 'ACADEMIC_HISTORY') && (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl font-sans text-slate-900 dark:text-white transition-all relative overflow-hidden">
+          {/* Executive Student Course Info Header (Shown only when a real target student profile is selected on STUDY_PLAN & ACADEMIC_HISTORY tabs) */}
+          {(activeTab === 'STUDY_PLAN' || activeTab === 'ACADEMIC_HISTORY') &&
+            selectedStudent && selectedStudent.account_category !== 'admin' && selectedStudent.student_id !== 0 && (
+            <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-xl font-sans text-slate-900 dark:text-white transition-all relative overflow-hidden backdrop-blur-md">
               {/* Subtle executive background accents */}
-              <div className="absolute -right-16 -top-16 w-72 h-72 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -left-16 -bottom-16 w-72 h-72 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -right-16 -top-16 w-80 h-80 bg-gradient-to-br from-red-600/15 via-rose-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-gradient-to-tr from-emerald-600/10 via-teal-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
               <div className="relative z-10 flex flex-col lg:flex-row justify-between lg:items-center gap-6">
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {/* Major & Status Tags */}
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <span className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 dark:bg-red-950/80 dark:text-red-300 border border-red-200 dark:border-red-800/60 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide shadow-2xs">
+                    <span className="inline-flex items-center gap-2 bg-gradient-to-r from-red-50 to-rose-50/80 text-red-700 dark:from-red-950/90 dark:to-rose-950/80 dark:text-red-300 border border-red-200/80 dark:border-red-800/60 px-4 py-1.5 rounded-full text-xs font-extrabold tracking-wide shadow-2xs font-heading">
                       <BookOpen className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
                       <span>Major: {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
                         ? selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()
@@ -647,52 +648,52 @@ export default function App() {
                     </span>
 
                     {currentPlan?.status === 'approved' && (
-                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-3.5 py-1 rounded-full text-xs font-bold shadow-2xs">
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-2xs">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Plan Approved & Finalized
                       </span>
                     )}
                     {currentPlan?.status === 'agreed' && (
-                      <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 px-3.5 py-1 rounded-full text-xs font-bold shadow-2xs">
+                      <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-2xs">
                         <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Student Agreed
                       </span>
                     )}
                     {currentPlan?.status === 'recommended' && (
-                      <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 px-3.5 py-1 rounded-full text-xs font-bold shadow-2xs">
+                      <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-2xs">
                         <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Recommended to Student
                       </span>
                     )}
                     {(!currentPlan || currentPlan?.status === 'draft' || currentPlan?.status === 'stored') && (
-                      <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-3.5 py-1 rounded-full text-xs font-bold shadow-2xs">
+                      <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-2xs">
                         Official Draft Plan
                       </span>
                     )}
                   </div>
 
                   {/* Degree Title */}
-                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
+                  <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-heading">
                     Bachelor of Information Technology
                   </h1>
 
                   {/* Student Context Metadata Strip */}
                   <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-300 pt-0.5 font-medium">
-                    <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/90 px-3.5 py-1.5 rounded-xl shadow-2xs">
-                      <User className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-                      <span className="font-bold text-slate-900 dark:text-white">
+                    <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 px-4 py-2 rounded-2xl shadow-2xs">
+                      <User className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                      <span className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">
                         {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
                       </span>
-                      <span className="text-slate-500 dark:text-slate-400 text-[11px] font-mono bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 font-semibold">
+                      <span className="text-slate-500 dark:text-slate-400 text-xs font-mono bg-white dark:bg-slate-900 px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-slate-800 font-bold">
                         {selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/90 px-3.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 shadow-2xs">
-                      <GraduationCap className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
+                    <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 px-4 py-2 rounded-2xl text-slate-700 dark:text-slate-300 shadow-2xs">
+                      <GraduationCap className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                       <span>Course Code: <strong className="text-slate-900 dark:text-white font-bold font-mono">{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-AI01'}</strong></span>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/90 px-3.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-300 shadow-2xs">
-                      <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <span className="font-semibold">{selectedStudent?.location_name || 'PT3 Solutions Singapore Campus'}</span>
+                    <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 px-4 py-2 rounded-2xl text-slate-700 dark:text-slate-300 shadow-2xs">
+                      <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span className="font-bold">{selectedStudent?.location_name || 'PT3 Solutions Singapore Campus'}</span>
                     </div>
                   </div>
                 </div>
@@ -703,28 +704,28 @@ export default function App() {
                   const progressPct = Math.min(100, Math.round((calculatedCP / 72) * 100));
 
                   return (
-                    <div className="bg-slate-50/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 p-5 rounded-2xl text-right shrink-0 min-w-[260px] shadow-sm relative backdrop-blur-xs">
+                    <div className="bg-gradient-to-br from-slate-50/90 to-slate-100/90 dark:from-slate-800/90 dark:to-slate-900/90 border border-slate-200 dark:border-slate-700 p-5 rounded-2xl text-right shrink-0 min-w-[280px] shadow-sm relative backdrop-blur-xs">
                       <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
                         <span>Degree Load Progress</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs font-sans tabular-nums">{progressPct}%</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-black text-xs font-sans tabular-nums">{progressPct}%</span>
                       </div>
 
-                      <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-baseline justify-end gap-1.5 my-1 font-heading">
-                        <span className="tabular-nums font-extrabold font-sans">{calculatedCP}</span>
-                        <span className="text-slate-500 dark:text-slate-400 font-bold text-xs font-sans">/ 72 CP</span>
+                      <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-baseline justify-end gap-1.5 my-1.5 font-heading">
+                        <span className="tabular-nums font-black font-sans">{calculatedCP}</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-extrabold text-sm font-sans">/ 72 CP</span>
                       </div>
 
                       {/* Dynamic Gradient Progress Bar */}
-                      <div className="w-full bg-slate-200 dark:bg-slate-900 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-300 dark:border-slate-700/80 my-2">
+                      <div className="w-full bg-slate-200 dark:bg-slate-950 h-3 rounded-full overflow-hidden p-0.5 border border-slate-300/80 dark:border-slate-700/80 my-2 shadow-inner">
                         <div 
-                          className="bg-gradient-to-r from-red-600 via-amber-500 to-emerald-500 h-full rounded-full transition-all duration-500 shadow-2xs" 
+                          className="bg-gradient-to-r from-red-600 via-amber-500 to-emerald-500 h-full rounded-full transition-all duration-500 shadow-xs" 
                           style={{ width: `${progressPct}%` }}
                         />
                       </div>
 
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-between font-sans">
-                        <span className="font-semibold">Target: 72 CP</span>
-                        <span className="text-slate-700 dark:text-slate-300 font-bold tabular-nums">{Math.max(0, 72 - calculatedCP)} CP remaining</span>
+                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-between font-sans pt-0.5">
+                        <span className="font-semibold text-slate-600 dark:text-slate-400">Target: 72 CP</span>
+                        <span className="text-slate-900 dark:text-white font-extrabold tabular-nums">{Math.max(0, 72 - calculatedCP)} CP remaining</span>
                       </div>
                     </div>
                   );
@@ -812,100 +813,39 @@ export default function App() {
               </div>
             </div>
 
-            {/* Audit Log Type Toggle */}
-            <div className="flex items-center gap-2 mb-4 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
-              <button
-                onClick={() => setAuditTab('data_audit')}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                  auditTab === 'data_audit'
-                    ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-extrabold'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
-                }`}
-              >
-                Study Plan Data Audit Trail (NFR-07)
-              </button>
-              <button
-                onClick={() => setAuditTab('system_spec')}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                  auditTab === 'system_spec'
-                    ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs font-extrabold'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold'
-                }`}
-              >
-                Specification Change Log (Sec 18)
-              </button>
-            </div>
-
-            {/* Change Log Entries */}
+            {/* Change Log Entries - Data Audit Trail (NFR-07) */}
             <div className="space-y-3 max-h-80 overflow-y-auto text-xs font-sans pr-1">
-              {auditTab === 'data_audit' ? (
-                auditLogsList.length === 0 ? (
-                  <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No plan data audit logs recorded yet.</p>
-                  </div>
-                ) : (
-                  auditLogsList.map((log, idx) => (
-                    <div key={log.version_id || idx} className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs">
-                      <div className="flex items-center justify-between font-mono text-[10px] font-bold">
-                        <span className="bg-red-700 text-white px-2.5 py-0.5 rounded-md font-mono shadow-2xs">
-                          v{log.version_number || '1'} · {new Date(log.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <span className={`px-2.5 py-0.5 rounded-md uppercase font-extrabold text-[9px] font-mono border ${
-                          log.plan_status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' :
-                          log.plan_status === 'agreed' ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' :
-                          log.plan_status === 'recommended' ? 'bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' :
-                          'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
-                        }`}>
-                          {log.plan_status || 'STATUS CHANGED'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
-                        <span>Student: {log.first_name || 'Alex'} {log.last_name || 'Mercer'} <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">({log.student_number || 'PT3-2026-001'})</span></span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium">By: <strong className="text-slate-800 dark:text-slate-200 font-bold">{log.created_by || 'Academic Chair'}</strong></span>
-                      </div>
-
-                      <p className="text-xs text-slate-600 dark:text-slate-300 font-medium pt-0.5">
-                        {log.amendment_reason || 'Study plan status update'}
-                      </p>
-                    </div>
-                  ))
-                )
-              ) : (
-                <div className="space-y-3 text-xs">
-                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-                    <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1.5">
-                      <span className="bg-red-700 text-white px-2.5 py-0.5 rounded-md">v1.1 · 15 SEP 2026</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">ACTIVE RELEASE</span>
-                    </div>
-                    <p className="font-bold text-slate-900 dark:text-white font-heading text-xs">Executive Navigation & Clean Layout Update</p>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 font-medium">
-                      Integrated direct executive tab navigation and Student View selection sync across Academic Chair.
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-                    <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1.5">
-                      <span className="bg-slate-800 dark:bg-slate-700 text-white px-2.5 py-0.5 rounded-md">v1.0 · 14 SEP 2026</span>
-                      <span className="text-slate-500 dark:text-slate-400 font-bold">STABLE RELEASE</span>
-                    </div>
-                    <p className="font-bold text-slate-900 dark:text-white font-heading text-xs">Core Engine & Database Release</p>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 font-medium">
-                      Created 11 database tables, rule validation engine, and StudyPlanVersion audit log table.
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-                    <div className="flex items-center justify-between font-mono text-[10px] font-bold mb-1.5">
-                      <span className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2.5 py-0.5 rounded-md">v0.1 · 09 SEP 2026</span>
-                      <span className="text-slate-400 dark:text-slate-500 font-bold">INITIAL SPEC</span>
-                    </div>
-                    <p className="font-bold text-slate-900 dark:text-white font-heading text-xs">Outsourced Development Requirements</p>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 font-medium">
-                      Initial outsourced development requirements document published by PT3 Solutions.
-                    </p>
-                  </div>
+              {auditLogsList.length === 0 ? (
+                <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No plan data audit logs recorded yet.</p>
                 </div>
+              ) : (
+                auditLogsList.map((log, idx) => (
+                  <div key={log.version_id || idx} className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs">
+                    <div className="flex items-center justify-between font-mono text-[10px] font-bold">
+                      <span className="bg-red-700 text-white px-2.5 py-0.5 rounded-md font-mono shadow-2xs">
+                        v{log.version_number || '1'} · {new Date(log.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <span className={`px-2.5 py-0.5 rounded-md uppercase font-extrabold text-[9px] font-mono border ${
+                        log.plan_status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' :
+                        log.plan_status === 'agreed' ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' :
+                        log.plan_status === 'recommended' ? 'bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' :
+                        'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
+                      }`}>
+                        {log.plan_status || 'STATUS CHANGED'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
+                      <span>Student: {log.first_name || 'Alex'} {log.last_name || 'Mercer'} <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">({log.student_number || 'PT3-2026-001'})</span></span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium">By: <strong className="text-slate-800 dark:text-slate-200 font-bold">{log.created_by || 'Academic Chair'}</strong></span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 dark:text-slate-300 font-medium pt-0.5">
+                      {log.amendment_reason || 'Study plan status update'}
+                    </p>
+                  </div>
+                ))
               )}
             </div>
 

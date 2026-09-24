@@ -6,3 +6,6 @@ backend/public/assets/
 .DS_Store
 *.log
 .env
+*.docx
+scratch/
+
