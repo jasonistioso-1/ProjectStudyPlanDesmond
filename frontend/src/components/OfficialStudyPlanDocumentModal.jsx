@@ -222,6 +222,49 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
               </div>
             </div>
 
+            {/* DUAL DIGITAL SIGNATURE & AUTHORISATION BOX */}
+            <div className="grid grid-cols-2 gap-4 mb-4 border-2 border-slate-900 p-3 bg-slate-50/90 rounded-xs">
+              {/* Academic Chair Endorsement Column */}
+              <div className="border-r border-slate-300 pr-3 space-y-1">
+                <div className="text-[10px] font-extrabold uppercase text-slate-500 font-mono tracking-wider">
+                  Academic Chair Endorsement
+                </div>
+                <div className="text-xs font-extrabold text-slate-900 font-heading">Dr. Aris Thorne</div>
+                <div className="text-[10px] text-slate-600 italic">Academic Chair & IT Course Director</div>
+                <div className="mt-2 pt-1 border-t border-slate-300 flex items-center justify-between text-[10px] text-emerald-800 font-bold font-mono">
+                  <span>Status: APPROVED & CERTIFIED</span>
+                  <span className="bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded border border-emerald-300 text-[9px]">OFFICIAL SEAL</span>
+                </div>
+              </div>
+
+              {/* Student Digital Sign-Off Column */}
+              <div className="pl-1 space-y-1">
+                <div className="text-[10px] font-extrabold uppercase text-slate-500 font-mono tracking-wider flex items-center justify-between">
+                  <span>Student Digital Sign-Off</span>
+                  {currentPlan?.studentSignature?.verificationHash && (
+                    <span className="text-emerald-700 font-mono text-[9px] font-bold bg-emerald-50 px-1 rounded border border-emerald-200">
+                      {currentPlan.studentSignature.verificationHash}
+                    </span>
+                  )}
+                </div>
+
+                {currentPlan?.studentSignature?.dataUrl ? (
+                  <div className="h-9 border border-slate-300 rounded bg-white p-0.5 flex items-center justify-start my-0.5">
+                    <img src={currentPlan.studentSignature.dataUrl} alt="Student Digital Signature" className="max-h-full max-w-[200px] object-contain" />
+                  </div>
+                ) : (
+                  <div className="text-xs font-serif italic text-slate-800 my-1 font-semibold border-b border-dashed border-slate-400 pb-0.5 inline-block">
+                    {student.first_name} {student.last_name}
+                  </div>
+                )}
+
+                <div className="text-[10px] text-slate-600 flex items-center justify-between font-mono pt-1 border-t border-slate-300">
+                  <span>Signee: {student.student_number || 'PT3-2026-001'}</span>
+                  <span className="text-slate-500">{currentPlan?.studentSignature?.timestamp || 'Digitally Endorsed'}</span>
+                </div>
+              </div>
+            </div>
+
             {/* FOOTER INFORMATION & DISCOVERY UNITS BOX */}
             <div className="border border-slate-400 p-3 bg-slate-50/50 text-[11px] space-y-2 rounded-sm">
               <h4 className="font-bold text-slate-900 text-xs flex items-center gap-1">

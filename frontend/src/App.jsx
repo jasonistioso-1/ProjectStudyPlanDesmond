@@ -483,9 +483,15 @@ export default function App() {
   };
 
   // Student Agree Plan
-  const handleAgreePlan = async () => {
+  const handleAgreePlan = async (signatureObj) => {
     if (!selectedStudent) return;
-    const updatedPlan = { ...currentPlan, status: 'agreed', updated_at: formatCurrentDateTime(), version_number: (currentPlan?.version_number || 1) + 1 };
+    const updatedPlan = {
+      ...currentPlan,
+      status: 'agreed',
+      studentSignature: signatureObj || currentPlan?.studentSignature,
+      updated_at: formatCurrentDateTime(),
+      version_number: (currentPlan?.version_number || 1) + 1
+    };
     setCurrentPlan(updatedPlan);
     setAllStudentPlansMap(prev => ({
       ...prev,
@@ -494,7 +500,8 @@ export default function App() {
         units: planUnits
       }
     }));
-    updatePlanRecordAndLogAudit('agreed', 'Student agreed and digitally signed proposed study plan', `Student: ${selectedStudent.first_name} ${selectedStudent.last_name}`);
+    const hashTag = signatureObj?.verificationHash ? ` (${signatureObj.verificationHash})` : '';
+    updatePlanRecordAndLogAudit('agreed', `Student agreed and digitally signed proposed study plan${hashTag}`, `Student: ${selectedStudent.first_name} ${selectedStudent.last_name}`);
     showToast('Study plan agreed and digitally signed by student!');
     try {
       const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;

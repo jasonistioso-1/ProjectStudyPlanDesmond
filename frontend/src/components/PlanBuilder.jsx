@@ -9,6 +9,7 @@ import {
 } from '@dnd-kit/core';
 import DroppablePeriod from './DroppablePeriod';
 import DroppablePaletteContainer from './DroppablePaletteContainer';
+import SignaturePad from './SignaturePad';
 import {
   CheckCircle2,
   Save,
@@ -568,43 +569,15 @@ export default function PlanBuilder({
           ))}
         </div>
 
-        {/* Student Decision Helper & Digital Signature Box */}
-        <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-6 max-w-2xl mx-auto shadow-2xs text-center space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Student Digital Sign-off Agreement</h3>
-          <p className="text-xs text-slate-600 dark:text-slate-300 font-normal leading-relaxed">
-            By signing below, you agree to the recommended unit sequence and acknowledge that changes to your study plan require Academic Chair re-approval.
-          </p>
-
-          <label className="flex items-start justify-center gap-3 cursor-pointer text-xs font-medium text-slate-800 dark:text-slate-200 select-none text-left bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-700">
-            <input
-              type="checkbox"
-              checked={agreedConfirmed || isAlreadyAgreed}
-              disabled={isAlreadyAgreed}
-              onChange={(e) => setAgreedConfirmed(e.target.checked)}
-              className="mt-0.5 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
-            />
-            <span>
-              I confirm that I have reviewed the credit load (maximum 12 CP per semester) and prerequisite progression sequence for my degree program.
-            </span>
-          </label>
-
-          <div className="flex justify-center pt-2">
-            <button
-              onClick={() => onAgreePlan && onAgreePlan()}
-              disabled={(!agreedConfirmed && !isAlreadyAgreed) || isAlreadyAgreed}
-              className={`px-6 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-2xs ${
-                isAlreadyAgreed
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 cursor-default'
-                  : agreedConfirmed
-                  ? 'bg-slate-900 dark:bg-red-700 hover:bg-slate-800 dark:hover:bg-red-800 text-white shadow-sm'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-              }`}
-            >
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              {isAlreadyAgreed ? 'Study Plan Agreed & Digitally Signed' : 'Sign & Agree to Study Plan'}
-            </button>
-          </div>
-        </div>
+        {/* Student Digital Signature Pad Component */}
+        <SignaturePad
+          student={student}
+          planStatus={planStatus}
+          planUnitsCount={planUnits.length}
+          isAlreadyAgreed={isAlreadyAgreed}
+          onAgreePlan={onAgreePlan}
+          currentSignature={currentPlan?.studentSignature}
+        />
       </div>
     );
   }
