@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Database, Upload, CheckCircle2, AlertCircle, X, FileSpreadsheet, Download, FileText, Check, AlertTriangle, Users, BookOpen, Layers, Award } from 'lucide-react';
+import { Database, Upload, CheckCircle2, AlertCircle, X, FileSpreadsheet, Download, FileText, Check, AlertTriangle, Users, BookOpen, Layers, Award, MapPin } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { importSeedData } from '../services/api';
 
-export default function DataImportModal({ onClose }) {
-  const [importEntity, setImportEntity] = useState('units'); // 'units' | 'students' | 'offerings' | 'prerequisites' | 'courses'
+export default function DataImportModal({ onClose, onImportSuccess }) {
+  const [importEntity, setImportEntity] = useState('units'); // 'units' | 'students' | 'offerings' | 'prerequisites' | 'courses' | 'locations'
   const [inputText, setInputText] = useState('');
   const [fileName, setFileName] = useState('');
   const [parsedData, setParsedData] = useState([]);
@@ -22,18 +22,79 @@ export default function DataImportModal({ onClose }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  // Helper to split CSV row respecting double quotes
+  const splitCSVRow = (textLine, isTab = false) => {
+    if (isTab) {
+      return textLine.split('\t').map(c => c.trim().replace(/^["']|["']$/g, ''));
+    }
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < textLine.length; i++) {
+      const char = textLine[i];
+      if (char === '"' || char === "'") {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim().replace(/^["']|["']$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim().replace(/^["']|["']$/g, ''));
+    return result;
+  };
+
+  // Helper to normalize period names (e.g., "Tri 1", "Trimester 1", "TRI 1", "T1" -> "T1")
+  const normalizePeriodCode = (raw) => {
+    if (!raw) return '';
+    const clean = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (clean === 'T1' || clean === 'TRI1' || clean === 'TRIMESTER1' || clean === '1') return 'T1';
+    if (clean === 'T2' || clean === 'TRI2' || clean === 'TRIMESTER2' || clean === '2') return 'T2';
+    if (clean === 'T3' || clean === 'TRI3' || clean === 'TRIMESTER3' || clean === '3') return 'T3';
+    if (clean === 'S1' || clean === 'SEM1' || clean === 'SEMESTER1') return 'S1';
+    if (clean === 'S2' || clean === 'SEM2' || clean === 'SEMESTER2') return 'S2';
+    return raw.trim().toUpperCase();
+  };
+
   // Sample CSV templates for all database entity schemas:
   const sampleTemplates = {
-    units: `Unit Code,Unit Name,Strict Prerequisite,2027 & 2028 Trimester Offer
-ICT100,Transition to IT,None,T1, T2, T3
-ICT158,Introduction to Computer Systems,None,T1, T3
-ICT159,Foundations of Programming,None,T1, T2, T3
-ICT167,Principles of Computer Science,ICT159,T1, T2
-ICT201,IT Project Management,ICT158,T1, T2, T3
-ICT202,Data Analytics & Processing,ICT159,T2, T3
-ICT203,Software Architecture & Design,ICT167,T1, T3
-ICT283,Data Structures & Algorithms,ICT167,T1, T2
-ICT302,IT Professional Practice (Capstone),ICT201,T1, T2`,
+    units: `Unit Code,Unit Name,Strict Prerequisite,2027 & 2028 Trimester Offerings
+ICT100,Transition to IT,None,"Tri 1, Tri 2, Tri 3"
+ICT158,Introduction to Information Systems,None,"Tri 1, Tri 3"
+ICT159,Foundations of Programming,None,"Tri 1, Tri 2, Tri 3"
+ICT167,Principles of Computer Science,ICT159,"Tri 1, Tri 2"
+ICT169,Foundations of Data Communications,None,"Tri 1, Tri 2"
+ICT170,Foundations of Computer Systems,None,"Tri 1, Tri 3"
+ICT145,Python Programming,None,"Tri 1, Tri 2, Tri 3"
+ICT201,IT Project Management,ICT158,"Tri 1, Tri 2, Tri 3"
+ICT202,Machine Learning,ICT159,"Tri 2, Tri 3"
+ICT203,Artificial Intelligence,ICT167,"Tri 1, Tri 3"
+ICT206,Intelligent Systems,ICT167,"Tri 2, Tri 3"
+ICT283,Data Structures & Algorithms,ICT167,"Tri 1, Tri 2"
+ICT284,Systems Analysis & Design,ICT158,"Tri 1, Tri 2"
+ICT285,Databases,ICT159,"Tri 1, Tri 2, Tri 3"
+ICT292,Information Systems Architecture,ICT158,"Tri 1, Tri 2, Tri 3"
+BSC203,Intro to ICT Research Methods,ICT158,"Tri 1, Tri 2, Tri 3"
+MAS162,Discrete Mathematics,None,"Tri 1, Tri 2, Tri 3"
+MAS164,Fundamentals of Mathematics,None,"Tri 1, Tri 2, Tri 3"
+MAS183,Statistical Data Analysis,None,"Tri 1, Tri 3"
+ICT301,Enterprise Architecture,ICT292,"Tri 1, Tri 2"
+ICT302,IT Professional Practice (Capstone),ICT201,"Tri 1, Tri 2, Tri 3"
+ICT303,Advanced Machine Learning,ICT202,"Tri 2, Tri 3"
+ICT304,AI System Design,ICT203,"Tri 1, Tri 3"
+ICT305,Data Visualisation,ICT202,"Tri 2, Tri 3"
+ICT373,Software Architecture,ICT283,"Tri 1, Tri 3"
+ICT374,Operating Systems,ICT283,"Tri 2, Tri 3"
+ICT393,Advanced Business Intelligence,ICT284,"Tri 1, Tri 3"
+ICT394,Business Intelligence & Analytics,ICT285,"Tri 1, Tri 2, Tri 3"`,
+
+    locations: `Location Code,Location Name
+PT3-MAIN,PT3 Solutions Main Campus (Perth)
+PT3-SGP,PT3 Solutions Singapore Campus
+PT3-DXB,PT3 Solutions Dubai Campus
+PT3-SYD,PT3 Solutions Sydney Campus
+PT3-ONL,PT3 Solutions Online Portal`,
 
     students: `Student Number,First Name,Last Name,Email,Course Code,Location Code,Status
 PT3-2026-005,David,Miller,d.miller@student.pt3solutions.edu.sg,PT3-BSIT-AI01,SINGAPORE,active
@@ -79,9 +140,7 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
 
     const headerLine = lines[0];
     const isTab = headerLine.includes('\t');
-    const headers = isTab
-      ? headerLine.split('\t').map(h => h.trim().toLowerCase())
-      : headerLine.split(',').map(h => h.trim().toLowerCase().replace(/^["']|["']$/g, ''));
+    const headers = splitCSVRow(headerLine, isTab).map(h => h.trim().toLowerCase());
 
     const hasHeader = headers.some(h => 
       h.includes('unit') || h.includes('code') || h.includes('name') || 
@@ -92,9 +151,7 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
     for (let i = startRowIdx; i < lines.length; i++) {
       const rowNum = i + 1;
       const line = lines[i];
-      const cols = isTab
-        ? line.split('\t').map(c => c.trim().replace(/^["']|["']$/g, ''))
-        : line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+      const cols = splitCSVRow(line, isTab);
 
       if (entity === 'units') {
         const unitCode = cols[0] || '';
@@ -105,7 +162,8 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
         if (!unitCode) { errors.push(`Row ${rowNum}: 'Unit Code' (Column 1) cannot be empty.`); continue; }
         if (!unitName) { errors.push(`Row ${rowNum} (${unitCode}): 'Unit Name' (Column 2) cannot be empty.`); continue; }
 
-        const parsedOfferings = offeringsRaw.split(/[,;&/]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+        const rawTokens = offeringsRaw.split(/[,;&/]+/).map(s => s.trim()).filter(Boolean);
+        const parsedOfferings = rawTokens.map(normalizePeriodCode).filter(Boolean);
         const invalidOfferings = parsedOfferings.filter(p => !['S1', 'S2', 'T1', 'T2', 'T3'].includes(p));
         if (invalidOfferings.length > 0) {
           errors.push(`Row ${rowNum} (${unitCode}): Invalid teaching period '${invalidOfferings.join(', ')}' in Offerings. (Valid: S1, S2, T1, T2, T3)`);
@@ -154,6 +212,12 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
 
         if (!courseCode || !courseName) { errors.push(`Row ${rowNum}: Course Code and Course Name are required.`); continue; }
         validRows.push({ rowNum, code: courseCode, name: courseName, degree_level: degreeLevel, total_credit_points: totalCP });
+      } else if (entity === 'locations') {
+        const locCode = cols[0] || '';
+        const locName = cols[1] || '';
+
+        if (!locCode || !locName) { errors.push(`Row ${rowNum}: Location Code and Location Name are required.`); continue; }
+        validRows.push({ rowNum, code: locCode.toUpperCase(), name: locName });
       }
     }
 
@@ -230,7 +294,13 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
     try {
       setStatus({ loading: true, success: null, error: null });
       const res = await importSeedData(importEntity, parsedData);
-      setStatus({ loading: false, success: res.message || `Successfully imported ${parsedData.length} ${importEntity} records into database!`, error: null });
+      const successMessage = res.message || `Database import execution completed successfully! Processed ${parsedData.length} ${importEntity} records into official schema.`;
+      setStatus({ loading: false, success: successMessage, error: null });
+
+      // Trigger realtime catalog refresh in parent App
+      if (onImportSuccess) {
+        onImportSuccess(importEntity, parsedData.length);
+      }
     } catch (err) {
       setStatus({ loading: false, success: null, error: err.message });
     }
@@ -264,7 +334,7 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
               Universal Database CSV / Excel Dataset Import Engine
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Import Unit Catalog, Students, Unit Offerings, Prerequisites, or Courses directly into database schema (Section 8).
+              Import Unit Catalog, Students, Campus Locations, Unit Offerings, Prerequisites, or Courses directly into database schema (Section 8).
             </p>
           </div>
         </div>
@@ -273,6 +343,7 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
         <div className="flex flex-wrap gap-1.5 mb-4 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
           {[
             { key: 'units', label: 'Course Units Catalog', icon: BookOpen },
+            { key: 'locations', label: 'Campus Locations', icon: MapPin },
             { key: 'students', label: 'Student Records', icon: Users },
             { key: 'offerings', label: 'Unit Offerings', icon: Layers },
             { key: 'prerequisites', label: 'Prerequisites', icon: AlertTriangle },
@@ -398,6 +469,10 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Prerequisite</th>
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Offerings</th>
                       </>}
+                      {importEntity === 'locations' && <>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Location Code</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Location Name</th>
+                      </>}
                       {importEntity === 'students' && <>
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Student Number</th>
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Name</th>
@@ -432,6 +507,10 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
                           <td className="p-2 font-semibold text-slate-900 dark:text-white">{row.title}</td>
                           <td className="p-2 font-mono text-amber-600 dark:text-amber-400">{row.prerequisites?.length > 0 ? row.prerequisites.join(', ') : 'None'}</td>
                           <td className="p-2 font-mono text-emerald-600 dark:text-emerald-400">{row.offerings?.join(', ')}</td>
+                        </>}
+                        {importEntity === 'locations' && <>
+                          <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.code}</td>
+                          <td className="p-2 font-semibold text-slate-900 dark:text-white">{row.name}</td>
                         </>}
                         {importEntity === 'students' && <>
                           <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.student_number}</td>

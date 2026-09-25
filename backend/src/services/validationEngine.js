@@ -66,10 +66,37 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
         // 5. Group plan units by period to validate Credit Points (Max 12 CP rule)
         const periodTotals = new Map(); // key: "year_periodId", value: { totalCP: number, periodCode: string, yearLevel: number }
 
-        // BR-01 Offering Mismatch Rule Sets
-        const t3RestrictedUnits = new Set(['ICT302', 'ICT373', 'ICT374', 'ICT303', 'ICT304', 'ICT203', 'ICT206']);
-        const s1OnlyUnits = new Set(['ICT158', 'ICT145', 'MAS162', 'ICT201', 'ICT202', 'ICT283', 'ICT301', 'ICT373', 'ICT393']);
-        const s2OnlyUnits = new Set(['ICT167', 'ICT169', 'ICT170', 'ICT203', 'ICT206', 'ICT292', 'BSC203', 'ICT304', 'ICT374', 'ICT394']);
+        // BR-01 Offering Mismatch Rules derived from Official 2027 & 2028 Trimester Offering Curriculum
+        const unitOfferingsMap = {
+            'ICT100': ['T1', 'T2', 'T3'],
+            'ICT158': ['T1', 'T3'],
+            'ICT159': ['T1', 'T2', 'T3'],
+            'ICT167': ['T1', 'T2'],
+            'ICT169': ['T1', 'T2'],
+            'ICT170': ['T1', 'T3'],
+            'ICT145': ['T1', 'T2', 'T3'],
+            'ICT201': ['T1', 'T2', 'T3'],
+            'ICT202': ['T2', 'T3'],
+            'ICT203': ['T1', 'T3'],
+            'ICT206': ['T2', 'T3'],
+            'ICT283': ['T1', 'T2'],
+            'ICT284': ['T1', 'T2'],
+            'ICT285': ['T1', 'T2', 'T3'],
+            'ICT292': ['T1', 'T2', 'T3'],
+            'BSC203': ['T1', 'T2', 'T3'],
+            'MAS162': ['T1', 'T2', 'T3'],
+            'MAS164': ['T1', 'T2', 'T3'],
+            'MAS183': ['T1', 'T3'],
+            'ICT301': ['T1', 'T2'],
+            'ICT302': ['T1', 'T2', 'T3'],
+            'ICT303': ['T2', 'T3'],
+            'ICT304': ['T1', 'T3'],
+            'ICT305': ['T2', 'T3'],
+            'ICT373': ['T1', 'T3'],
+            'ICT374': ['T2', 'T3'],
+            'ICT393': ['T1', 'T3'],
+            'ICT394': ['T1', 'T2', 'T3']
+        };
 
         for (const unit of planUnits) {
             const period = periodMap.get(unit.period_id);
@@ -81,31 +108,23 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
             }
             periodTotals.get(key).totalCP += Number(unit.credit_points || 3);
 
-            // BR-01 Check: Unit Offering by Location and Period
-            const isTri3 = unit.period_id === 5 || periodCode === 'T3';
-            const isS1OrT1 = unit.period_id === 1 || unit.period_id === 3 || periodCode === 'S1' || periodCode === 'T1';
-            const isS2OrT2 = unit.period_id === 2 || unit.period_id === 4 || periodCode === 'S2' || periodCode === 'T2';
+            // Determine normalized Trimester (T1, T2, T3) for Offering validation
+            let normalizedPeriod = 'T1';
+            if (unit.period_id === 1 || periodCode === 'T1' || periodCode === 'S1') {
+                normalizedPeriod = 'T1';
+            } else if (unit.period_id === 2 || unit.period_id === 4 || periodCode === 'T2' || periodCode === 'S2') {
+                normalizedPeriod = 'T2';
+            } else if (unit.period_id === 3 || unit.period_id === 5 || periodCode === 'T3') {
+                normalizedPeriod = 'T3';
+            }
 
-            if (isTri3 && t3RestrictedUnits.has(unit.code)) {
+            const allowedOfferings = unitOfferingsMap[unit.code];
+            if (allowedOfferings && !allowedOfferings.includes(normalizedPeriod)) {
                 warnings.push({
                     type: 'BR-01_OFFERING_MISMATCH',
                     severity: 'error',
                     unitCode: unit.code,
-                    message: `Unit ${unit.code} (${unit.title}) is NOT offered in Tri-Semester 3 (T3) at Singapore Campus.`
-                });
-            } else if (isS2OrT2 && s1OnlyUnits.has(unit.code)) {
-                warnings.push({
-                    type: 'BR-01_OFFERING_MISMATCH',
-                    severity: 'error',
-                    unitCode: unit.code,
-                    message: `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 1 / Trimester 1 and cannot be taken in ${periodCode}.`
-                });
-            } else if (isS1OrT1 && s2OnlyUnits.has(unit.code)) {
-                warnings.push({
-                    type: 'BR-01_OFFERING_MISMATCH',
-                    severity: 'error',
-                    unitCode: unit.code,
-                    message: `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 2 / Trimester 2 and cannot be taken in ${periodCode}.`
+                    message: `Unit ${unit.code} (${unit.title || unit.code}) is offered ONLY in ${allowedOfferings.join(', ')} and cannot be taken in ${periodCode} (${normalizedPeriod}).`
                 });
             }
 

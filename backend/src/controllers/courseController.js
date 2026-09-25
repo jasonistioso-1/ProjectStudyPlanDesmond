@@ -31,19 +31,37 @@ export async function getUnits(req, res) {
             prereqMap.get(p.unit_id).push({ prereq_unit_id: p.prereq_unit_id, prereq_code: p.prereq_code });
         }
 
-        const unitsWithPrereqs = units.map(u => ({
+        // Fetch offerings
+        const [offeringsRows] = await pool.query(`
+            SELECT uo.unit_id, tp.code AS period_code
+            FROM UnitOffering uo
+            JOIN TeachingPeriod tp ON uo.period_id = tp.period_id
+        `);
+
+        const offeringsMap = new Map();
+        for (const o of offeringsRows) {
+            if (!offeringsMap.has(o.unit_id)) {
+                offeringsMap.set(o.unit_id, []);
+            }
+            if (!offeringsMap.get(o.unit_id).includes(o.period_code)) {
+                offeringsMap.get(o.unit_id).push(o.period_code);
+            }
+        }
+
+        const unitsWithData = units.map(u => ({
             ...u,
-            prerequisites: prereqMap.get(u.unit_id) || []
+            prerequisites: prereqMap.get(u.unit_id) || [],
+            offerings: offeringsMap.get(u.unit_id) || ['T1', 'T2', 'T3']
         }));
 
-        res.json(unitsWithPrereqs);
+        res.json(unitsWithData);
     } catch (err) {
         console.warn('Database query failed, returning fallback mockUnits:', err.message);
-        const unitsWithPrereqs = mockUnits.map(u => {
+        const unitsWithData = mockUnits.map(u => {
             const reqs = mockPrerequisites.filter(p => p.target_code === u.code).map(p => ({ prereq_code: p.prereq_code }));
             return { ...u, prerequisites: reqs };
         });
-        res.json(unitsWithPrereqs);
+        res.json(unitsWithData);
     }
 }
 

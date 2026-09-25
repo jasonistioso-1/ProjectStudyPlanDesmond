@@ -19,6 +19,41 @@ export async function importData(req, res) {
                      ON DUPLICATE KEY UPDATE title = VALUES(title), credit_points = VALUES(credit_points), level = VALUES(level)`,
                     [item.code, item.title, item.credit_points || 3, item.level || 100]
                 );
+
+                // Fetch unit_id
+                const [uRows] = await connection.query(`SELECT unit_id FROM Unit WHERE code = ?`, [item.code]);
+                if (uRows.length > 0) {
+                    const unitId = uRows[0].unit_id;
+
+                    // Sync offerings if provided in unit payload
+                    if (Array.isArray(item.offerings) && item.offerings.length > 0) {
+                        for (const pCode of item.offerings) {
+                            const [pRows] = await connection.query(`SELECT period_id FROM TeachingPeriod WHERE code = ?`, [pCode]);
+                            if (pRows.length > 0) {
+                                await connection.query(
+                                    `INSERT INTO UnitOffering (unit_id, location_id, period_id, year_version, delivery_mode, is_active)
+                                     VALUES (?, 2, ?, 2026, 'internal', TRUE)
+                                     ON DUPLICATE KEY UPDATE delivery_mode = 'internal', is_active = TRUE`,
+                                    [unitId, pRows[0].period_id]
+                                );
+                            }
+                        }
+                    }
+
+                    // Sync prerequisites if provided in unit payload
+                    if (Array.isArray(item.prerequisites) && item.prerequisites.length > 0) {
+                        for (const prereqCode of item.prerequisites) {
+                            const [puRows] = await connection.query(`SELECT unit_id FROM Unit WHERE code = ?`, [prereqCode]);
+                            if (puRows.length > 0) {
+                                await connection.query(
+                                    `INSERT INTO Prerequisite (unit_id, prereq_unit_id, min_grade) VALUES (?, ?, 'P')
+                                     ON DUPLICATE KEY UPDATE min_grade = 'P'`,
+                                    [unitId, puRows[0].unit_id]
+                                );
+                            }
+                        }
+                    }
+                }
                 importedCount++;
             }
         } else if (type === 'offerings') {
@@ -68,7 +103,7 @@ export async function importData(req, res) {
                 }
 
                 await connection.query(
-                    `INSERT INTO Student (student_number, first_name, last_name, email, course_id, location_id, commencement_year, status)
+                    `INSERT INTO Student (student_number, first_name, last_name, email, course_id, location_id, commencement_year, study_status)
                      VALUES (?, ?, ?, ?, ?, ?, 2026, ?)
                      ON DUPLICATE KEY UPDATE first_name = VALUES(first_name), last_name = VALUES(last_name), email = VALUES(email)`,
                     [item.student_number, item.first_name, item.last_name, item.email, courseId, locationId, item.status || 'active']
@@ -85,12 +120,22 @@ export async function importData(req, res) {
                 );
                 importedCount++;
             }
+        } else if (type === 'locations') {
+            for (const item of data) {
+                // item: { code, name }
+                await connection.query(
+                    `INSERT INTO Location (code, name) VALUES (?, ?)
+                     ON DUPLICATE KEY UPDATE name = VALUES(name)`,
+                    [item.code, item.name]
+                );
+                importedCount++;
+            }
         } else {
-            return res.status(400).json({ error: 'Invalid import type. Use units, students, offerings, prerequisites, or courses' });
+            return res.status(400).json({ error: 'Invalid import type. Use units, students, offerings, prerequisites, courses, or locations' });
         }
 
         await connection.commit();
-        res.json({ message: `Data import successful for type: ${type}`, count: importedCount });
+        res.json({ message: `Database import execution completed successfully! Processed ${importedCount} ${type} records into official schema.`, count: importedCount });
     } catch (err) {
         await connection.rollback();
         res.status(500).json({ error: err.message });

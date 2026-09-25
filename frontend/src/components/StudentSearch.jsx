@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserCheck, BookOpen, MapPin, GraduationCap } from 'lucide-react';
+import { Search, UserCheck, BookOpen, MapPin, GraduationCap, X } from 'lucide-react';
 import { fetchStudents } from '../services/api';
 
 export default function StudentSearch({ selectedStudent, onSelectStudent }) {
@@ -84,13 +84,27 @@ export default function StudentSearch({ selectedStudent, onSelectStudent }) {
         <div className="relative">
           <Search className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
           <input
+            id="student-navbar-search-input"
             type="text"
             placeholder="Search student name, ID (e.g. 34001001), or email..."
             value={searchTerm}
             onChange={handleSearchChange}
             onFocus={() => setIsOpen(true)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-1 focus:ring-blue-600 font-medium transition-all"
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-9 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white focus:ring-1 focus:ring-blue-600 font-medium transition-all"
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setFilteredStudents(students);
+              }}
+              className="absolute right-2.5 top-3 text-slate-400 hover:text-slate-600 transition-colors p-0.5 rounded-full hover:bg-slate-200 cursor-pointer"
+              title="Clear search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         {/* Dropdown Menu */}

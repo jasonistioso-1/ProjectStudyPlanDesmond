@@ -50,7 +50,7 @@ const initialSampleStudents = [
     email: 'academic.chair@pt3solutions.edu.sg',
     course_id: 1,
     course_code: 'PT3-ADMIN',
-    course_name: 'Academic Chair & System Administrator',
+    course_name: 'Academic Chair',
     location_id: 2,
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
@@ -163,7 +163,7 @@ export default function App() {
       course_code: 'PT3-BSIT-CS02',
       title: 'PT3-BSIT Computer Science Plan',
       status: 'agreed',
-      version_number: 1,
+      version_number: 2,
       total_cp: 72,
       created_by: 'Academic Chair',
       updated_at: '2026-09-14 16:45',
@@ -177,7 +177,7 @@ export default function App() {
       course_code: 'PT3-BSIT-BIS03',
       title: 'PT3-BSIT Business Info Systems Plan',
       status: 'recommended',
-      version_number: 1,
+      version_number: 2,
       total_cp: 69,
       created_by: 'Academic Chair',
       updated_at: '2026-09-14 11:20',
@@ -191,7 +191,7 @@ export default function App() {
       course_code: 'PT3-BSIT-AI04',
       title: 'PT3-BSIT Artificial Intelligence Plan',
       status: 'draft',
-      version_number: 3,
+      version_number: 2,
       total_cp: 72,
       created_by: 'Academic Chair',
       updated_at: '2026-09-13 14:10',
@@ -232,6 +232,41 @@ export default function App() {
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState(null);
 
+  // Per-semester change requests state (key format: 'Y{yearLevel}-P{periodId}')
+  const [semesterRequests, setSemesterRequests] = useState({
+    'Y2-P1': 'Student request: "Please swap ICT283 Data Structures to Trimester 2 due to timetable conflict."'
+  });
+
+  const handleSaveSemesterRequest = (key, comment) => {
+    setSemesterRequests(prev => ({
+      ...prev,
+      [key]: comment
+    }));
+
+    if (currentPlan) {
+      const updatedPlan = {
+        ...currentPlan,
+        status: 'rejected',
+        updated_at: formatCurrentDateTime(),
+        version_number: (currentPlan?.version_number || 1) + 1
+      };
+      setCurrentPlan(updatedPlan);
+      setStoredPlansList(prevList =>
+        prevList.map(p => p.plan_id === updatedPlan.plan_id ? { ...p, status: 'rejected', updated_at: updatedPlan.updated_at, version_number: updatedPlan.version_number } : p)
+      );
+    }
+    showToast(`Semester change request submitted to Academic Chair!`);
+  };
+
+  const handleRemoveSemesterRequest = (key) => {
+    setSemesterRequests(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    showToast(`Semester change request resolved and cleared.`);
+  };
+
   const handleAddUnit = (newUnit) => {
     setCatalogUnits(prev => [newUnit, ...prev]);
     showToast(`Successfully created new course unit ${newUnit.code}: ${newUnit.title}`);
@@ -258,7 +293,15 @@ export default function App() {
 
   useEffect(() => {
     if (showAuditModal) {
-      fetchAuditLog().then(res => setAuditLogsList(res || [])).catch(console.error);
+      fetchAuditLog().then(res => {
+        if (res && res.length > 0) {
+          setAuditLogsList(prev => {
+            const existingIds = new Set(prev.map(l => l.version_id));
+            const newFetched = res.filter(l => !existingIds.has(l.version_id));
+            return [...prev, ...newFetched];
+          });
+        }
+      }).catch(console.error);
     }
   }, [showAuditModal]);
 
@@ -281,6 +324,22 @@ export default function App() {
       }
     } catch (err) {
       console.error('Failed to load initial catalog/students data:', err);
+    }
+  };
+
+  const handleRefreshCatalog = async (entityType, recordCount) => {
+    try {
+      const [unitsData, periodsData, studentsData] = await Promise.all([
+        fetchCatalogUnits(),
+        fetchTeachingPeriods(),
+        fetchStudents('')
+      ]);
+      if (unitsData && unitsData.length > 0) setCatalogUnits(unitsData);
+      if (periodsData && periodsData.length > 0) setPeriods(periodsData);
+      if (studentsData && studentsData.length > 0) setStudentsList(studentsData);
+      showToast(`Realtime sync complete! Processed ${recordCount || ''} ${entityType || 'database'} records.`);
+    } catch (err) {
+      console.warn('Realtime refresh error:', err);
     }
   };
 
@@ -315,6 +374,23 @@ export default function App() {
 
     setSelectedStudent(student);
     setShowStudentSelectModal(false);
+
+    // Record login / account switch event into Audit Log
+    setAuditLogsList(prev => [
+      {
+        version_id: `evt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        version_number: 'LOG',
+        student_number: student.student_number || 'PT3-2026-000',
+        first_name: student.first_name,
+        last_name: student.last_name,
+        plan_title: `${student.course_code || 'PT3-BSIT'} Account Session`,
+        amendment_reason: `Account Profile Switch: Loaded profile for ${student.first_name} ${student.last_name} (${(student.account_category || 'STUDENT').replace('_', ' ').toUpperCase()})`,
+        created_by: activeRole === 'chair' ? 'Academic Chair' : `Student: ${student.first_name} ${student.last_name}`,
+        created_at: new Date().toISOString(),
+        plan_status: 'logged_in'
+      },
+      ...prev
+    ]);
     
     // Do NOT auto-switch activeRole when a student profile is selected.
     // If the Academic Chair selects a student, they stay in Academic Chair view to manage that student's plan.
@@ -322,7 +398,7 @@ export default function App() {
       setActiveTab('STUDY_PLAN');
     }
 
-    showToast(`Loaded profile for ${student.first_name} ${student.last_name} (${student.account_category === 'admin' ? 'Administrator' : student.account_category === 'new_student' ? 'New Student' : 'Existing Student'})`);
+    showToast(`Loaded profile for ${student.first_name} ${student.last_name} (${student.account_category === 'admin' ? 'Academic Chair' : student.account_category === 'new_student' ? 'New Student' : 'Existing Student'})`);
 
     // 2. If student ALREADY has a working draft in memory, load it directly to prevent wiping data!
     if (allStudentPlansMap[student.student_id]) {
@@ -511,6 +587,32 @@ export default function App() {
     }
   };
 
+  // Student Reject Plan / Request Changes
+  const handleRejectPlan = (rejectionComment) => {
+    if (!selectedStudent) return;
+    const updatedPlan = {
+      ...currentPlan,
+      status: 'rejected',
+      rejectionComment,
+      updated_at: formatCurrentDateTime(),
+      version_number: (currentPlan?.version_number || 1) + 1
+    };
+    setCurrentPlan(updatedPlan);
+    setAllStudentPlansMap(prev => ({
+      ...prev,
+      [selectedStudent.student_id]: {
+        plan: updatedPlan,
+        units: planUnits
+      }
+    }));
+    updatePlanRecordAndLogAudit(
+      'rejected',
+      `Student requested changes / rejected study plan with comment: "${rejectionComment}"`,
+      `Student: ${selectedStudent.first_name} ${selectedStudent.last_name}`
+    );
+    showToast(`Study plan rejection submitted to Academic Chair! Comment: "${rejectionComment}"`);
+  };
+
   // Chair Approve & Finalise Plan
   const handleApprovePlan = async () => {
     if (!selectedStudent) return;
@@ -569,9 +671,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased flex flex-col justify-between transition-colors duration-200">
       <div>
-        {/* Toast Notification Banner - Centered Viewport */}
+        {/* Toast Notification Banner - Centered Below Navbar */}
         {notificationMsg && (
-          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-700 dark:bg-emerald-800 text-white px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-bold transition-all border border-emerald-600 dark:border-emerald-700 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-300 font-sans max-w-md text-center">
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-emerald-700 dark:bg-emerald-800 text-white px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-bold transition-all border border-emerald-600 dark:border-emerald-700 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-300 font-sans max-w-md text-center">
             <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
             <span>{notificationMsg}</span>
           </div>
@@ -631,105 +733,62 @@ export default function App() {
           {/* Executive Student Course Info Header (Shown only when a real target student profile is selected on STUDY_PLAN & ACADEMIC_HISTORY tabs) */}
           {(activeTab === 'STUDY_PLAN' || activeTab === 'ACADEMIC_HISTORY') &&
             selectedStudent && selectedStudent.account_category !== 'admin' && selectedStudent.student_id !== 0 && (
-            <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-xl font-sans text-slate-900 dark:text-white transition-all relative overflow-hidden backdrop-blur-md">
+            <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl font-sans text-slate-900 dark:text-white transition-all relative overflow-hidden backdrop-blur-md">
               {/* Subtle executive background accents */}
               <div className="absolute -right-16 -top-16 w-80 h-80 bg-gradient-to-br from-red-600/15 via-rose-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
               <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-gradient-to-tr from-emerald-600/10 via-teal-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-              <div className="relative z-10 flex flex-col lg:flex-row justify-between lg:items-center gap-6">
-                <div className="space-y-3.5">
-                  {/* Major & Status Tags */}
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <span className="inline-flex items-center gap-2 bg-gradient-to-r from-red-50 to-rose-50/80 text-red-700 dark:from-red-950/90 dark:to-rose-950/80 dark:text-red-300 border border-red-200/80 dark:border-red-800/60 px-4 py-1.5 rounded-full text-xs font-extrabold tracking-wide shadow-2xs font-heading">
-                      <BookOpen className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-                      <span>Major: {selectedStudent?.course_name && selectedStudent.course_name.includes('Major:')
-                        ? selectedStudent.course_name.split('Major:')[1].replace(')', '').trim()
-                        : (selectedStudent?.course_code || 'IT Specialization')}</span>
-                    </span>
-
+              <div className="relative z-10 flex flex-col lg:flex-row justify-between lg:items-center gap-4 sm:gap-6">
+                {/* Left Side: Major Badge, Status & Degree Title */}
+                <div className="space-y-2 max-w-full overflow-hidden">
+                  <div className="flex flex-wrap items-center gap-2 font-sans">
                     {currentPlan?.status === 'approved' && (
-                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-2xs">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Plan Approved & Finalized
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold shadow-2xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Approved
                       </span>
                     )}
                     {currentPlan?.status === 'agreed' && (
-                      <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-2xs">
+                      <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold shadow-2xs">
                         <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Student Agreed
                       </span>
                     )}
                     {currentPlan?.status === 'recommended' && (
-                      <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-2xs">
-                        <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Recommended to Student
-                      </span>
-                    )}
-                    {(!currentPlan || currentPlan?.status === 'draft' || currentPlan?.status === 'stored') && (
-                      <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-2xs">
-                        Official Draft Plan
+                      <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold shadow-2xs">
+                        <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Recommended
                       </span>
                     )}
                   </div>
-
-                  {/* Degree Title */}
-                  <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-heading">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-heading">
                     Bachelor of Information Technology
                   </h1>
-
-                  {/* Student Context Metadata Strip */}
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-300 pt-0.5 font-medium">
-                    <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 px-4 py-2 rounded-2xl shadow-2xs">
-                      <User className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-                      <span className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">
-                        {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
-                      </span>
-                      <span className="text-slate-500 dark:text-slate-400 text-xs font-mono bg-white dark:bg-slate-900 px-2.5 py-0.5 rounded-lg border border-slate-200 dark:border-slate-800 font-bold">
-                        {selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 px-4 py-2 rounded-2xl text-slate-700 dark:text-slate-300 shadow-2xs">
-                      <GraduationCap className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
-                      <span>Course Code: <strong className="text-slate-900 dark:text-white font-bold font-mono">{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-AI01'}</strong></span>
-                    </div>
-
-                    <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 px-4 py-2 rounded-2xl text-slate-700 dark:text-slate-300 shadow-2xs">
-                      <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <span className="font-bold">{selectedStudent?.location_name || 'PT3 Solutions Singapore Campus'}</span>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Total Degree Credit Meter Widget */}
-                {(() => {
-                  const calculatedCP = (planUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
-                  const progressPct = Math.min(100, Math.round((calculatedCP / 72) * 100));
+                {/* Right Side: Clean Student Metadata Strip (No background boxes) */}
+                <div className="flex flex-wrap items-center justify-start lg:justify-end gap-2.5 sm:gap-3.5 text-xs text-slate-600 dark:text-slate-300 font-medium shrink-0">
+                  <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                    <User className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm font-heading">
+                      {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
+                    </span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[11px] font-mono font-bold">
+                      ({selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'})
+                    </span>
+                  </div>
 
-                  return (
-                    <div className="bg-gradient-to-br from-slate-50/90 to-slate-100/90 dark:from-slate-800/90 dark:to-slate-900/90 border border-slate-200 dark:border-slate-700 p-5 rounded-2xl text-right shrink-0 min-w-[280px] shadow-sm relative backdrop-blur-xs">
-                      <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
-                        <span>Degree Load Progress</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-black text-xs font-sans tabular-nums">{progressPct}%</span>
-                      </div>
+                  <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
 
-                      <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-baseline justify-end gap-1.5 my-1.5 font-heading">
-                        <span className="tabular-nums font-black font-sans">{calculatedCP}</span>
-                        <span className="text-slate-400 dark:text-slate-500 font-extrabold text-sm font-sans">/ 72 CP</span>
-                      </div>
+                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                    <GraduationCap className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
+                    <span>Course: <strong className="text-slate-900 dark:text-white font-bold font-mono">{selectedStudent ? selectedStudent.course_code : 'PT3-BSIT-AI01'}</strong></span>
+                  </div>
 
-                      {/* Dynamic Gradient Progress Bar */}
-                      <div className="w-full bg-slate-200 dark:bg-slate-950 h-3 rounded-full overflow-hidden p-0.5 border border-slate-300/80 dark:border-slate-700/80 my-2 shadow-inner">
-                        <div 
-                          className="bg-gradient-to-r from-red-600 via-amber-500 to-emerald-500 h-full rounded-full transition-all duration-500 shadow-xs" 
-                          style={{ width: `${progressPct}%` }}
-                        />
-                      </div>
+                  <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
 
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-between font-sans pt-0.5">
-                        <span className="font-semibold text-slate-600 dark:text-slate-400">Target: 72 CP</span>
-                        <span className="text-slate-900 dark:text-white font-extrabold tabular-nums">{Math.max(0, 72 - calculatedCP)} CP remaining</span>
-                      </div>
-                    </div>
-                  );
-                })()}
+                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                    <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span className="font-bold">{selectedStudent?.location_name || 'Singapore Campus'}</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -738,6 +797,13 @@ export default function App() {
           {activeTab === 'STUDY_PLAN' && (
             <PlanBuilder
               student={selectedStudent}
+              students={studentsList}
+              onSelectStudent={handleSelectStudent}
+              onAddStudentClick={() => setShowAddStudentModal(true)}
+              onEditStudentClick={(st) => {
+                setEditingStudent(st);
+                setShowAddStudentModal(true);
+              }}
               planUnits={planUnits}
               setPlanUnits={handleSetPlanUnits}
               catalogUnits={catalogUnits}
@@ -751,6 +817,10 @@ export default function App() {
               onAgreePlan={handleAgreePlan}
               onApprovePlan={handleApprovePlan}
               onSavePlan={handleSavePlan}
+              onRejectPlan={handleRejectPlan}
+              semesterRequests={semesterRequests}
+              onSaveSemesterRequest={handleSaveSemesterRequest}
+              onRemoveSemesterRequest={handleRemoveSemesterRequest}
               onOpenOfficialDocument={() => setShowDocumentModal(true)}
               onOpenStudentSelectModal={() => setShowStudentSelectModal(true)}
             />
@@ -766,6 +836,7 @@ export default function App() {
             <StoredPlansView
               students={studentsList}
               storedPlans={storedPlansList}
+              activeRole={activeRole}
               onSelectStudentAndRetrievePlan={(st) => {
                 handleSelectStudent(st);
                 setActiveTab('STUDY_PLAN');
@@ -824,15 +895,16 @@ export default function App() {
                   <div key={log.version_id || idx} className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs">
                     <div className="flex items-center justify-between font-mono text-[10px] font-bold">
                       <span className="bg-red-700 text-white px-2.5 py-0.5 rounded-md font-mono shadow-2xs">
-                        v{log.version_number || '1'} · {new Date(log.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {new Date(log.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <span className={`px-2.5 py-0.5 rounded-md uppercase font-extrabold text-[9px] font-mono border ${
                         log.plan_status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' :
                         log.plan_status === 'agreed' ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' :
                         log.plan_status === 'recommended' ? 'bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' :
+                        log.plan_status === 'logged_in' ? 'bg-purple-50 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800' :
                         'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                       }`}>
-                        {log.plan_status || 'STATUS CHANGED'}
+                        {log.plan_status === 'logged_in' ? 'LOGIN / ACCOUNT SWITCH' : (log.plan_status || 'STATUS CHANGED')}
                       </span>
                     </div>
 
@@ -882,6 +954,7 @@ export default function App() {
       {/* Data Import Modal */}
       {showImportModal && (
         <DataImportModal
+          onImportSuccess={handleRefreshCatalog}
           onClose={() => setShowImportModal(false)}
         />
       )}

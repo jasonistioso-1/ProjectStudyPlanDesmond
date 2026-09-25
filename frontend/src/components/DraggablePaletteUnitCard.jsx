@@ -3,9 +3,11 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, ChevronDown, Zap, Calendar } from 'lucide-react';
 
-export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificSemester, layoutType = 'trimester' }) {
+export default function DraggablePaletteUnitCard({ unit, scheduledInfo, onAdd, onAddToSpecificSemester, layoutType = 'trimester' }) {
   const [showPicker, setShowPicker] = useState(false);
   const cardRef = useRef(null);
+
+  const isScheduled = !!scheduledInfo;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `palette_${unit.unit_id || unit.code}`,
@@ -59,7 +61,11 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
         cardRef.current = node;
       }}
       style={style}
-      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 p-3.5 rounded-2xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative font-sans"
+      className={`border p-3 rounded-xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative font-sans ${
+        isScheduled
+          ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/60'
+          : 'bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600'
+      }`}
     >
       <div className="flex items-center gap-2.5 min-w-0 pr-2">
         <div
@@ -72,8 +78,17 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
         </div>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-heading font-extrabold text-white bg-red-700 dark:bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs font-mono">{unit.code}</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-heading font-extrabold text-white bg-slate-900 dark:bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs font-mono">{unit.code}</span>
+            <span className="text-[10px] font-mono font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+              L{unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : '100')}
+            </span>
+
+            {isScheduled && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans">
+                ✓ Added in {scheduledInfo.termName}
+              </span>
+            )}
           </div>
           <div className="text-slate-900 dark:text-slate-100 text-xs font-bold truncate mt-1">
             {unit.title}
@@ -87,15 +102,17 @@ export default function DraggablePaletteUnitCard({ unit, onAdd, onAddToSpecificS
       </div>
 
       <div className="flex items-center gap-1 shrink-0 relative">
-        <button
-          onClick={() => setShowPicker(!showPicker)}
-          className="px-3 py-1.5 bg-red-700 hover:bg-red-800 dark:bg-red-700 dark:hover:bg-red-600 text-white text-xs font-extrabold rounded-xl transition-all shadow-xs hover:shadow flex items-center gap-1.5 active:scale-95"
-          title="Click to select target trimester/semester period for this unit"
-        >
-          <Plus className="w-3.5 h-3.5 text-white stroke-[2.5]" />
-          <span>Add Unit</span>
-          <ChevronDown className={`w-3.5 h-3.5 text-red-200 transition-transform ${showPicker ? 'rotate-180' : ''}`} />
-        </button>
+        {isScheduled ? null : (
+          <button
+            onClick={() => setShowPicker(!showPicker)}
+            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+            title="Click to select target trimester/semester period for this unit"
+          >
+            <Plus className="w-3.5 h-3.5 text-white" />
+            <span>Add Unit</span>
+            <ChevronDown className={`w-3.5 h-3.5 text-slate-300 dark:text-red-200 transition-transform ${showPicker ? 'rotate-180' : ''}`} />
+          </button>
+        )}
 
         {showPicker && (
           <div className="absolute right-0 top-full mt-1.5 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 p-2 space-y-1 text-xs font-sans animate-in fade-in duration-150">

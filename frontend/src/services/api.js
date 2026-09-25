@@ -118,21 +118,34 @@ export async function fetchStudentHistory(id) {
         return await res.json();
     } catch (err) {
         console.warn('API fetchStudentHistory fallback activated:', err.message);
-        if (id == 0 || id == 3 || id == 4) return [];
+        if (id == 0 || id == 3 || id == 4) {
+            // New Students (Michael Chang, Emily Watson) - 0 prior history recorded (Fresh Enrolment)
+            return [];
+        }
         if (id == 2) {
-            // Sarah Jenkins (Existing Student - CS Major: Completed Year 1 Trimester 1 - 9 CP)
+            // Sarah Jenkins (Existing Student - CS Major: 7 Passed Units - 21 CP Completed)
             return [
-                { history_id: 10, student_id: 2, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'HD', mark: 85.0, period_id: 3, period_code: 'T1', year_taken: 2025 },
-                { history_id: 11, student_id: 2, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'completed', grade: 'D', mark: 78.0, period_id: 3, period_code: 'T1', year_taken: 2025 },
-                { history_id: 12, student_id: 2, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'HD', mark: 88.0, period_id: 3, period_code: 'T1', year_taken: 2025 }
+                { history_id: 10, student_id: 2, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'HD', mark: 92.0, period_id: 3, period_code: 'T1', year_taken: 2025 },
+                { history_id: 11, student_id: 2, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'completed', grade: 'D', mark: 81.0, period_id: 3, period_code: 'T1', year_taken: 2025 },
+                { history_id: 12, student_id: 2, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'HD', mark: 89.0, period_id: 3, period_code: 'T1', year_taken: 2025 },
+                { history_id: 13, student_id: 2, unit_id: 4, unit_code: 'ICT167', unit_title: 'Principles of Computer Science', status: 'completed', grade: 'D', mark: 77.0, period_id: 4, period_code: 'T2', year_taken: 2025 },
+                { history_id: 14, student_id: 2, unit_id: 7, unit_code: 'ICT145', unit_title: 'Python Programming', status: 'completed', grade: 'HD', mark: 94.0, period_id: 4, period_code: 'T2', year_taken: 2025 },
+                { history_id: 15, student_id: 2, unit_id: 17, unit_code: 'MAS162', unit_title: 'Discrete Mathematics', status: 'completed', grade: 'C', mark: 69.0, period_id: 5, period_code: 'T3', year_taken: 2025 },
+                { history_id: 16, student_id: 2, unit_id: 18, unit_code: 'MAS164', unit_title: 'Fundamentals of Mathematics', status: 'completed', grade: 'D', mark: 76.0, period_id: 5, period_code: 'T3', year_taken: 2025 },
+                { history_id: 17, student_id: 2, unit_id: 12, unit_code: 'ICT283', unit_title: 'Data Structures & Algorithms', status: 'attempted', grade: 'F', mark: 46.0, period_id: 5, period_code: 'T3', year_taken: 2025 }
             ];
         }
+        // Alex Mercer (Existing Student - AI Major: 6 Passed Units - 18 CP Completed + 2 Enrolled)
         return [
-            { history_id: 1, student_id: 1, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'D', mark: 78.5, period_id: 1, period_code: 'T1', year_taken: 2026 },
-            { history_id: 2, student_id: 1, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'C', mark: 68.0, period_id: 1, period_code: 'T1', year_taken: 2026 },
-            { history_id: 3, student_id: 1, unit_id: 5, unit_code: 'ICT169', unit_title: 'Foundations of Data Communications', status: 'attempted', grade: 'F', mark: 42.0, period_id: 1, period_code: 'T1', year_taken: 2026 },
-            { history_id: 4, student_id: 1, unit_id: 17, unit_code: 'MAS162', unit_title: 'Discrete Mathematics', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'T2', year_taken: 2026 },
-            { history_id: 5, student_id: 1, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'T2', year_taken: 2026 }
+            { history_id: 1, student_id: 1, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'HD', mark: 88.5, period_id: 3, period_code: 'T1', year_taken: 2025 },
+            { history_id: 2, student_id: 1, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'completed', grade: 'D', mark: 78.0, period_id: 3, period_code: 'T1', year_taken: 2025 },
+            { history_id: 3, student_id: 1, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'HD', mark: 85.0, period_id: 3, period_code: 'T1', year_taken: 2025 },
+            { history_id: 4, student_id: 1, unit_id: 4, unit_code: 'ICT167', unit_title: 'Principles of Computer Science', status: 'completed', grade: 'C', mark: 68.0, period_id: 4, period_code: 'T2', year_taken: 2025 },
+            { history_id: 5, student_id: 1, unit_id: 6, unit_code: 'ICT170', unit_title: 'Foundations of Computer Systems', status: 'completed', grade: 'D', mark: 75.0, period_id: 4, period_code: 'T2', year_taken: 2025 },
+            { history_id: 6, student_id: 1, unit_id: 17, unit_code: 'MAS162', unit_title: 'Discrete Mathematics', status: 'completed', grade: 'HD', mark: 90.0, period_id: 5, period_code: 'T3', year_taken: 2025 },
+            { history_id: 7, student_id: 1, unit_id: 5, unit_code: 'ICT169', unit_title: 'Foundations of Data Communications', status: 'attempted', grade: 'F', mark: 44.0, period_id: 5, period_code: 'T3', year_taken: 2025 },
+            { history_id: 8, student_id: 1, unit_id: 13, unit_code: 'ICT284', unit_title: 'Systems Analysis & Design', status: 'current', grade: null, mark: null, period_id: 3, period_code: 'T1', year_taken: 2026 },
+            { history_id: 9, student_id: 1, unit_id: 14, unit_code: 'ICT285', unit_title: 'Databases', status: 'current', grade: null, mark: null, period_id: 3, period_code: 'T1', year_taken: 2026 }
         ];
     }
 }
@@ -193,20 +206,36 @@ export async function fetchTeachingPeriods() {
 
 export const mockClientStudentPlans = {
     1: {
-        plan: { plan_id: 1, student_id: 1, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
-        units: []
+        plan: { plan_id: 1, student_id: 1, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 9 },
+        units: [
+            { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 1 },
+            { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 2 },
+            { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 3 }
+        ]
     },
     2: {
-        plan: { plan_id: 2, student_id: 2, title: 'PT3-BSIT Computer Science Plan 2026', status: 'draft', total_credit_points: 0 },
-        units: []
+        plan: { plan_id: 2, student_id: 2, title: 'PT3-BSIT Computer Science Plan 2026', status: 'draft', total_credit_points: 12 },
+        units: [
+            { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 1 },
+            { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 2 },
+            { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 3 },
+            { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 4 }
+        ]
     },
     3: {
-        plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0 },
-        units: []
+        plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 9 },
+        units: [
+            { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 1 },
+            { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 2 },
+            { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 3 }
+        ]
     },
     4: {
-        plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
-        units: []
+        plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 6 },
+        units: [
+            { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 1 },
+            { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 2 }
+        ]
     }
 };
 
@@ -417,6 +446,19 @@ export async function fetchAuditLog() {
     } catch (err) {
         console.warn('API fetchAuditLog fallback activated:', err.message);
         return [
+            {
+                version_id: 106,
+                plan_id: 2,
+                version_number: 'LOG',
+                student_number: 'PT3-2026-002',
+                first_name: 'Sarah',
+                last_name: 'Jenkins',
+                plan_title: 'PT3-BSIT-CS02 Account Session',
+                amendment_reason: 'Account Profile Switch: Loaded profile for Sarah Jenkins (EXISTING STUDENT)',
+                created_by: 'Academic Chair',
+                created_at: '2026-09-17T12:00:00.000Z',
+                plan_status: 'logged_in'
+            },
             {
                 version_id: 105,
                 plan_id: 1,

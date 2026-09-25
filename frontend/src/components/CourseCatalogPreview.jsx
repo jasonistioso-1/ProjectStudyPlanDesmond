@@ -1,37 +1,39 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, FileSpreadsheet, Layers, CheckCircle2, ChevronRight, Filter, Plus } from 'lucide-react';
+import { BookOpen, Search, FileSpreadsheet, Layers, CheckCircle2, ChevronRight, Filter, Plus, X } from 'lucide-react';
 
 export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, onOpenAddUnit }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState('ALL');
 
   const defaultUnits = [
-    { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2', 'T1', 'T2'] },
-    { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2', 'T1'] },
-    { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2', 'T1', 'T2', 'T3'] },
-    { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, level: 100, prereqs: 'ICT159', offerings: ['S1', 'S2'] },
-    { unit_id: 5, code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2'] },
-    { unit_id: 6, code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2'] },
-    { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2', 'T1'] },
-    { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['S1', 'S2'] },
-    { unit_id: 9, code: 'ICT202', title: 'Data Analytics & Processing', credit_points: 3, level: 200, prereqs: 'ICT159', offerings: ['S1', 'S2'] },
-    { unit_id: 10, code: 'ICT203', title: 'Software Architecture & Design', credit_points: 3, level: 200, prereqs: 'ICT167', offerings: ['S1', 'S2'] },
-    { unit_id: 11, code: 'ICT206', title: 'Distributed Systems', credit_points: 3, level: 200, prereqs: 'ICT167', offerings: ['S1', 'S2'] },
-    { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, level: 200, prereqs: 'ICT167', offerings: ['S1', 'S2'] },
-    { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['S1', 'S2'] },
-    { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, level: 200, prereqs: 'ICT159', offerings: ['S1', 'S2'] },
-    { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['S1', 'S2'] },
-    { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['S1', 'S2'] },
-    { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, level: 100, prereqs: 'None', offerings: ['S1', 'S2'] },
-    { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, level: 300, prereqs: 'ICT292', offerings: ['S1', 'S2'] },
-    { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, level: 300, prereqs: 'ICT201', offerings: ['S1', 'S2'] },
-    { unit_id: 22, code: 'ICT303', title: 'Cloud Infrastructure & DevOps', credit_points: 3, level: 300, prereqs: 'ICT202', offerings: ['S1', 'S2'] },
-    { unit_id: 23, code: 'ICT304', title: 'Enterprise Software Systems', credit_points: 3, level: 300, prereqs: 'ICT203', offerings: ['S1', 'S2'] },
-    { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, level: 300, prereqs: 'ICT202', offerings: ['S1', 'S2'] },
-    { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300, prereqs: 'ICT283', offerings: ['S1', 'S2'] },
-    { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300, prereqs: 'ICT283', offerings: ['S1', 'S2'] },
-    { unit_id: 27, code: 'ICT393', title: 'Advanced Business Intelligence', credit_points: 3, level: 300, prereqs: 'ICT284', offerings: ['S1', 'S2'] },
-    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prereqs: 'ICT285', offerings: ['S1', 'S2'] }
+    { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 3'] },
+    { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, level: 100, prereqs: 'ICT159', offerings: ['Tri 1', 'Tri 2'] },
+    { unit_id: 5, code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 2'] },
+    { unit_id: 6, code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 3'] },
+    { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, level: 200, prereqs: 'ICT159', offerings: ['Tri 2', 'Tri 3'] },
+    { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, level: 200, prereqs: 'ICT167', offerings: ['Tri 1', 'Tri 3'] },
+    { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, level: 200, prereqs: 'ICT167', offerings: ['Tri 2', 'Tri 3'] },
+    { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, level: 200, prereqs: 'ICT167', offerings: ['Tri 1', 'Tri 2'] },
+    { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['Tri 1', 'Tri 2'] },
+    { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, level: 200, prereqs: 'ICT159', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, level: 200, prereqs: 'ICT158', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 18, code: 'MAS164', title: 'Fundamentals of Mathematics', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 19, code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 3'] },
+    { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, level: 300, prereqs: 'ICT292', offerings: ['Tri 1', 'Tri 2'] },
+    { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, level: 300, prereqs: 'ICT201', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
+    { unit_id: 22, code: 'ICT303', title: 'Advanced Machine Learning', credit_points: 3, level: 300, prereqs: 'ICT202', offerings: ['Tri 2', 'Tri 3'] },
+    { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, level: 300, prereqs: 'ICT203', offerings: ['Tri 1', 'Tri 3'] },
+    { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, level: 300, prereqs: 'ICT202', offerings: ['Tri 2', 'Tri 3'] },
+    { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300, prereqs: 'ICT283', offerings: ['Tri 1', 'Tri 3'] },
+    { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300, prereqs: 'ICT283', offerings: ['Tri 2', 'Tri 3'] },
+    { unit_id: 27, code: 'ICT393', title: 'Advanced Business Intelligence', credit_points: 3, level: 300, prereqs: 'ICT284', offerings: ['Tri 1', 'Tri 3'] },
+    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prereqs: 'ICT285', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] }
   ];
 
   const unitsList = catalogUnits && catalogUnits.length > 0
@@ -41,8 +43,12 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
         title: u.title,
         credit_points: u.credit_points || 3,
         level: u.level || 100,
-        prereqs: u.prerequisites && u.prerequisites.length > 0 ? u.prerequisites.map(p => p.prereq_code || p).join(', ') : 'None',
-        offerings: u.offerings || ['S1', 'S2']
+        prereqs: u.prerequisites && u.prerequisites.length > 0
+          ? u.prerequisites.map(p => p.prereq_code || p).join(', ')
+          : (u.prereq_code || u.prereqs || 'None'),
+        offerings: u.offerings && u.offerings.length > 0
+          ? u.offerings
+          : ['Tri 1', 'Tri 2', 'Tri 3']
       }))
     : defaultUnits;
 
@@ -67,10 +73,6 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
         <div className="absolute -right-16 -top-16 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-red-50 text-red-700 dark:bg-red-950/80 dark:text-red-300 border border-red-200 dark:border-red-800/60 rounded-full text-xs font-semibold tracking-wide mb-2">
-            <BookOpen className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-            <span>Data-Driven Course Unit Catalog & Prerequisites</span>
-          </div>
           <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
             Official Course Unit Catalog & Prerequisites Directory
           </h2>
@@ -104,12 +106,23 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
+            id="course-catalog-search-input"
             type="text"
             placeholder="Search unit by code or title (e.g. ICT159, Machine Learning)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-all placeholder:text-slate-400 font-semibold"
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-9 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-all placeholder:text-slate-400 font-semibold"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-0.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+              title="Clear catalog search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
