@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Database, Upload, CheckCircle2, AlertCircle, X, FileSpreadsheet, Download, FileText, Check, AlertTriangle, Users, BookOpen, Layers, Award, MapPin } from 'lucide-react';
+import { Database, Upload, CheckCircle2, AlertCircle, X, FileSpreadsheet, Download, FileText, Check, AlertTriangle, Users, BookOpen, Layers, Award, MapPin, History, Calendar } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { importSeedData } from '../services/api';
 
 export default function DataImportModal({ onClose, onImportSuccess }) {
-  const [importEntity, setImportEntity] = useState('units'); // 'units' | 'students' | 'offerings' | 'prerequisites' | 'courses' | 'locations'
+  const [importEntity, setImportEntity] = useState('units'); // 'units' | 'students' | 'history' | 'offerings' | 'prerequisites' | 'courses' | 'locations' | 'periods'
   const [inputText, setInputText] = useState('');
   const [fileName, setFileName] = useState('');
   const [parsedData, setParsedData] = useState([]);
@@ -118,7 +118,20 @@ ICT283,ICT167,P,false`,
     courses: `Course Code,Course Name,Degree Level,Total Credit Points
 PT3-BSIT-AI01,Bachelor of Information Technology (Major: Artificial Intelligence),Bachelor,72
 PT3-BSIT-CS02,Bachelor of Information Technology (Major: Computer Science),Bachelor,72
-PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information Systems),Bachelor,72`
+PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information Systems),Bachelor,72`,
+
+    history: `Student Number,Unit Code,Status,Grade,Period Code,Year Taken
+PT3-2026-001,ICT100,completed,HD,T1,2025
+PT3-2026-001,ICT158,completed,D,T2,2025
+PT3-2026-001,ICT159,completed,C,T3,2025
+PT3-2026-001,ICT167,current,N/A,T1,2026`,
+
+    periods: `Period Code,Period Name,Period Type,Sequence Order
+T1,Trimester 1,trimester,1
+T2,Trimester 2,trimester,2
+T3,Trimester 3,trimester,3
+S1,Semester 1,semester,1
+S2,Semester 2,semester,2`
   };
 
   const parseContent = (text, entity = importEntity) => {
@@ -144,7 +157,7 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
 
     const hasHeader = headers.some(h => 
       h.includes('unit') || h.includes('code') || h.includes('name') || 
-      h.includes('prereq') || h.includes('offer') || h.includes('student') || h.includes('email')
+      h.includes('prereq') || h.includes('offer') || h.includes('student') || h.includes('email') || h.includes('grade') || h.includes('period')
     );
     const startRowIdx = hasHeader ? 1 : 0;
 
@@ -218,6 +231,24 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
 
         if (!locCode || !locName) { errors.push(`Row ${rowNum}: Location Code and Location Name are required.`); continue; }
         validRows.push({ rowNum, code: locCode.toUpperCase(), name: locName });
+      } else if (entity === 'history') {
+        const studentNum = cols[0] || '';
+        const unitCode = cols[1] || '';
+        const historyStatus = cols[2] || 'completed';
+        const grade = cols[3] || 'P';
+        const periodCode = cols[4] || 'T1';
+        const yearTaken = Number(cols[5] || 2025);
+
+        if (!studentNum || !unitCode) { errors.push(`Row ${rowNum}: Student Number and Unit Code are required for Academic History.`); continue; }
+        validRows.push({ rowNum, student_number: studentNum, unit_code: unitCode, status: historyStatus, grade, period_code: periodCode, year_taken: yearTaken });
+      } else if (entity === 'periods') {
+        const pCode = cols[0] || '';
+        const pName = cols[1] || '';
+        const pType = cols[2] || 'trimester';
+        const seq = Number(cols[3] || 1);
+
+        if (!pCode || !pName) { errors.push(`Row ${rowNum}: Period Code and Period Name are required.`); continue; }
+        validRows.push({ rowNum, code: pCode.toUpperCase(), name: pName, period_type: pType, sequence_order: seq });
       }
     }
 
@@ -345,9 +376,11 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
             { key: 'units', label: 'Course Units Catalog', icon: BookOpen },
             { key: 'locations', label: 'Campus Locations', icon: MapPin },
             { key: 'students', label: 'Student Records', icon: Users },
+            { key: 'history', label: 'Academic History', icon: History },
             { key: 'offerings', label: 'Unit Offerings', icon: Layers },
             { key: 'prerequisites', label: 'Prerequisites', icon: AlertTriangle },
-            { key: 'courses', label: 'Degree Programs', icon: Award }
+            { key: 'courses', label: 'Degree Programs', icon: Award },
+            { key: 'periods', label: 'Teaching Periods', icon: Calendar }
           ].map(ent => {
             const Icon = ent.icon;
             return (
@@ -496,6 +529,19 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Degree Level</th>
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Total CP</th>
                       </>}
+                      {importEntity === 'history' && <>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Student Number</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Code</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Status</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Grade</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Period</th>
+                      </>}
+                      {importEntity === 'periods' && <>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Period Code</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Period Name</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Type</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Seq Order</th>
+                      </>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
@@ -534,6 +580,19 @@ PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information S
                           <td className="p-2 font-semibold text-slate-900 dark:text-white">{row.name}</td>
                           <td className="p-2">{row.degree_level}</td>
                           <td className="p-2 font-mono">{row.total_credit_points} CP</td>
+                        </>}
+                        {importEntity === 'history' && <>
+                          <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.student_number}</td>
+                          <td className="p-2 font-mono font-semibold">{row.unit_code}</td>
+                          <td className="p-2 font-bold text-emerald-600 dark:text-emerald-400">{row.status}</td>
+                          <td className="p-2 font-mono">{row.grade}</td>
+                          <td className="p-2 font-mono">{row.period_code} {row.year_taken}</td>
+                        </>}
+                        {importEntity === 'periods' && <>
+                          <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.code}</td>
+                          <td className="p-2 font-semibold text-slate-900 dark:text-white">{row.name}</td>
+                          <td className="p-2">{row.period_type}</td>
+                          <td className="p-2 font-mono">{row.sequence_order}</td>
                         </>}
                       </tr>
                     ))}

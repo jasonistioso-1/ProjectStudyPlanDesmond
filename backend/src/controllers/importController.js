@@ -130,8 +130,36 @@ export async function importData(req, res) {
                 );
                 importedCount++;
             }
+        } else if (type === 'history') {
+            for (const item of data) {
+                // item: { student_number, unit_code, status, grade, period_code, year_taken }
+                const [s] = await connection.query(`SELECT student_id FROM Student WHERE student_number = ?`, [item.student_number]);
+                const [u] = await connection.query(`SELECT unit_id FROM Unit WHERE code = ?`, [item.unit_code]);
+                const [p] = await connection.query(`SELECT period_id FROM TeachingPeriod WHERE code = ?`, [item.period_code || 'T1']);
+
+                if (s.length > 0 && u.length > 0 && p.length > 0) {
+                    await connection.query(
+                        `INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, period_id, year_taken)
+                         VALUES (?, ?, ?, ?, ?, ?)
+                         ON DUPLICATE KEY UPDATE status = VALUES(status), grade = VALUES(grade)`,
+                        [s[0].student_id, u[0].unit_id, item.status || 'completed', item.grade || 'P', p[0].period_id, item.year_taken || 2025]
+                    );
+                    importedCount++;
+                }
+            }
+        } else if (type === 'periods') {
+            for (const item of data) {
+                // item: { code, name, period_type, sequence_order }
+                await connection.query(
+                    `INSERT INTO TeachingPeriod (code, name, period_type, sequence_order)
+                     VALUES (?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE name = VALUES(name), period_type = VALUES(period_type), sequence_order = VALUES(sequence_order)`,
+                    [item.code, item.name, item.period_type || 'trimester', item.sequence_order || 1]
+                );
+                importedCount++;
+            }
         } else {
-            return res.status(400).json({ error: 'Invalid import type. Use units, students, offerings, prerequisites, courses, or locations' });
+            return res.status(400).json({ error: 'Invalid import type. Use units, students, history, offerings, prerequisites, courses, locations, or periods' });
         }
 
         await connection.commit();

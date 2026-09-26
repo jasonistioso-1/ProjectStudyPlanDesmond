@@ -5,6 +5,9 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState('ALL');
 
+  const [showAllUnits, setShowAllUnits] = useState(false);
+  const INITIAL_LIMIT = 6;
+
   const defaultUnits = [
     { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 2', 'Tri 3'] },
     { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, level: 100, prereqs: 'None', offerings: ['Tri 1', 'Tri 3'] },
@@ -65,6 +68,8 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
     return matchesQuery && matchesLevel;
   });
 
+  const displayedUnits = showAllUnits ? filteredUnits : filteredUnits.slice(0, INITIAL_LIMIT);
+
   return (
     <section className="py-4 font-sans space-y-5">
       {/* Header Banner */}
@@ -101,9 +106,9 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
-        <div className="relative">
+      {/* Search Bar & Counter */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="relative w-full md:flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             id="course-catalog-search-input"
@@ -124,16 +129,23 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
             </button>
           )}
         </div>
+
+        {/* Counter Badge */}
+        <div className="flex items-center gap-2 text-xs shrink-0 self-end md:self-auto">
+          <span className="font-mono font-bold px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            Showing <strong className="text-red-700 dark:text-red-400">{displayedUnits.length}</strong> of <strong className="text-slate-900 dark:text-white">{filteredUnits.length}</strong> Units
+          </span>
+        </div>
       </div>
 
       {/* Unit Catalog Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredUnits.length === 0 ? (
+        {displayedUnits.length === 0 ? (
           <div className="col-span-full py-12 text-center bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl">
             <p className="text-xs text-slate-500">No course units match your search query.</p>
           </div>
         ) : (
-          filteredUnits.map(unit => (
+          displayedUnits.map(unit => (
             <div
               key={unit.unit_id || unit.code}
               className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
@@ -187,6 +199,19 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
           ))
         )}
       </div>
+
+      {/* View More / Show Less Button */}
+      {filteredUnits.length > INITIAL_LIMIT && (
+        <div className="flex justify-center pt-3">
+          <button
+            onClick={() => setShowAllUnits(!showAllUnits)}
+            className="px-5 py-2.5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-2 group cursor-pointer"
+          >
+            <span>{showAllUnits ? 'Show Less' : `View More Units (${filteredUnits.length - INITIAL_LIMIT} More)`}</span>
+            <ChevronRight className={`w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-transform ${showAllUnits ? '-rotate-90' : 'rotate-90'}`} />
+          </button>
+        </div>
+      )}
     </section>
   );
 }
