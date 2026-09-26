@@ -14,7 +14,6 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-slate-900 dark:text-white text-sm">PT3 Solutions</span>
-              <span className="text-slate-300 dark:text-slate-600">•</span>
               <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Study Plan Repository (SPR)</span>
             </div>
             <p className="text-[11px] text-slate-400 dark:text-slate-500 font-normal mt-0.5">
