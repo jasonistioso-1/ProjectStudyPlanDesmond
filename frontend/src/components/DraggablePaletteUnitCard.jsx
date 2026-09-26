@@ -3,15 +3,18 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, ChevronDown, Zap, Calendar } from 'lucide-react';
 
-export default function DraggablePaletteUnitCard({ unit, scheduledInfo, onAdd, onAddToSpecificSemester, layoutType = 'trimester' }) {
+export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyRecord, onAdd, onAddToSpecificSemester, layoutType = 'trimester' }) {
   const [showPicker, setShowPicker] = useState(false);
   const cardRef = useRef(null);
 
   const isScheduled = !!scheduledInfo;
+  const isPassedHistory = historyRecord && historyRecord.status === 'completed';
+  const isFailedHistory = historyRecord && historyRecord.status === 'attempted';
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `palette_${unit.unit_id || unit.code}`,
-    data: { unit }
+    data: { unit },
+    disabled: isPassedHistory
   });
 
   useEffect(() => {
@@ -28,7 +31,7 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, onAdd, o
   const style = {
     transform: CSS.Translate.toString(transform),
     opacity: isDragging ? 0.35 : 1,
-    cursor: isDragging ? 'grabbing' : 'grab'
+    cursor: isPassedHistory ? 'not-allowed' : isDragging ? 'grabbing' : 'grab'
   };
 
   const trimesterOptions = [
@@ -62,17 +65,25 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, onAdd, o
       }}
       style={style}
       className={`border p-3 rounded-xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative font-sans ${
-        isScheduled
+        isPassedHistory
+          ? 'bg-emerald-50/20 dark:bg-emerald-950/20 border-emerald-200/60 dark:border-emerald-900/50 opacity-90'
+          : isFailedHistory
+          ? 'bg-rose-50/20 dark:bg-rose-950/20 border-rose-200/80 dark:border-rose-900/60'
+          : isScheduled
           ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/60'
           : 'bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600'
       }`}
     >
       <div className="flex items-center gap-2.5 min-w-0 pr-2">
         <div
-          {...attributes}
-          {...listeners}
-          className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 cursor-grab active:cursor-grabbing shrink-0 transition-colors p-0.5"
-          title="Drag unit into a semester slot"
+          {...(isPassedHistory ? {} : attributes)}
+          {...(isPassedHistory ? {} : listeners)}
+          className={`shrink-0 transition-colors p-0.5 ${
+            isPassedHistory
+              ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+              : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 cursor-grab active:cursor-grabbing'
+          }`}
+          title={isPassedHistory ? 'Unit already passed in history' : 'Drag unit into a semester slot'}
         >
           <GripVertical className="w-4 h-4" />
         </div>
@@ -80,15 +91,20 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, onAdd, o
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-heading font-extrabold text-white bg-slate-900 dark:bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs font-mono">{unit.code}</span>
-            <span className="text-[10px] font-mono font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
-              L{unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : '100')}
-            </span>
 
-            {isScheduled && (
+            {isPassedHistory ? (
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1 font-sans">
+                ✓ PASSED ({historyRecord.grade || 'P'})
+              </span>
+            ) : isFailedHistory ? (
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800 flex items-center gap-1 font-sans">
+                ⚠ RE-TAKE ALLOWED
+              </span>
+            ) : isScheduled ? (
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans">
                 ✓ Added in {scheduledInfo.termName}
               </span>
-            )}
+            ) : null}
           </div>
           <div className="text-slate-900 dark:text-slate-100 text-xs font-bold truncate mt-1">
             {unit.title}
@@ -102,7 +118,7 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, onAdd, o
       </div>
 
       <div className="flex items-center gap-1 shrink-0 relative">
-        {isScheduled ? null : (
+        {isPassedHistory || isScheduled ? null : (
           <button
             onClick={() => setShowPicker(!showPicker)}
             className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1.5 active:scale-95 cursor-pointer"

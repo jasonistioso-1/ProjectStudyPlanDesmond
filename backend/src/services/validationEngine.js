@@ -48,7 +48,7 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
 
         // Map completed units for fast lookup
         const completedUnitCodes = new Set(
-            history.filter(h => h.status === 'completed').map(h => h.code)
+            history.filter(h => h.status === 'completed').map(h => h.code || h.unit_code)
         );
 
         // Fetch all Teaching Periods for sequence order comparison
@@ -69,32 +69,32 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
         // BR-01 Offering Mismatch Rules derived from Official 2027 & 2028 Trimester Offering Curriculum
         const unitOfferingsMap = {
             'ICT100': ['T1', 'T2', 'T3'],
-            'ICT158': ['T1', 'T3'],
+            'ICT158': ['T1', 'T2', 'T3'],
             'ICT159': ['T1', 'T2', 'T3'],
-            'ICT167': ['T1', 'T2'],
-            'ICT169': ['T1', 'T2'],
-            'ICT170': ['T1', 'T3'],
+            'ICT167': ['T1', 'T2', 'T3'],
+            'ICT169': ['T1', 'T2', 'T3'],
+            'ICT170': ['T1', 'T2', 'T3'],
             'ICT145': ['T1', 'T2', 'T3'],
             'ICT201': ['T1', 'T2', 'T3'],
-            'ICT202': ['T2', 'T3'],
-            'ICT203': ['T1', 'T3'],
-            'ICT206': ['T2', 'T3'],
-            'ICT283': ['T1', 'T2'],
-            'ICT284': ['T1', 'T2'],
+            'ICT202': ['T1', 'T2', 'T3'],
+            'ICT203': ['T1', 'T2', 'T3'],
+            'ICT206': ['T1', 'T2', 'T3'],
+            'ICT283': ['T1', 'T2', 'T3'],
+            'ICT284': ['T1', 'T2', 'T3'],
             'ICT285': ['T1', 'T2', 'T3'],
             'ICT292': ['T1', 'T2', 'T3'],
             'BSC203': ['T1', 'T2', 'T3'],
             'MAS162': ['T1', 'T2', 'T3'],
             'MAS164': ['T1', 'T2', 'T3'],
-            'MAS183': ['T1', 'T3'],
-            'ICT301': ['T1', 'T2'],
+            'MAS183': ['T1', 'T2', 'T3'],
+            'ICT301': ['T1', 'T2', 'T3'],
             'ICT302': ['T1', 'T2', 'T3'],
-            'ICT303': ['T2', 'T3'],
-            'ICT304': ['T1', 'T3'],
-            'ICT305': ['T2', 'T3'],
-            'ICT373': ['T1', 'T3'],
-            'ICT374': ['T2', 'T3'],
-            'ICT393': ['T1', 'T3'],
+            'ICT303': ['T1', 'T2', 'T3'],
+            'ICT304': ['T1', 'T2', 'T3'],
+            'ICT305': ['T1', 'T2', 'T3'],
+            'ICT373': ['T1', 'T2', 'T3'],
+            'ICT374': ['T1', 'T2', 'T3'],
+            'ICT393': ['T1', 'T2', 'T3'],
             'ICT394': ['T1', 'T2', 'T3']
         };
 
@@ -110,12 +110,23 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
 
             // Determine normalized Trimester (T1, T2, T3) for Offering validation
             let normalizedPeriod = 'T1';
-            if (unit.period_id === 1 || periodCode === 'T1' || periodCode === 'S1') {
+            if (unit.period_id === 1 || unit.period_id === 3 || periodCode === 'T1' || periodCode === 'S1') {
                 normalizedPeriod = 'T1';
             } else if (unit.period_id === 2 || unit.period_id === 4 || periodCode === 'T2' || periodCode === 'S2') {
                 normalizedPeriod = 'T2';
-            } else if (unit.period_id === 3 || unit.period_id === 5 || periodCode === 'T3') {
+            } else if (unit.period_id === 5 || periodCode === 'T3') {
                 normalizedPeriod = 'T3';
+            }
+
+            // Already Completed Check (If already passed in history, no rule validation errors apply)
+            if (completedUnitCodes.has(unit.code)) {
+                info.push({
+                    type: 'ALREADY_COMPLETED',
+                    severity: 'info',
+                    unitCode: unit.code,
+                    message: `Unit ${unit.code} is already completed in student academic history.`
+                });
+                continue;
             }
 
             const allowedOfferings = unitOfferingsMap[unit.code];
@@ -125,16 +136,6 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
                     severity: 'error',
                     unitCode: unit.code,
                     message: `Unit ${unit.code} (${unit.title || unit.code}) is offered ONLY in ${allowedOfferings.join(', ')} and cannot be taken in ${periodCode} (${normalizedPeriod}).`
-                });
-            }
-
-            // Already Completed Check
-            if (completedUnitCodes.has(unit.code)) {
-                info.push({
-                    type: 'ALREADY_COMPLETED',
-                    severity: 'info',
-                    unitCode: unit.code,
-                    message: `Unit ${unit.code} is already completed in student academic history.`
                 });
             }
 

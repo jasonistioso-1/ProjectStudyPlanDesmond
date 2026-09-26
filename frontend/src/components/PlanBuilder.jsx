@@ -33,6 +33,7 @@ import {
   RotateCcw,
   HelpCircle,
   ChevronDown,
+  ChevronUp,
   ChevronLeft,
   ChevronRight,
   UserCheck,
@@ -41,6 +42,7 @@ import {
   MessageSquare,
   Send,
   AlertCircle,
+  Clock,
   X
 } from 'lucide-react';
 
@@ -83,6 +85,14 @@ export default function PlanBuilder({
   const [activeRequestModal, setActiveRequestModal] = useState(null);
   const [requestCommentInput, setRequestCommentInput] = useState('');
   const [dragWarningToast, setDragWarningToast] = useState(null);
+  const [expandedTrimesters, setExpandedTrimesters] = useState({});
+
+  const toggleTrimesterExpand = (key) => {
+    setExpandedTrimesters(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -94,16 +104,19 @@ export default function PlanBuilder({
 
   // Completed & Attempted (Failed) unit codes from student history
   const completedUnitCodes = new Set(
-    (history || []).filter(h => h.status === 'completed').map(h => h.unit_code)
+    (history || []).filter(h => h.status === 'completed').map(h => h.unit_code || h.code)
   );
   const attemptedUnitCodes = new Set(
-    (history || []).filter(h => h.status === 'attempted').map(h => h.unit_code)
+    (history || []).filter(h => h.status === 'attempted').map(h => h.unit_code || h.code)
   );
 
   const historyMap = useMemo(() => {
     const map = {};
     (history || []).forEach(h => {
-      if (h && h.unit_code) map[h.unit_code] = h;
+      if (h) {
+        const code = h.unit_code || h.code;
+        if (code) map[code] = h;
+      }
     });
     return map;
   }, [history]);
@@ -140,29 +153,9 @@ export default function PlanBuilder({
     return map;
   }, [catalogUnits]);
 
-  const t3RestrictedUnits = useMemo(() => {
-    const set = new Set(['ICT302', 'ICT373', 'ICT374', 'ICT303', 'ICT304', 'ICT203', 'ICT206']);
-    (catalogUnits || []).forEach(u => {
-      if (u.code && u.restricted_t3) set.add(u.code);
-    });
-    return set;
-  }, [catalogUnits]);
-
-  const s1OnlyUnits = useMemo(() => {
-    const set = new Set(['ICT158', 'ICT145', 'MAS162', 'ICT201', 'ICT202', 'ICT283', 'ICT301', 'ICT373', 'ICT393']);
-    (catalogUnits || []).forEach(u => {
-      if (u.code && u.offering_period === 'S1') set.add(u.code);
-    });
-    return set;
-  }, [catalogUnits]);
-
-  const s2OnlyUnits = useMemo(() => {
-    const set = new Set(['ICT167', 'ICT169', 'ICT170', 'ICT203', 'ICT206', 'ICT292', 'BSC203', 'ICT304', 'ICT374', 'ICT394']);
-    (catalogUnits || []).forEach(u => {
-      if (u.code && u.offering_period === 'S2') set.add(u.code);
-    });
-    return set;
-  }, [catalogUnits]);
+  const t3RestrictedUnits = useMemo(() => new Set(), []);
+  const s1OnlyUnits = useMemo(() => new Set(), []);
+  const s2OnlyUnits = useMemo(() => new Set(), []);
 
   // Complete Warnings List & Unit-level Warning Map
   const warningsByUnit = {};
@@ -171,6 +164,7 @@ export default function PlanBuilder({
   // Merge backend warnings if available
   if (validationResult && validationResult.warnings) {
     validationResult.warnings.forEach(w => {
+      if (w.unitCode && completedUnitCodes.has(w.unitCode)) return;
       warningsList.push(w);
       if (w.unitCode && !warningsByUnit[w.unitCode]) {
         warningsByUnit[w.unitCode] = w.message;
@@ -180,9 +174,12 @@ export default function PlanBuilder({
 
   // Real-time BR-01 Offering & BR-02 Prerequisite checks on planUnits
   planUnits.forEach(unit => {
+    // If unit is already completed & passed in history, skip validation warnings for it
+    if (completedUnitCodes.has(unit.code)) return;
+
     const isTri3 = unit.period_id === 5;
-    const isS1OrT1 = unit.period_id === 1 || unit.period_id === 3;
-    const isS2OrT2 = unit.period_id === 2 || unit.period_id === 4;
+    const isS1Only = unit.period_id === 1;
+    const isS2Only = unit.period_id === 2;
 
     // BR-01 Offering Check
     if (isTri3 && t3RestrictedUnits.has(unit.code)) {
@@ -191,14 +188,14 @@ export default function PlanBuilder({
       if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
         warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
       }
-    } else if (isS2OrT2 && s1OnlyUnits.has(unit.code)) {
-      const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 1 / Trimester 1 and cannot be taken in this period.`;
+    } else if (isS2Only && s1OnlyUnits.has(unit.code)) {
+      const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 1 and cannot be taken in Semester 2.`;
       if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
       if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
         warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
       }
-    } else if (isS1OrT1 && s2OnlyUnits.has(unit.code)) {
-      const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 2 / Trimester 2 and cannot be taken in this period.`;
+    } else if (isS1Only && s2OnlyUnits.has(unit.code)) {
+      const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 2 and cannot be taken in Semester 1.`;
       if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
       if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
         warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
@@ -336,6 +333,11 @@ export default function PlanBuilder({
       // Dragging an existing unit card within the plan canvas to reposition
       const existingUnit = planUnits.find(u => String(u.unit_id || u.code) === activeId || u.code === activeId);
       if (existingUnit) {
+        if (historyMap[existingUnit.code]?.status === 'completed') {
+          setDragWarningToast(`Unit ${existingUnit.code} is PASSED in official academic history and cannot be moved.`);
+          setTimeout(() => setDragWarningToast(null), 4500);
+          return;
+        }
         const updated = planUnits.map(u =>
           (String(u.unit_id || u.code) === activeId || u.code === existingUnit.code)
             ? { ...u, year_level: targetYear, period_id: targetPeriod }
@@ -423,7 +425,7 @@ export default function PlanBuilder({
   const handleGeneratePresetPlan = () => {
     const isNewStudent = !history || history.length === 0;
     const completedCodesSet = new Set(
-      (history || []).filter(h => h.status === 'completed').map(h => h.unit_code)
+      (history || []).filter(h => h.status === 'completed').map(h => h.unit_code || h.code)
     );
 
     // Gather candidate units from active catalogUnits or fallback standard list
@@ -500,6 +502,12 @@ export default function PlanBuilder({
 
   // Remove unit from Plan
   const handleRemoveUnit = (unitIdOrCode) => {
+    const targetUnit = planUnits.find(u => String(u.unit_id || u.code) === String(unitIdOrCode));
+    if (targetUnit && historyMap[targetUnit.code]?.status === 'completed') {
+      setDragWarningToast(`Unit ${targetUnit.code} is PASSED in official academic history and cannot be removed.`);
+      setTimeout(() => setDragWarningToast(null), 4500);
+      return;
+    }
     const updated = planUnits.filter(u => String(u.unit_id || u.code) !== String(unitIdOrCode));
     setPlanUnits(updated);
     if (onValidate) onValidate(updated);
@@ -580,67 +588,110 @@ export default function PlanBuilder({
     return (
       <div className="font-sans max-w-[1440px] mx-auto space-y-5 transition-colors">
         {/* Student View Executive Banner Header (Consistent with Course Catalog & Stored Plans style) */}
-        <div className="bg-white dark:bg-slate-900 border-t-2 border-t-red-600 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all">
-          <div>
-            <h2 className="text-lg md:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5 font-heading">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all font-sans">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 font-heading">
               <FileCheck className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
-              Proposed Study Plan Review ({stCourse})
+              Proposed Study Plan Review
             </h2>
+            <span className="font-mono text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 font-bold">
+              {stCourse}
+            </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0 self-stretch md:self-auto justify-end">
+          <div className="flex flex-wrap items-center gap-3 shrink-0 self-stretch md:self-auto justify-end text-xs">
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              Major: <span className="font-bold text-slate-900 dark:text-white">{stMajor}</span>
+            </span>
+
             {onOpenStudentSelectModal && (
               <button
                 onClick={onOpenStudentSelectModal}
-                className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 px-3.5 py-2 rounded-xl text-left shadow-2xs flex items-center gap-2.5 transition-all shrink-0 cursor-pointer active:scale-95"
-                title="Click to view or switch student profile"
+                className="bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl shadow-2xs flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white transition-all cursor-pointer active:scale-95"
+                title="Click to switch active student profile"
               >
-                <User className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-                <div>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block font-sans">Active Profile</span>
-                  <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1 font-sans">
-                    {stName}
-                    <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold underline">(Change)</span>
-                  </span>
-                </div>
+                <User className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                <span>Change Student</span>
               </button>
             )}
+
+            <div className="flex items-center gap-2">
+              <span className={`px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wide border ${
+                planStatus === 'approved' ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' :
+                planStatus === 'agreed' ? 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800' :
+                planStatus === 'recommended' ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' :
+                planStatus === 'rejected' ? 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800' :
+                'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+              }`}>
+                {planStatus === 'rejected' ? 'Change Requested' : planStatus}
+              </span>
+
+              <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl shadow-2xs">
+                {totalCP} / 72 CP
+              </span>
+            </div>
 
             {onOpenOfficialDocument && (
               <button
                 onClick={onOpenOfficialDocument}
-                className="bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-600 text-white px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-2 shrink-0 cursor-pointer active:scale-95 font-sans"
+                className="bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95"
                 title="Export official Study Plan as PDF or PNG image"
               >
-                <BookOpen className="w-4 h-4 text-emerald-400 dark:text-white" />
-                <span>Export PDF / Image</span>
+                <BookOpen className="w-3.5 h-3.5 text-white" />
+                <span>Export PDF</span>
               </button>
             )}
+          </div>
+        </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3.5 py-2 rounded-xl text-right shadow-2xs">
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block font-sans">Current Status</span>
-              <span className={`text-xs font-extrabold uppercase tracking-wide font-sans block mt-0.5 ${
-                planStatus === 'approved' ? 'text-emerald-700 dark:text-emerald-400' :
-                planStatus === 'agreed' ? 'text-blue-700 dark:text-blue-400' :
-                planStatus === 'recommended' ? 'text-amber-700 dark:text-amber-400' :
-                planStatus === 'rejected' ? 'text-rose-700 dark:text-rose-400' : 'text-slate-800 dark:text-slate-200'
-              }`}>
-                {planStatus === 'rejected' ? 'CHANGE REQUESTED' : planStatus}
-              </span>
+
+
+        {/* Student Degree Plan Guide Card */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm font-sans space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white font-heading">
+                Student Degree Plan Guide
+              </h3>
+            </div>
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full font-mono">
+              3 Steps
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex items-start gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-slate-900 text-white dark:bg-emerald-600 flex items-center justify-center text-[10px] font-bold shrink-0 font-mono mt-0.5">1</span>
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white font-heading">Review Recommended Units</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">Inspect your scheduled subjects across Year 1, 2, and 3 prepared by your Academic Chair.</p>
+              </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3.5 py-2 rounded-xl text-right shadow-2xs">
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block font-sans">Planned Load</span>
-              <span className="text-xs font-extrabold text-slate-900 dark:text-white font-mono tabular-nums block mt-0.5">{totalCP} / 72 CP</span>
+            <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex items-start gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0 font-mono mt-0.5">2</span>
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white font-heading">Request Change (Optional)</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">Click Request Change on any trimester header to suggest modifications to your Chair.</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex items-start gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 font-mono mt-0.5">3</span>
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white font-heading">Digital Sign-Off</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">Sign and endorse your official 72 CP plan using the digital signature pad below.</p>
+              </div>
             </div>
           </div>
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {years.map(y => (
             <div key={y.level} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
               <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-red-600 inline-block"></span>
                   <span className="text-sm font-extrabold text-slate-900 dark:text-white font-heading tracking-tight">
                     {y.yearName}
                   </span>
@@ -717,50 +768,91 @@ export default function PlanBuilder({
                         <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono italic">No units scheduled for this trimester</span>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        {sUnits.map(u => {
-                          const isCompleted = completedUnitCodes.has(u.code);
-                          const isAttempted = attemptedUnitCodes.has(u.code);
-                          const hist = historyMap[u.code];
+                      (() => {
+                        const isExpanded = expandedTrimesters[periodKey];
+                        const displayUnits = isExpanded ? sUnits : sUnits.slice(0, 3);
+                        const hiddenCount = sUnits.length - 3;
 
-                          let cardBg = 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200';
-                          if (isCompleted) {
-                            cardBg = 'bg-emerald-50/60 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100';
-                          } else if (isAttempted) {
-                            cardBg = 'bg-rose-50/60 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-950 dark:text-rose-100';
-                          }
+                        return (
+                          <div className="space-y-2">
+                            {displayUnits.map(u => {
+                              const isCompleted = completedUnitCodes.has(u.code);
+                              const isAttempted = attemptedUnitCodes.has(u.code);
+                              const hist = historyMap[u.code];
+                              const isEnrolled = hist && (hist.status === 'enrolled' || hist.status === 'current');
 
-                          return (
-                            <div
-                              key={u.unit_id || u.code}
-                              className={`flex items-center justify-between text-xs border p-2.5 rounded-xl font-medium shadow-2xs transition-all ${cardBg}`}
-                            >
-                              <div className="flex items-center gap-2 truncate pr-2">
-                                <span className="bg-slate-900 text-white dark:bg-red-700 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0">
-                                  L{u.level || 1}00
-                                </span>
-                                <span className="font-mono font-extrabold text-slate-900 dark:text-white shrink-0">{u.code}</span>
-                                <span className="text-slate-600 dark:text-slate-400 text-xs truncate font-normal">{u.title}</span>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                {isCompleted && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                                    <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> PASSED {hist?.grade ? `(${hist.grade})` : ''}
-                                  </span>
+                              let cardBg = 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200';
+                              if (isCompleted) {
+                                cardBg = 'bg-emerald-50/60 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100';
+                              } else if (isEnrolled) {
+                                cardBg = 'bg-sky-50/60 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800 text-sky-950 dark:text-sky-100';
+                              } else if (isAttempted) {
+                                cardBg = 'bg-rose-50/60 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-950 dark:text-rose-100';
+                              }
+
+                              return (
+                                <div
+                                  key={u.unit_id || u.code}
+                                  className={`p-3 rounded-xl border text-xs shadow-2xs transition-all space-y-1.5 ${cardBg}`}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-heading font-extrabold text-white bg-slate-900 dark:bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs font-mono">
+                                        {u.code}
+                                      </span>
+                                      <span className="text-xs font-mono text-slate-700 dark:text-slate-300 tabular-nums font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                                        {u.credit_points || 3} CP
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      {isCompleted && (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">
+                                          <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> PASSED {hist?.grade ? `(${hist.grade})` : ''}
+                                        </span>
+                                      )}
+                                      {isEnrolled && (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">
+                                          <Clock className="w-3 h-3 text-sky-600 dark:text-sky-400" /> ENROLLED
+                                        </span>
+                                      )}
+                                      {isAttempted && (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80">
+                                          <RotateCcw className="w-3 h-3 text-rose-600 dark:text-rose-400" /> FAILED ({hist?.grade || 'F'})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="text-slate-900 dark:text-white text-xs font-bold leading-snug break-words pt-0.5" title={u.title}>
+                                    {u.title}
+                                  </div>
+                                </div>
+                              );
+                            })}
+
+                            {sUnits.length > 3 && (
+                              <button
+                                type="button"
+                                onClick={() => toggleTrimesterExpand(periodKey)}
+                                className="w-full py-1.5 px-3 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1 border border-slate-200 dark:border-slate-700"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <span>Show Less</span>
+                                    <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>View More ({hiddenCount} more {hiddenCount === 1 ? 'unit' : 'units'})</span>
+                                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                                  </>
                                 )}
-                                {isAttempted && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
-                                    <RotateCcw className="w-3 h-3 text-rose-600 dark:text-rose-400" /> FAILED ({hist?.grade || 'F'})
-                                  </span>
-                                )}
-                                <span className="text-xs font-mono text-slate-700 dark:text-slate-300 tabular-nums font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                                  {u.credit_points || 3} CP
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()
                     )}
                   </div>
                 );
@@ -769,16 +861,112 @@ export default function PlanBuilder({
           ))}
         </div>
 
-        {/* Student Digital Signature Pad Component */}
+        {/* Unified Student Digital Signature Pad Component (Single Card for 72 CP Plan) */}
         <SignaturePad
           student={student}
+          yearLevel="ALL"
+          yearName="Official 3-Year Study Plan (72 CP)"
           planStatus={planStatus}
           planUnitsCount={planUnits.length}
-          isAlreadyAgreed={isAlreadyAgreed}
-          onAgreePlan={onAgreePlan}
-          onRejectPlan={onRejectPlan}
-          currentSignature={currentPlan?.studentSignature}
+          isAlreadyAgreed={isAlreadyAgreed || Boolean(currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1])}
+          isYearCompleted={false}
+          isYearLocked={false}
+          onAgreePlan={(sigObj) => {
+            if (onAgreePlan) onAgreePlan(sigObj, 'ALL');
+          }}
+          onRejectPlan={(reason) => {
+            if (onRejectPlan) onRejectPlan(reason, 'ALL');
+          }}
+          currentSignature={currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1]}
         />
+
+        {/* Semester Change Request Modal Dialog */}
+        {activeRequestModal && (
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200 font-sans">
+            <div className="bg-white dark:bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold shadow-2xs">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
+                      Request Change for {activeRequestModal.periodName}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                      Send a specific modification comment to your Academic Chair.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveRequestModal(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-200 font-heading">
+                  Enter your request / comment for this trimester:
+                </label>
+                <textarea
+                  rows={3}
+                  value={requestCommentInput}
+                  onChange={(e) => setRequestCommentInput(e.target.value)}
+                  placeholder="e.g. Please swap ICT283 Data Structures to Trimester 2 due to timetable conflict or reduce load to 9 CP..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
+                />
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <span className="text-[10px] text-slate-400 font-semibold block w-full">Quick suggestions:</span>
+                  {[
+                    "Swap subject to next trimester",
+                    "Reduce CP credit load for this term",
+                    "Prefer online delivery mode",
+                    "Prerequisite requirement clarification"
+                  ].map((sugg) => (
+                    <button
+                      key={sugg}
+                      type="button"
+                      onClick={() => setRequestCommentInput(sugg)}
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-amber-100 dark:bg-slate-800 dark:hover:bg-amber-950 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-semibold border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                    >
+                      + {sugg}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setActiveRequestModal(null)}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!requestCommentInput.trim()) {
+                      alert('Please enter a comment before submitting.');
+                      return;
+                    }
+                    if (onSaveSemesterRequest) {
+                      onSaveSemesterRequest(activeRequestModal.key, requestCommentInput.trim());
+                    }
+                    setActiveRequestModal(null);
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 cursor-pointer font-heading uppercase tracking-wider"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Submit Request to Chair</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1106,7 +1294,7 @@ export default function PlanBuilder({
                           }}
                           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                             isActive
-                              ? 'bg-gradient-to-r from-red-700 via-red-600 to-rose-700 text-white shadow-xs font-heading'
+                              ? 'bg-slate-900 text-white dark:bg-red-700 shadow-2xs font-heading'
                               : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-800'
                           }`}
                         >
@@ -1140,29 +1328,29 @@ export default function PlanBuilder({
                     </button>
                   </div>
 
-                  {/* Mode Switcher: Year Slide Mode vs View All Years */}
-                  <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1 text-xs shrink-0 font-sans shadow-2xs">
+                  {/* Mode Switcher: Single Year vs 3-Year Overview */}
+                  <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl p-1 text-xs shrink-0 font-sans shadow-2xs">
                     <button
                       type="button"
                       onClick={() => setViewMode('single')}
-                      className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         viewMode === 'single'
-                          ? 'bg-red-700 text-white dark:bg-red-700 dark:text-white font-heading shadow-2xs'
+                          ? 'bg-white text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs font-heading'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
-                      Year Slide Focus
+                      Single Year
                     </button>
                     <button
                       type="button"
                       onClick={() => setViewMode('all')}
-                      className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         viewMode === 'all'
-                          ? 'bg-red-700 text-white dark:bg-red-700 dark:text-white font-heading shadow-2xs'
+                          ? 'bg-white text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs font-heading'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
-                      View All 3 Years
+                      3-Year Overview
                     </button>
                   </div>
                 </div>
@@ -1239,8 +1427,16 @@ export default function PlanBuilder({
                                 warningsByUnit={warningsByUnit}
                                 completedUnitCodes={completedUnitCodes}
                                 historyMap={historyMap}
+                                isChair={isChair}
                                 changeRequest={changeReq}
                                 onResolveChangeRequest={onRemoveSemesterRequest ? () => onRemoveSemesterRequest(periodKey) : undefined}
+                                onRequestChange={!isChair ? (key, periodName) => {
+                                  setActiveRequestModal({
+                                    key,
+                                    periodName
+                                  });
+                                  setRequestCommentInput(semesterRequests[key] || '');
+                                } : undefined}
                               />
                             );
                           })}
@@ -1253,32 +1449,32 @@ export default function PlanBuilder({
                               type="button"
                               onClick={() => setActiveYearLevel(prev => Math.max(1, prev - 1))}
                               disabled={activeYearLevel === 1}
-                              className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-all ${
+                              className={`px-3.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all text-xs ${
                                 activeYearLevel === 1
                                   ? 'opacity-30 cursor-not-allowed text-slate-400 bg-slate-100 dark:bg-slate-800/50'
                                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer shadow-2xs active:scale-95'
                               }`}
                             >
-                              <ChevronLeft className="w-4 h-4" />
-                              <span>{activeYearLevel > 1 ? `Previous (${years[activeYearLevel - 2].yearName})` : 'Previous Year'}</span>
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                              <span>{activeYearLevel > 1 ? `Previous (Year ${activeYearLevel - 1})` : 'Previous Year'}</span>
                             </button>
 
-                            <span className="text-slate-400 dark:text-slate-500 text-[11px] font-medium font-sans">
-                              Showing {yearObj.yearName} • Slide {activeYearLevel} of 3
+                            <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 font-sans shadow-2xs">
+                              Year {activeYearLevel} of 3
                             </span>
 
                             <button
                               type="button"
                               onClick={() => setActiveYearLevel(prev => Math.min(3, prev + 1))}
                               disabled={activeYearLevel === 3}
-                              className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-all ${
+                              className={`px-3.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all text-xs ${
                                 activeYearLevel === 3
                                   ? 'opacity-30 cursor-not-allowed text-slate-400 bg-slate-100 dark:bg-slate-800/50'
                                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer shadow-2xs active:scale-95'
                               }`}
                             >
-                              <span>{activeYearLevel < 3 ? `Next (${years[activeYearLevel].yearName})` : 'Next Year'}</span>
-                              <ChevronRight className="w-4 h-4" />
+                              <span>{activeYearLevel < 3 ? `Next (Year ${activeYearLevel + 1})` : 'Next Year'}</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         )}
@@ -1400,8 +1596,8 @@ export default function PlanBuilder({
           ) : null}
         </DragOverlay>
 
-        {/* Semester Change Request Modal Dialog (Restricted to Student View) */}
-        {!isChair && activeRequestModal && (
+        {/* Semester Change Request Modal Dialog */}
+        {activeRequestModal && (
           <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200 font-sans">
             <div className="bg-white dark:bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 text-slate-900 dark:text-white">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">

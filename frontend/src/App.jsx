@@ -150,7 +150,7 @@ export default function App() {
       title: 'PT3-BSIT Artificial Intelligence Plan',
       status: 'approved',
       version_number: 2,
-      total_cp: 72,
+      total_cp: 36,
       created_by: 'Academic Chair',
       updated_at: '2026-09-15 08:30',
       location: 'Singapore Campus'
@@ -176,9 +176,9 @@ export default function App() {
       student_number: 'PT3-2026-003',
       course_code: 'PT3-BSIT-BIS03',
       title: 'PT3-BSIT Business Info Systems Plan',
-      status: 'recommended',
-      version_number: 2,
-      total_cp: 69,
+      status: 'draft',
+      version_number: 1,
+      total_cp: 0,
       created_by: 'Academic Chair',
       updated_at: '2026-09-14 11:20',
       location: 'Singapore Campus'
@@ -191,8 +191,8 @@ export default function App() {
       course_code: 'PT3-BSIT-AI04',
       title: 'PT3-BSIT Artificial Intelligence Plan',
       status: 'draft',
-      version_number: 2,
-      total_cp: 72,
+      version_number: 1,
+      total_cp: 0,
       created_by: 'Academic Chair',
       updated_at: '2026-09-13 14:10',
       location: 'Singapore Campus'
@@ -384,7 +384,7 @@ export default function App() {
         first_name: student.first_name,
         last_name: student.last_name,
         plan_title: `${student.course_code || 'PT3-BSIT'} Account Session`,
-        amendment_reason: `Account Profile Switch: Loaded profile for ${student.first_name} ${student.last_name} (${(student.account_category || 'STUDENT').replace('_', ' ').toUpperCase()})`,
+        amendment_reason: `Account Profile Switch: Loaded profile for ${student.first_name} ${student.last_name}${student.account_category === 'admin' || student.student_id === 0 ? '' : ` (${(student.account_category || 'STUDENT').replace('_', ' ').toUpperCase()})`}`,
         created_by: activeRole === 'chair' ? 'Academic Chair' : `Student: ${student.first_name} ${student.last_name}`,
         created_at: new Date().toISOString(),
         plan_status: 'logged_in'
@@ -398,7 +398,8 @@ export default function App() {
       setActiveTab('STUDY_PLAN');
     }
 
-    showToast(`Loaded profile for ${student.first_name} ${student.last_name} (${student.account_category === 'admin' ? 'Academic Chair' : student.account_category === 'new_student' ? 'New Student' : 'Existing Student'})`);
+    const categoryTag = student.account_category === 'admin' || student.student_id === 0 ? '' : ` (${student.account_category === 'new_student' ? 'New Student' : 'Existing Student'})`;
+    showToast(`Loaded profile for ${student.first_name} ${student.last_name}${categoryTag}`);
 
     // 2. If student ALREADY has a working draft in memory, load it directly to prevent wiping data!
     if (allStudentPlansMap[student.student_id]) {
@@ -739,25 +740,8 @@ export default function App() {
               <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-gradient-to-tr from-emerald-600/10 via-teal-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
               <div className="relative z-10 flex flex-col lg:flex-row justify-between lg:items-center gap-4 sm:gap-6">
-                {/* Left Side: Major Badge, Status & Degree Title */}
-                <div className="space-y-2 max-w-full overflow-hidden">
-                  <div className="flex flex-wrap items-center gap-2 font-sans">
-                    {currentPlan?.status === 'approved' && (
-                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold shadow-2xs">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Approved
-                      </span>
-                    )}
-                    {currentPlan?.status === 'agreed' && (
-                      <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold shadow-2xs">
-                        <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Student Agreed
-                      </span>
-                    )}
-                    {currentPlan?.status === 'recommended' && (
-                      <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 px-3 py-1 rounded-full text-[11px] sm:text-xs font-extrabold shadow-2xs">
-                        <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Recommended
-                      </span>
-                    )}
-                  </div>
+                {/* Left Side: Major Badge & Degree Title */}
+                <div className="space-y-1 max-w-full overflow-hidden">
                   <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-heading">
                     Bachelor of Information Technology
                   </h1>

@@ -2,7 +2,7 @@ import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import DraggableUnitCard from './DraggableUnitCard';
-import { AlertCircle, Plus } from 'lucide-react';
+import { AlertCircle, Plus, MessageSquare } from 'lucide-react';
 
 export default function DroppablePeriod({
   id,
@@ -14,8 +14,10 @@ export default function DroppablePeriod({
   completedUnitCodes,
   historyMap,
   isReadOnly = false,
+  isChair = false,
   changeRequest,
-  onResolveChangeRequest
+  onResolveChangeRequest,
+  onRequestChange
 }) {
   const { setNodeRef, isOver } = useDroppable({ id, disabled: isReadOnly });
 
@@ -30,34 +32,34 @@ export default function DroppablePeriod({
       ref={setNodeRef}
       className={`rounded-2xl border p-3.5 flex flex-col h-full min-h-[220px] transition-all font-sans shadow-2xs relative ${
         changeRequest
-          ? 'border-rose-400 dark:border-rose-700 bg-rose-50/30 dark:bg-rose-950/20 ring-2 ring-rose-400/40'
+          ? 'border-amber-400 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20 ring-2 ring-amber-400/40'
           : isOver && !isReadOnly
           ? 'bg-slate-100/90 dark:bg-slate-800/90 border-slate-400 dark:border-slate-600 ring-2 ring-slate-400/50'
           : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
       }`}
     >
-      {/* Student Change Request Exclamation Mark Alert Banner */}
+      {/* Student Change Request Alert Banner */}
       {changeRequest && (
-        <div className="mb-2.5 p-2.5 bg-rose-100/90 dark:bg-rose-950/90 border-2 border-rose-500/80 rounded-xl shadow-md space-y-1">
-          <div className="flex items-center justify-between text-xs font-black text-rose-900 dark:text-rose-100">
-            <span className="flex items-center gap-1.5 font-heading uppercase tracking-wider text-[11px]">
-              <span className="w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-black shrink-0 font-mono shadow-2xs animate-bounce">
+        <div className="mb-2.5 p-2.5 bg-amber-100/90 dark:bg-amber-950/90 border-2 border-amber-500/80 rounded-xl shadow-md space-y-1">
+          <div className="flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-100">
+            <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-heading">
+              <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-xs font-extrabold shrink-0 font-mono shadow-2xs">
                 !
               </span>
-              Student Request Alert
+              {isChair ? 'Student Change Request' : 'Your Request to Chair'}
             </span>
             {onResolveChangeRequest && (
               <button
                 type="button"
                 onClick={onResolveChangeRequest}
-                className="text-[10px] bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 px-2 py-0.5 rounded-md font-bold hover:bg-rose-200 dark:hover:bg-rose-900 transition-all cursor-pointer shadow-2xs"
-                title="Mark request resolved"
+                className="text-[10px] bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800 px-2 py-0.5 rounded-md font-bold hover:bg-amber-200 dark:hover:bg-amber-900 transition-all cursor-pointer shadow-2xs"
+                title={isChair ? 'Mark request as resolved' : 'Clear request'}
               >
-                Resolve & Clear
+                {isChair ? 'Mark Resolved' : 'Clear'}
               </button>
             )}
           </div>
-          <p className="text-xs font-semibold text-rose-950 dark:text-rose-100 font-sans italic leading-normal pl-6">
+          <p className="text-xs font-semibold text-amber-950 dark:text-amber-100 font-sans italic leading-normal pl-6">
             "{changeRequest}"
           </p>
         </div>
@@ -67,7 +69,7 @@ export default function DroppablePeriod({
       <div className="pb-2.5 mb-2.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-2">
-            {changeRequest && <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping"></span>}
+            {changeRequest && <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>}
             <div className="flex items-baseline gap-1.5">
               <span className="text-xs font-bold text-slate-900 dark:text-white tracking-tight font-heading">
                 {period.name}
@@ -79,13 +81,26 @@ export default function DroppablePeriod({
               )}
             </div>
           </div>
-          <span className={`text-[11px] font-bold tabular-nums px-2.5 py-0.5 rounded-full font-mono ${
-            totalCP > 12
-              ? 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800'
-              : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700'
-          }`}>
-            {totalCP} CP
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[11px] font-bold tabular-nums px-2.5 py-0.5 rounded-full font-mono ${
+              totalCP > 12
+                ? 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800'
+                : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700'
+            }`}>
+              {totalCP} / 12 CP
+            </span>
+            {!isChair && onRequestChange && (
+              <button
+                type="button"
+                onClick={() => onRequestChange(`Y${yearLevel}-P${period.period_id}`, `Year ${yearLevel} - ${period.name}`)}
+                className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/80 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0"
+                title="Request change specifically for this trimester"
+              >
+                <MessageSquare className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>{changeRequest ? 'Edit Request' : 'Request Change'}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Credit Point Progress Meter Bar */}

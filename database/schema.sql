@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS StudentUnitHistory (
     history_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
     unit_id INT NOT NULL,
-    status ENUM('completed', 'current', 'attempted') NOT NULL, -- completed=passed, current=enrolled, attempted=failed
+    status ENUM('completed', 'current', 'enrolled', 'attempted') NOT NULL, -- completed=passed, current/enrolled=in progress, attempted=failed
     grade VARCHAR(10) NULL, -- e.g., HD, D, C, P, F, N
     mark DECIMAL(5,2) NULL,
     period_id INT NOT NULL,

@@ -82,32 +82,32 @@ export async function seedDatabase() {
         // 6. Seed Unit Offerings based on specific trimester availability
         const unitOfferingSchedule = {
             'ICT100': ['T1', 'T2', 'T3'],
-            'ICT158': ['T1', 'T3'],
+            'ICT158': ['T1', 'T2', 'T3'],
             'ICT159': ['T1', 'T2', 'T3'],
-            'ICT167': ['T1', 'T2'],
-            'ICT169': ['T1', 'T2'],
-            'ICT170': ['T1', 'T3'],
+            'ICT167': ['T1', 'T2', 'T3'],
+            'ICT169': ['T1', 'T2', 'T3'],
+            'ICT170': ['T1', 'T2', 'T3'],
             'ICT145': ['T1', 'T2', 'T3'],
             'ICT201': ['T1', 'T2', 'T3'],
-            'ICT202': ['T2', 'T3'],
-            'ICT203': ['T1', 'T3'],
-            'ICT206': ['T2', 'T3'],
-            'ICT283': ['T1', 'T2'],
-            'ICT284': ['T1', 'T2'],
+            'ICT202': ['T1', 'T2', 'T3'],
+            'ICT203': ['T1', 'T2', 'T3'],
+            'ICT206': ['T1', 'T2', 'T3'],
+            'ICT283': ['T1', 'T2', 'T3'],
+            'ICT284': ['T1', 'T2', 'T3'],
             'ICT285': ['T1', 'T2', 'T3'],
             'ICT292': ['T1', 'T2', 'T3'],
             'BSC203': ['T1', 'T2', 'T3'],
             'MAS162': ['T1', 'T2', 'T3'],
             'MAS164': ['T1', 'T2', 'T3'],
-            'MAS183': ['T1', 'T3'],
-            'ICT301': ['T1', 'T2'],
+            'MAS183': ['T1', 'T2', 'T3'],
+            'ICT301': ['T1', 'T2', 'T3'],
             'ICT302': ['T1', 'T2', 'T3'],
-            'ICT303': ['T2', 'T3'],
-            'ICT304': ['T1', 'T3'],
-            'ICT305': ['T2', 'T3'],
-            'ICT373': ['T1', 'T3'],
-            'ICT374': ['T2', 'T3'],
-            'ICT393': ['T1', 'T3'],
+            'ICT303': ['T1', 'T2', 'T3'],
+            'ICT304': ['T1', 'T2', 'T3'],
+            'ICT305': ['T1', 'T2', 'T3'],
+            'ICT373': ['T1', 'T2', 'T3'],
+            'ICT374': ['T1', 'T2', 'T3'],
+            'ICT393': ['T1', 'T2', 'T3'],
             'ICT394': ['T1', 'T2', 'T3']
         };
 
@@ -148,51 +148,76 @@ export async function seedDatabase() {
         }
         console.log(`✅ Seeded ${mockStudentHistory.length} Student Academic History records`);
 
-        // 9. Seed Initial Study Plans (Draft plans with only Trimester 1 2026 filled)
+        // 9. Seed Initial Study Plans
         const initialStudentPlans = [
             {
                 student_id: 1,
                 title: 'PT3-BSIT Artificial Intelligence Plan 2026',
-                status: 'draft',
-                total_credit_points: 9,
+                status: 'approved',
+                total_credit_points: 36,
                 units: [
+                    // Y1 T1
                     { code: 'ICT100', year_level: 1, period_id: 3, sequence_order: 1 },
-                    { code: 'ICT159', year_level: 1, period_id: 3, sequence_order: 2 },
-                    { code: 'MAS162', year_level: 1, period_id: 3, sequence_order: 3 }
+                    { code: 'ICT158', year_level: 1, period_id: 3, sequence_order: 2 },
+                    { code: 'ICT159', year_level: 1, period_id: 3, sequence_order: 3 },
+                    { code: 'MAS162', year_level: 1, period_id: 3, sequence_order: 4 },
+                    // Y1 T2
+                    { code: 'ICT167', year_level: 1, period_id: 4, sequence_order: 1 },
+                    { code: 'ICT170', year_level: 1, period_id: 4, sequence_order: 2 },
+                    { code: 'ICT145', year_level: 1, period_id: 4, sequence_order: 3 },
+                    { code: 'MAS164', year_level: 1, period_id: 4, sequence_order: 4 },
+                    // Y1 T3
+                    { code: 'ICT169', year_level: 1, period_id: 5, sequence_order: 1 },
+                    { code: 'ICT284', year_level: 1, period_id: 5, sequence_order: 2 },
+                    { code: 'ICT285', year_level: 1, period_id: 5, sequence_order: 3 },
+                    { code: 'ICT202', year_level: 1, period_id: 5, sequence_order: 4 }
                 ]
             },
             {
                 student_id: 2,
                 title: 'PT3-BSIT Computer Science Plan 2026',
                 status: 'draft',
-                total_credit_points: 12,
+                total_credit_points: 72,
                 units: [
                     { code: 'ICT100', year_level: 1, period_id: 3, sequence_order: 1 },
                     { code: 'ICT158', year_level: 1, period_id: 3, sequence_order: 2 },
                     { code: 'ICT159', year_level: 1, period_id: 3, sequence_order: 3 },
-                    { code: 'MAS162', year_level: 1, period_id: 3, sequence_order: 4 }
+                    { code: 'MAS162', year_level: 1, period_id: 3, sequence_order: 4 },
+                    { code: 'ICT167', year_level: 1, period_id: 4, sequence_order: 1 },
+                    { code: 'ICT169', year_level: 1, period_id: 4, sequence_order: 2 },
+                    { code: 'ICT145', year_level: 1, period_id: 4, sequence_order: 3 },
+                    { code: 'MAS164', year_level: 1, period_id: 4, sequence_order: 4 },
+                    { code: 'ICT170', year_level: 1, period_id: 5, sequence_order: 1 },
+                    { code: 'ICT285', year_level: 1, period_id: 5, sequence_order: 2 },
+                    { code: 'ICT202', year_level: 1, period_id: 5, sequence_order: 3 },
+                    { code: 'ICT283', year_level: 1, period_id: 5, sequence_order: 4 },
+                    { code: 'ICT201', year_level: 2, period_id: 3, sequence_order: 1 },
+                    { code: 'ICT284', year_level: 2, period_id: 3, sequence_order: 2 },
+                    { code: 'ICT292', year_level: 2, period_id: 3, sequence_order: 3 },
+                    { code: 'BSC203', year_level: 2, period_id: 3, sequence_order: 4 },
+                    { code: 'ICT206', year_level: 2, period_id: 4, sequence_order: 1 },
+                    { code: 'MAS183', year_level: 2, period_id: 4, sequence_order: 2 },
+                    { code: 'ICT374', year_level: 2, period_id: 4, sequence_order: 3 },
+                    { code: 'ICT301', year_level: 2, period_id: 4, sequence_order: 4 },
+                    { code: 'ICT203', year_level: 2, period_id: 5, sequence_order: 1 },
+                    { code: 'ICT305', year_level: 2, period_id: 5, sequence_order: 2 },
+                    { code: 'ICT373', year_level: 2, period_id: 5, sequence_order: 3 },
+                    { code: 'ICT302', year_level: 2, period_id: 5, sequence_order: 4 }
                 ]
             },
             {
                 student_id: 3,
                 title: 'PT3-BSIT Business Info Systems Plan 2026',
                 status: 'draft',
-                total_credit_points: 9,
-                units: [
-                    { code: 'ICT100', year_level: 1, period_id: 3, sequence_order: 1 },
-                    { code: 'ICT159', year_level: 1, period_id: 3, sequence_order: 2 },
-                    { code: 'MAS162', year_level: 1, period_id: 3, sequence_order: 3 }
-                ]
+                total_credit_points: 0,
+                units: []
             },
             {
                 student_id: 4,
                 title: 'PT3-BSIT Artificial Intelligence Plan 2026',
                 status: 'draft',
-                total_credit_points: 6,
-                units: [
-                    { code: 'ICT100', year_level: 1, period_id: 3, sequence_order: 1 },
-                    { code: 'ICT159', year_level: 1, period_id: 3, sequence_order: 2 }
-                ]
+                total_credit_points: 0,
+                units: []
             }
         ];
 

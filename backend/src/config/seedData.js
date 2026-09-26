@@ -133,22 +133,39 @@ export const mockStudents = [
 ];
 
 export const mockStudentHistory = [
-    { history_id: 1, student_id: 1, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'D', mark: 78.5, period_id: 1, period_code: 'S1', year_taken: 2026 },
-    { history_id: 2, student_id: 1, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'C', mark: 68.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
-    { history_id: 3, student_id: 1, unit_id: 5, unit_code: 'ICT169', unit_title: 'Foundations of Data Communications', status: 'attempted', grade: 'F', mark: 42.0, period_id: 1, period_code: 'S1', year_taken: 2026 },
-    { history_id: 4, student_id: 1, unit_id: 17, unit_code: 'MAS162', unit_title: 'Discrete Mathematics', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 },
-    { history_id: 5, student_id: 1, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'current', grade: null, mark: null, period_id: 2, period_code: 'S2', year_taken: 2026 },
+    // Alex Mercer (Existing Student - AI Major: 12 Units across 2026 T1, T2, T3)
+    { history_id: 1, student_id: 1, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'HD', mark: 88.5, period_id: 3, period_code: 'T1', year_taken: 2026 },
+    { history_id: 2, student_id: 1, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'completed', grade: 'D', mark: 78.0, period_id: 3, period_code: 'T1', year_taken: 2026 },
+    { history_id: 3, student_id: 1, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'HD', mark: 85.0, period_id: 3, period_code: 'T1', year_taken: 2026 },
+    { history_id: 4, student_id: 1, unit_id: 17, unit_code: 'MAS162', unit_title: 'Discrete Mathematics', status: 'completed', grade: 'HD', mark: 90.0, period_id: 3, period_code: 'T1', year_taken: 2026 },
+    { history_id: 5, student_id: 1, unit_id: 4, unit_code: 'ICT167', unit_title: 'Principles of Computer Science', status: 'completed', grade: 'C', mark: 68.0, period_id: 4, period_code: 'T2', year_taken: 2026 },
+    { history_id: 6, student_id: 1, unit_id: 6, unit_code: 'ICT170', unit_title: 'Foundations of Computer Systems', status: 'completed', grade: 'D', mark: 75.0, period_id: 4, period_code: 'T2', year_taken: 2026 },
+    { history_id: 7, student_id: 1, unit_id: 7, unit_code: 'ICT145', unit_title: 'Python Programming', status: 'attempted', grade: 'F', mark: 42.0, period_id: 4, period_code: 'T2', year_taken: 2026 },
+    { history_id: 8, student_id: 1, unit_id: 18, unit_code: 'MAS164', unit_title: 'Fundamentals of Mathematics', status: 'completed', grade: 'D', mark: 76.0, period_id: 4, period_code: 'T2', year_taken: 2026 },
+    { history_id: 9, student_id: 1, unit_id: 5, unit_code: 'ICT169', unit_title: 'Foundations of Data Communications', status: 'completed', grade: 'HD', mark: 86.0, period_id: 5, period_code: 'T3', year_taken: 2026 },
+    { history_id: 10, student_id: 1, unit_id: 13, unit_code: 'ICT284', unit_title: 'Systems Analysis & Design', status: 'completed', grade: 'D', mark: 77.0, period_id: 5, period_code: 'T3', year_taken: 2026 },
+    { history_id: 11, student_id: 1, unit_id: 14, unit_code: 'ICT285', unit_title: 'Databases', status: 'completed', grade: 'HD', mark: 89.0, period_id: 5, period_code: 'T3', year_taken: 2026 },
+    { history_id: 12, student_id: 1, unit_id: 9, unit_code: 'ICT202', unit_title: 'Machine Learning', status: 'completed', grade: 'D', mark: 79.0, period_id: 5, period_code: 'T3', year_taken: 2026 },
 
-    // David Tan (At-Risk student history)
-    { history_id: 6, student_id: 3, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'P', mark: 55.0, period_id: 1, period_code: 'S1', year_taken: 2025 },
-    { history_id: 7, student_id: 3, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'P', mark: 52.0, period_id: 1, period_code: 'S1', year_taken: 2025 },
-    { history_id: 8, student_id: 3, unit_id: 4, unit_code: 'ICT167', unit_title: 'Principles of Computer Science', status: 'attempted', grade: 'F', mark: 38.0, period_id: 2, period_code: 'S2', year_taken: 2025 },
-
-    // Michael Rahardjo (Graduating senior history)
-    { history_id: 9, student_id: 5, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'HD', mark: 86.0, period_id: 1, period_code: 'S1', year_taken: 2024 },
-    { history_id: 10, student_id: 5, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'D', mark: 81.0, period_id: 1, period_code: 'S1', year_taken: 2024 },
-    { history_id: 11, student_id: 5, unit_id: 4, unit_code: 'ICT167', unit_title: 'Principles of Computer Science', status: 'completed', grade: 'D', mark: 79.0, period_id: 2, period_code: 'S2', year_taken: 2024 },
-    { history_id: 12, student_id: 5, unit_id: 9, unit_code: 'ICT202', unit_title: 'Machine Learning', status: 'completed', grade: 'HD', mark: 89.0, period_id: 1, period_code: 'S1', year_taken: 2025 }
+    // Sarah Jenkins (Existing Student - CS Major: 14 Passed, 2 Enrolled, 1 Failed)
+    { history_id: 13, student_id: 2, unit_id: 1, unit_code: 'ICT100', unit_title: 'Transition to IT', status: 'completed', grade: 'HD', mark: 92.0, period_id: 3, period_code: 'T1', year_taken: 2026 },
+    { history_id: 14, student_id: 2, unit_id: 2, unit_code: 'ICT158', unit_title: 'Introduction to Computer Systems', status: 'completed', grade: 'D', mark: 81.0, period_id: 3, period_code: 'T1', year_taken: 2026 },
+    { history_id: 15, student_id: 2, unit_id: 3, unit_code: 'ICT159', unit_title: 'Foundations of Programming', status: 'completed', grade: 'HD', mark: 89.0, period_id: 3, period_code: 'T1', year_taken: 2026 },
+    { history_id: 16, student_id: 2, unit_id: 17, unit_code: 'MAS162', unit_title: 'Discrete Mathematics', status: 'completed', grade: 'C', mark: 69.0, period_id: 3, period_code: 'T1', year_taken: 2026 },
+    { history_id: 17, student_id: 2, unit_id: 4, unit_code: 'ICT167', unit_title: 'Principles of Computer Science', status: 'completed', grade: 'D', mark: 77.0, period_id: 4, period_code: 'T2', year_taken: 2026 },
+    { history_id: 18, student_id: 2, unit_id: 5, unit_code: 'ICT169', unit_title: 'Foundations of Data Communications', status: 'completed', grade: 'HD', mark: 88.0, period_id: 4, period_code: 'T2', year_taken: 2026 },
+    { history_id: 19, student_id: 2, unit_id: 7, unit_code: 'ICT145', unit_title: 'Python Programming', status: 'completed', grade: 'HD', mark: 94.0, period_id: 4, period_code: 'T2', year_taken: 2026 },
+    { history_id: 20, student_id: 2, unit_id: 18, unit_code: 'MAS164', unit_title: 'Fundamentals of Mathematics', status: 'completed', grade: 'D', mark: 76.0, period_id: 4, period_code: 'T2', year_taken: 2026 },
+    { history_id: 21, student_id: 2, unit_id: 6, unit_code: 'ICT170', unit_title: 'Foundations of Computer Systems', status: 'completed', grade: 'HD', mark: 95.0, period_id: 5, period_code: 'T3', year_taken: 2026 },
+    { history_id: 22, student_id: 2, unit_id: 14, unit_code: 'ICT285', unit_title: 'Databases', status: 'completed', grade: 'HD', mark: 91.0, period_id: 5, period_code: 'T3', year_taken: 2026 },
+    { history_id: 23, student_id: 2, unit_id: 9, unit_code: 'ICT202', unit_title: 'Machine Learning', status: 'completed', grade: 'D', mark: 79.0, period_id: 5, period_code: 'T3', year_taken: 2026 },
+    { history_id: 24, student_id: 2, unit_id: 12, unit_code: 'ICT283', unit_title: 'Data Structures & Algorithms', status: 'attempted', grade: 'F', mark: 42.0, period_id: 5, period_code: 'T3', year_taken: 2026 },
+    { history_id: 25, student_id: 2, unit_id: 8, unit_code: 'ICT201', unit_title: 'IT Project Management', status: 'completed', grade: 'D', mark: 75.0, period_id: 3, period_code: 'T1', year_taken: 2027 },
+    { history_id: 26, student_id: 2, unit_id: 13, unit_code: 'ICT284', unit_title: 'Systems Analysis & Design', status: 'completed', grade: 'D', mark: 79.0, period_id: 3, period_code: 'T1', year_taken: 2027 },
+    { history_id: 27, student_id: 2, unit_id: 15, unit_code: 'ICT292', unit_title: 'Information Systems Architecture', status: 'completed', grade: 'D', mark: 78.0, period_id: 3, period_code: 'T1', year_taken: 2027 },
+    { history_id: 28, student_id: 2, unit_id: 16, unit_code: 'BSC203', unit_title: 'Intro to ICT Research Methods', status: 'completed', grade: 'HD', mark: 87.0, period_id: 3, period_code: 'T1', year_taken: 2027 },
+    { history_id: 29, student_id: 2, unit_id: 11, unit_code: 'ICT206', unit_title: 'Intelligent Systems', status: 'enrolled', grade: null, mark: null, period_id: 4, period_code: 'T2', year_taken: 2027 },
+    { history_id: 30, student_id: 2, unit_id: 19, unit_code: 'MAS183', unit_title: 'Statistical Data Analysis', status: 'enrolled', grade: null, mark: null, period_id: 4, period_code: 'T2', year_taken: 2027 }
 ];
 
 export const mockPrerequisites = [

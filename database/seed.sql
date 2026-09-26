@@ -2,6 +2,7 @@
 -- PT3 Solutions Dataset (PT3-BSIT-01 IT Major)
 
 USE spr_db;
+SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';
 
 -- Clear existing data (in dependency order)
 SET FOREIGN_KEY_CHECKS = 0;
@@ -118,58 +119,63 @@ INSERT INTO Student (student_id, student_number, first_name, last_name, email, c
 
 -- 8. Seed Student Unit History
 INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period_id, year_taken) VALUES
-(1, (SELECT unit_id FROM Unit WHERE code = 'ICT100'), 'completed', 'D', 78.50, 1, 2026),
-(1, (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'completed', 'C', 68.00, 1, 2026),
-(1, (SELECT unit_id FROM Unit WHERE code = 'ICT169'), 'attempted', 'F', 42.00, 1, 2026),
-(1, (SELECT unit_id FROM Unit WHERE code = 'ICT164'), 'current', NULL, NULL, 2, 2026),
-(1, (SELECT unit_id FROM Unit WHERE code = 'ICT111'), 'current', NULL, NULL, 2, 2026);
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT100'), 'completed', 'HD', 88.50, 3, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT158'), 'completed', 'D', 78.00, 3, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'completed', 'HD', 85.00, 3, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'MAS162'), 'completed', 'HD', 90.00, 3, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT167'), 'completed', 'C', 68.00, 4, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT170'), 'completed', 'D', 75.00, 4, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT145'), 'attempted', 'F', 42.00, 4, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'MAS164'), 'completed', 'D', 76.00, 4, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT169'), 'completed', 'HD', 86.00, 5, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT284'), 'completed', 'D', 77.00, 5, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT285'), 'completed', 'HD', 89.00, 5, 2026),
+(1, (SELECT unit_id FROM Unit WHERE code = 'ICT202'), 'completed', 'D', 79.00, 5, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT100'), 'completed', 'HD', 92.00, 3, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT158'), 'completed', 'D', 81.00, 3, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT159'), 'completed', 'HD', 89.00, 3, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'MAS162'), 'completed', 'C', 69.00, 3, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT167'), 'completed', 'D', 77.00, 4, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT169'), 'completed', 'HD', 88.00, 4, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT145'), 'completed', 'HD', 94.00, 4, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'MAS164'), 'completed', 'D', 76.00, 4, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT170'), 'completed', 'HD', 95.00, 5, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT285'), 'completed', 'HD', 91.00, 5, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT202'), 'completed', 'D', 79.00, 5, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT283'), 'attempted', 'F', 42.00, 5, 2026),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT201'), 'completed', 'D', 75.00, 3, 2027),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT284'), 'completed', 'D', 79.00, 3, 2027),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT292'), 'completed', 'D', 78.00, 3, 2027),
+(2, (SELECT unit_id FROM Unit WHERE code = 'BSC203'), 'completed', 'HD', 87.00, 3, 2027),
+(2, (SELECT unit_id FROM Unit WHERE code = 'ICT206'), 'enrolled', NULL, NULL, 4, 2027),
+(2, (SELECT unit_id FROM Unit WHERE code = 'MAS183'), 'enrolled', NULL, NULL, 4, 2027);
 
 -- 9. Seed Sample Study Plans (Distinct per Student)
 INSERT INTO StudyPlan (plan_id, student_id, title, status, total_credit_points, created_by, recommended_at, agreed_at, approved_at) VALUES
-(1, 1, 'PT3-BSIT Software Engineering Plan 2026', 'approved', 72, 'Academic Chair', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 1 DAY, NOW()),
+(1, 1, 'PT3-BSIT Artificial Intelligence Plan 2026', 'approved', 36, 'Academic Chair', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 1 DAY, NOW()),
 (2, 2, 'PT3-BSIT Computer Science Plan 2026', 'agreed', 72, 'Academic Chair', NOW() - INTERVAL 1 DAY, NOW(), NULL),
-(3, 3, 'PT3-BSIT Business Info Systems Plan 2026', 'recommended', 69, 'Academic Chair', NOW(), NULL, NULL),
-(4, 4, 'PT3-BSIT Cyber Security Plan 2026', 'draft', 72, 'Academic Chair', NULL, NULL, NULL);
+(3, 3, 'PT3-BSIT Business Info Systems Plan 2026', 'draft', 0, 'Academic Chair', NULL, NULL, NULL),
+(4, 4, 'PT3-BSIT Artificial Intelligence Plan 2026', 'draft', 0, 'Academic Chair', NULL, NULL, NULL);
 
--- 10. Seed Study Plan Units (Plan 1 - Alex Mercer - AI Major - 72 CP)
+-- 10. Seed Study Plan Units (Plan 1 - Alex Mercer - AI Major Y1 T1-T3 - 36 CP)
 INSERT INTO StudyPlanUnit (plan_id, unit_id, period_id, year_level, sequence_order, credit_points) VALUES
-(1, 1, 1, 1, 1, 3), (1, 3, 1, 1, 2, 3), (1, 17, 1, 1, 3, 3), (1, 2, 1, 1, 4, 3),
-(1, 5, 2, 1, 1, 3), (1, 6, 2, 1, 2, 3), (1, 4, 2, 1, 3, 3), (1, 7, 2, 1, 4, 3),
-(1, 8, 1, 2, 1, 3), (1, 9, 1, 2, 2, 3), (1, 10, 1, 2, 3, 3), (1, 14, 1, 2, 4, 3),
-(1, 11, 2, 2, 1, 3), (1, 16, 2, 2, 2, 3), (1, 12, 2, 2, 3, 3), (1, 13, 2, 2, 4, 3),
-(1, 21, 1, 3, 1, 3), (1, 22, 1, 3, 2, 3), (1, 23, 1, 3, 3, 3), (1, 24, 1, 3, 4, 3),
-(1, 20, 2, 3, 1, 3), (1, 25, 2, 3, 2, 3), (1, 26, 2, 3, 3, 3), (1, 15, 2, 3, 4, 3);
+(1, 1, 3, 1, 1, 3), (1, 2, 3, 1, 2, 3), (1, 3, 3, 1, 3, 3), (1, 17, 3, 1, 4, 3),
+(1, 4, 4, 1, 1, 3), (1, 6, 4, 1, 2, 3), (1, 7, 4, 1, 3, 3), (1, 18, 4, 1, 4, 3),
+(1, 5, 5, 1, 1, 3), (1, 13, 5, 1, 2, 3), (1, 14, 5, 1, 3, 3), (1, 9, 5, 1, 4, 3);
 
 -- Plan 2 - Sarah Jenkins - CS Major - 72 CP
 INSERT INTO StudyPlanUnit (plan_id, unit_id, period_id, year_level, sequence_order, credit_points) VALUES
-(2, 1, 1, 1, 1, 3), (2, 3, 1, 1, 2, 3), (2, 17, 1, 1, 3, 3), (2, 2, 1, 1, 4, 3),
-(2, 4, 2, 1, 1, 3), (2, 6, 2, 1, 2, 3), (2, 18, 2, 1, 3, 3), (2, 7, 2, 1, 4, 3),
-(2, 12, 1, 2, 1, 3), (2, 13, 1, 2, 2, 3), (2, 14, 1, 2, 3, 3), (2, 8, 1, 2, 4, 3),
-(2, 26, 2, 2, 1, 3), (2, 16, 2, 2, 2, 3), (2, 19, 2, 2, 3, 3), (2, 15, 2, 2, 4, 3),
-(2, 25, 1, 3, 1, 3), (2, 21, 1, 3, 2, 3), (2, 20, 1, 3, 3, 3), (2, 10, 1, 3, 4, 3),
-(2, 24, 2, 3, 1, 3), (2, 11, 2, 3, 2, 3), (2, 23, 2, 3, 3, 3), (2, 28, 2, 3, 4, 3);
-
--- Plan 3 - Michael Chang - BIS Major - 69 CP
-INSERT INTO StudyPlanUnit (plan_id, unit_id, period_id, year_level, sequence_order, credit_points) VALUES
-(3, 1, 1, 1, 1, 3), (3, 3, 1, 1, 2, 3), (3, 17, 1, 1, 3, 3), (3, 2, 1, 1, 4, 3),
-(3, 5, 2, 1, 1, 3), (3, 6, 2, 1, 2, 3), (3, 13, 2, 1, 3, 3), (3, 7, 2, 1, 4, 3),
-(3, 8, 1, 2, 1, 3), (3, 14, 1, 2, 2, 3), (3, 15, 1, 2, 3, 3), (3, 19, 1, 2, 4, 3),
-(3, 16, 2, 2, 1, 3), (3, 28, 2, 2, 2, 3), (3, 12, 2, 2, 3, 3), (3, 4, 2, 2, 4, 3),
-(3, 20, 1, 3, 1, 3), (3, 21, 1, 3, 2, 3), (3, 27, 1, 3, 3, 3), (3, 24, 1, 3, 4, 3),
-(3, 25, 2, 3, 1, 3), (3, 9, 2, 3, 2, 3), (3, 23, 2, 3, 3, 3);
-
--- Plan 4 - Emily Watson - AI Major Part-Time - 72 CP
-INSERT INTO StudyPlanUnit (plan_id, unit_id, period_id, year_level, sequence_order, credit_points) VALUES
-(4, 1, 1, 1, 1, 3), (4, 3, 1, 1, 2, 3), (4, 17, 1, 1, 3, 3), (4, 2, 1, 1, 4, 3),
-(4, 5, 2, 1, 1, 3), (4, 6, 2, 1, 2, 3), (4, 4, 2, 1, 3, 3), (4, 7, 2, 1, 4, 3),
-(4, 8, 1, 2, 1, 3), (4, 9, 1, 2, 2, 3), (4, 10, 1, 2, 3, 3), (4, 14, 1, 2, 4, 3),
-(4, 11, 2, 2, 1, 3), (4, 16, 2, 2, 2, 3), (4, 12, 2, 2, 3, 3), (4, 13, 2, 2, 4, 3),
-(4, 21, 1, 3, 1, 3), (4, 22, 1, 3, 2, 3), (4, 23, 1, 3, 3, 3), (4, 24, 1, 3, 4, 3),
-(4, 20, 2, 3, 1, 3), (4, 25, 2, 3, 2, 3), (4, 26, 2, 3, 3, 3), (4, 15, 2, 3, 4, 3);
+(2, 1, 3, 1, 1, 3), (2, 2, 3, 1, 2, 3), (2, 3, 3, 1, 3, 3), (2, 17, 3, 1, 4, 3),
+(2, 4, 4, 1, 1, 3), (2, 5, 4, 1, 2, 3), (2, 7, 4, 1, 3, 3), (2, 18, 4, 1, 4, 3),
+(2, 6, 5, 1, 1, 3), (2, 14, 5, 1, 2, 3), (2, 9, 5, 1, 3, 3), (2, 12, 5, 1, 4, 3),
+(2, 8, 3, 2, 1, 3), (2, 13, 3, 2, 2, 3), (2, 15, 3, 2, 3, 3), (2, 16, 3, 2, 4, 3),
+(2, 11, 4, 2, 1, 3), (2, 19, 4, 2, 2, 3), (2, 26, 4, 2, 3, 3), (2, 20, 4, 2, 4, 3),
+(2, 10, 5, 2, 1, 3), (2, 24, 5, 2, 2, 3), (2, 25, 5, 2, 3, 3), (2, 21, 5, 2, 4, 3);
 
 -- 11. Seed Version History
 INSERT INTO StudyPlanVersion (plan_id, version_number, amendment_reason, snapshot_json, created_by) VALUES
-(1, 5, 'Study Plan officially APPROVED & finalized by Academic Chair', '{"plan_id": 1, "student_number": "PT3-2026-001", "total_cp": 72, "status": "approved"}', 'Academic Chair'),
-(2, 4, 'Student agreed and digitally signed proposed study plan (72 CP)', '{"plan_id": 2, "student_number": "PT3-2026-002", "total_cp": 72, "status": "agreed"}', 'Student: Sarah Jenkins'),
-(3, 3, 'Study plan marked as RECOMMENDED to student for review', '{"plan_id": 3, "student_number": "PT3-2026-003", "total_cp": 69, "status": "recommended"}', 'Academic Chair'),
-(4, 1, 'Initial study plan creation and unit placement', '{"plan_id": 4, "student_number": "PT3-2026-004", "total_cp": 72, "status": "draft"}', 'Academic Chair');
+(1, 2, 'Study Plan officially APPROVED & finalized by Academic Chair', '{"plan_id": 1, "student_number": "PT3-2026-001", "total_cp": 36, "status": "approved"}', 'Academic Chair'),
+(2, 2, 'Student agreed and digitally signed proposed study plan (72 CP)', '{"plan_id": 2, "student_number": "PT3-2026-002", "total_cp": 72, "status": "agreed"}', 'Student: Sarah Jenkins'),
+(3, 1, 'Initial study plan draft', '{"plan_id": 3, "student_number": "PT3-2026-003", "total_cp": 0, "status": "draft"}', 'Academic Chair'),
+(4, 1, 'Initial study plan draft', '{"plan_id": 4, "student_number": "PT3-2026-004", "total_cp": 0, "status": "draft"}', 'Academic Chair');
+

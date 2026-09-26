@@ -14,6 +14,7 @@ export default function DroppablePaletteContainer({
   totalCatalogCount = 28,
   scheduledCodesSet = new Set(),
   scheduledUnitsMap = new Map(),
+  historyMap = {},
   onAddUnit,
   onAddToSpecificSemester,
   layoutType = 'trimester'
@@ -125,6 +126,7 @@ export default function DroppablePaletteContainer({
                 key={unit.unit_id || unit.code}
                 unit={unit}
                 scheduledInfo={scheduledUnitsMap?.get(unit.code)}
+                historyRecord={historyMap ? historyMap[unit.code] : undefined}
                 onAdd={onAddUnit}
                 onAddToSpecificSemester={onAddToSpecificSemester}
                 layoutType={layoutType}
