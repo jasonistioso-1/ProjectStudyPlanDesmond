@@ -93,8 +93,8 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
             <span className="font-heading font-extrabold text-white bg-slate-900 dark:bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs font-mono">{unit.code}</span>
 
             {isPassedHistory ? (
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1 font-sans">
-                ✓ PASSED ({historyRecord.grade || 'P'})
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans">
+                ✓ Passed ({historyRecord?.grade || 'P'})
               </span>
             ) : isFailedHistory ? (
               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800 flex items-center gap-1 font-sans">
@@ -145,7 +145,7 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
               }}
               className="w-full text-left px-2.5 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 rounded-xl font-bold flex items-center gap-2 transition-colors border border-emerald-200/60 dark:border-emerald-800/60 text-[11px]"
             >
-              <Zap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <Plus className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>Auto-assign next open slot</span>
             </button>
 

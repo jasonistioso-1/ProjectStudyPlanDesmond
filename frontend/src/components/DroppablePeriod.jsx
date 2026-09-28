@@ -2,7 +2,7 @@ import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import DraggableUnitCard from './DraggableUnitCard';
-import { AlertCircle, Plus, MessageSquare } from 'lucide-react';
+import { AlertCircle, Plus, MessageSquare, Lock } from 'lucide-react';
 
 export default function DroppablePeriod({
   id,
@@ -14,14 +14,15 @@ export default function DroppablePeriod({
   completedUnitCodes,
   historyMap,
   isReadOnly = false,
+  isPassedYear = false,
   isChair = false,
   changeRequest,
   onResolveChangeRequest,
   onRequestChange
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id, disabled: isReadOnly });
+  const { setNodeRef, isOver } = useDroppable({ id, disabled: isReadOnly || isPassedYear });
 
-  const totalCP = units.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+  const totalCP = isPassedYear ? 12 : units.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
   const targetCP = 12; // Standard full-time load benchmark
   const cpPercentage = Math.min(100, Math.round((totalCP / targetCP) * 100));
 
@@ -34,7 +35,9 @@ export default function DroppablePeriod({
         changeRequest
           ? 'border-amber-400 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20 ring-2 ring-amber-400/40'
           : isOver && !isReadOnly
-          ? 'bg-slate-100/90 dark:bg-slate-800/90 border-slate-400 dark:border-slate-600 ring-2 ring-slate-400/50'
+          ? 'bg-red-50/70 dark:bg-red-950/40 border-red-500 dark:border-red-500 ring-4 ring-red-500/20 scale-[1.01] transition-all duration-200 ease-out shadow-md'
+          : isPassedYear
+          ? 'bg-emerald-50/20 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/60'
           : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
       }`}
     >
@@ -82,14 +85,14 @@ export default function DroppablePeriod({
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className={`text-[11px] font-bold tabular-nums px-2.5 py-0.5 rounded-full font-mono ${
+            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md flex items-center gap-1 ${
               totalCP > 12
                 ? 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800'
                 : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700'
             }`}>
               {totalCP} / 12 CP
             </span>
-            {!isChair && onRequestChange && (
+            {!isChair && !isPassedYear && onRequestChange && (
               <button
                 type="button"
                 onClick={() => onRequestChange(`Y${yearLevel}-P${period.period_id}`, `Year ${yearLevel} - ${period.name}`)}
@@ -106,14 +109,16 @@ export default function DroppablePeriod({
         {/* Credit Point Progress Meter Bar */}
         <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden flex">
           <div
-            className={`h-full transition-all duration-300 ${totalCP > 12 ? 'bg-rose-600' : 'bg-slate-900 dark:bg-red-600'}`}
+            className={`h-full transition-all duration-300 ${
+              isPassedYear ? 'bg-emerald-600' : totalCP > 12 ? 'bg-rose-600' : 'bg-slate-900 dark:bg-red-600'
+            }`}
             style={{ width: `${cpPercentage}%` }}
           />
         </div>
       </div>
 
       {/* Single Period Overload Warning Banner */}
-      {totalCP > 12 && (
+      {totalCP > 12 && !isPassedYear && (
         <div className="mb-2.5 p-2 bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-800 rounded-xl text-rose-900 dark:text-rose-200 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
           <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
           <span>Period load ({totalCP} CP) exceeds 12 CP limit.</span>
@@ -124,25 +129,39 @@ export default function DroppablePeriod({
       <SortableContext items={unitIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-2 flex-1 min-h-[140px] flex flex-col justify-start">
           {units.length === 0 ? (
-            <div className="h-full border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-xs py-7 rounded-2xl flex flex-col items-center justify-center bg-slate-50/60 dark:bg-slate-800/30 transition-all select-none font-sans">
-              {!isReadOnly ? (
-                <>
-                  <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-400 dark:text-slate-500 group-hover:text-red-600 dark:group-hover:text-red-400 flex items-center justify-center mb-2 transition-all shadow-2xs">
-                    <Plus className="w-4.5 h-4.5" />
-                  </div>
-                  <span className="text-xs font-black text-slate-700 dark:text-slate-300 font-heading">
-                    Schedule Unit for {period.name}
-                  </span>
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-                    Drag unit here or use + Add Unit button
-                  </span>
-                </>
-              ) : (
-                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
-                  No units scheduled for {period.name}
+            isPassedYear ? (
+              <div className="h-full border-2 border-dashed border-emerald-300/80 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-100 text-xs py-7 rounded-2xl flex flex-col items-center justify-center bg-emerald-50/50 dark:bg-emerald-950/30 transition-all select-none font-sans space-y-1">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 flex items-center justify-center mb-0.5 shadow-2xs">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-black text-emerald-900 dark:text-emerald-100 font-heading">
+                  PASSED - Academic Record Completed
                 </span>
-              )}
-            </div>
+                <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">
+                  12 CP Earned & Locked (Read-Only)
+                </span>
+              </div>
+            ) : (
+              <div className="h-full border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-xs py-7 rounded-2xl flex flex-col items-center justify-center bg-slate-50/60 dark:bg-slate-800/30 transition-all select-none font-sans">
+                {!isReadOnly ? (
+                  <>
+                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-400 dark:text-slate-500 group-hover:text-red-600 dark:group-hover:text-red-400 flex items-center justify-center mb-2 transition-all shadow-2xs">
+                      <Plus className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="text-xs font-black text-slate-700 dark:text-slate-300 font-heading">
+                      Schedule Unit for {period.name}
+                    </span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                      Drag unit here or use + Add Unit button
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+                    No units scheduled for {period.name}
+                  </span>
+                )}
+              </div>
+            )
           ) : (
             units.map(unit => (
               <DraggableUnitCard

@@ -155,7 +155,7 @@ export default function GuideModal({ isOpen, onClose }) {
                     Academic Chair Governance Workflow (5-Step Process)
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-xs">
-                    Official Academic Chair process flow: Receive Request → Generate/Adjust (2A Auto vs 2B Manual) → Review & Validate → Finalise → Recommend to Student.
+                    Official Academic Chair process flow: Receive Request → Generate/Adjust (Auto System Generation vs Manual Adjustment) → Review & Validate → Finalise → Recommend to Student.
                   </p>
                 </div>
               </div>
@@ -180,7 +180,7 @@ export default function GuideModal({ isOpen, onClose }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div className="bg-emerald-50 dark:bg-emerald-950/60 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800 space-y-1">
                       <span className="text-[11px] font-extrabold text-emerald-900 dark:text-emerald-300 font-heading block">
-                        ✨ 2A. Auto System Generation
+                        Auto System Generation
                       </span>
                       <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-snug">
                         System automatically schedules an optimal 72-CP study plan based on unit offerings, prerequisites, and max 12 CP load limits.

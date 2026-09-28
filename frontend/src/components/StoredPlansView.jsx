@@ -65,7 +65,11 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
     }
   ];
 
-  const activePlansList = (storedPlans && storedPlans.length > 0) ? storedPlans : defaultStoredPlans;
+  const rawPlansList = (storedPlans && storedPlans.length > 0) ? storedPlans : defaultStoredPlans;
+  const activePlansList = rawPlansList.filter(p => {
+    const isChairAdmin = p.student_id === 0 || p.student_id === '0' || String(p.student_number || '').includes('ADMIN') || String(p.student_name || '').includes('Academic Chair');
+    return !isChairAdmin;
+  });
 
   const filteredPlans = activePlansList.filter(p => {
     if (!searchQuery.trim()) return true;
@@ -82,31 +86,31 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
     switch (status) {
       case 'approved':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">
             Approved
           </span>
         );
       case 'agreed':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">
             Student Agreed
           </span>
         );
       case 'recommended':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80">
             Recommended
           </span>
         );
       case 'rejected':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80">
             Change Requested
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
             Draft
           </span>
         );
@@ -114,34 +118,42 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xs font-sans max-w-[1440px] mx-auto space-y-5 transition-colors">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 font-heading">
+    <div className="font-sans max-w-[1440px] mx-auto space-y-5 transition-colors">
+      {/* Executive Header Banner */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl font-sans text-slate-900 dark:text-white transition-all relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        {/* Subtle executive background glow */}
+        <div className="absolute -right-16 -top-16 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-slate-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 flex items-center justify-center shadow-2xs shrink-0 border border-red-200/60 dark:border-red-900/60">
             <Database className="w-5 h-5 text-red-600 dark:text-red-400" />
-            Stored Study Plans Repository
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Archived multi-year student study plans with version audit history.
-          </p>
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
+              Stored Study Plans Repository
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              Archived multi-year student study plans with version audit history.
+            </p>
+          </div>
         </div>
 
-        <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+        <div className="relative z-10 w-full md:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             id="stored-plans-search-input"
             type="text"
             placeholder="Search plan by student or ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-red-600 font-medium transition-all"
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-9 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-red-600/30 focus:border-red-600 font-semibold transition-all placeholder:text-slate-400"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-0.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-0.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
               title="Clear search"
             >
               <X className="w-3.5 h-3.5" />
@@ -150,18 +162,21 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
         </div>
       </div>
 
+      {/* Main Table Container */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xs space-y-4">
+
       {/* Table List of Stored Plans */}
       <div className="overflow-x-auto border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xs">
         <table className="w-full text-left text-xs font-sans">
-          <thead className="bg-slate-50/90 dark:bg-slate-800/90 border-b border-slate-200/90 dark:border-slate-700/90 text-slate-500 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+          <thead className="bg-slate-50/90 dark:bg-slate-800/90 border-b border-slate-200/90 dark:border-slate-700/90 text-slate-700 dark:text-slate-300 font-heading font-extrabold text-[11px] uppercase tracking-wider">
             <tr>
-              <th className="p-4 font-bold">Plan Title & ID</th>
-              <th className="p-4 font-bold">Student Record</th>
-              <th className="p-4 font-bold">Course & Location</th>
-              <th className="p-4 font-bold">Status</th>
-              <th className="p-4 font-bold">Version</th>
-              <th className="p-4 font-bold">Last Updated</th>
-              <th className="p-4 font-bold text-right">Action</th>
+              <th className="p-4">Plan Title & ID</th>
+              <th className="p-4">Student Record</th>
+              <th className="p-4">Course & Location</th>
+              <th className="p-4">Status</th>
+              <th className="p-4">Version</th>
+              <th className="p-4">Last Updated</th>
+              <th className="p-4 text-right">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -176,28 +191,28 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Plan ID: #{plan.plan_id}</span>
                   </td>
                   <td className="p-4">
-                    <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 font-heading">
                       <span>{plan.student_name}</span>
                       {isNewStudent ? (
-                        <span className="bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-md font-sans">New Student</span>
+                        <span className="bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-semibold px-2 py-0.5 rounded-md font-sans">New Student</span>
                       ) : (
-                        <span className="bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-md font-sans">Existing Student</span>
+                        <span className="bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80 text-[10px] font-semibold px-2 py-0.5 rounded-md font-sans">Existing Student</span>
                       )}
                     </div>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 block">{plan.student_number}</span>
                   </td>
                   <td className="p-4">
-                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono font-bold text-[10px] px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 block w-fit mb-0.5">
+                    <span className="font-heading font-extrabold text-white bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs font-mono inline-block mb-1">
                       {plan.course_code}
                     </span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{plan.location}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block">{plan.location}</span>
                   </td>
                   <td className="p-4">
                     {getStatusBadge(plan.status)}
                   </td>
                   <td className="p-4">
-                    <span className="inline-block bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300">
-                      v2.0
+                    <span className="inline-block bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300">
+                      v{plan.version_number ? Number(plan.version_number).toFixed(1) : '2.0'}
                     </span>
                   </td>
                   <td className="p-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
@@ -206,13 +221,21 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
                   <td className="p-4 text-right">
                     <button
                       onClick={() => {
-                        if (matchedStudent && onSelectStudentAndRetrievePlan) {
-                          onSelectStudentAndRetrievePlan(matchedStudent);
+                        const targetStudent = matchedStudent || students.find(s => String(s.student_id) === String(plan.student_id)) || {
+                          student_id: plan.student_id,
+                          first_name: plan.student_name ? plan.student_name.split(' ')[0] : 'Student',
+                          last_name: plan.student_name ? plan.student_name.split(' ').slice(1).join(' ') : `#${plan.student_id}`,
+                          student_number: plan.student_number || `PT3-2026-00${plan.student_id}`,
+                          course_code: plan.course_code || 'PT3-BSIT',
+                          course_name: plan.title || 'Bachelor of Information Technology'
+                        };
+                        if (onSelectStudentAndRetrievePlan) {
+                          onSelectStudentAndRetrievePlan(targetStudent, plan);
                         } else if (onTabChange) {
                           onTabChange('STUDY_PLAN');
                         }
                       }}
-                      className="px-3.5 py-2 bg-slate-900 dark:bg-red-700 hover:bg-slate-800 dark:hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                      className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-extrabold transition-all shadow-2xs hover:shadow-md inline-flex items-center gap-1.5 cursor-pointer active:scale-95 border border-red-800 font-heading"
                     >
                       {isChair ? (
                         <>
@@ -239,6 +262,7 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
           Showing {filteredPlans.length} archived student study plans
         </span>
       </div>
+    </div>
     </div>
   );
 }

@@ -76,11 +76,20 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl font-sans text-slate-900 dark:text-white transition-all relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         {/* Subtle executive background glow */}
         <div className="absolute -right-16 -top-16 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-slate-500/5 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="relative z-10">
-          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
-            Official Course Unit Catalog & Prerequisites Directory
-          </h2>
+        <div className="relative z-10 flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 flex items-center justify-center shadow-2xs shrink-0 border border-red-200/60 dark:border-red-900/60">
+            <BookOpen className="w-5 h-5 text-red-600 dark:text-red-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
+              Official Course Unit Catalog & Prerequisites Directory
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              Comprehensive registry of academic unit offerings, credit values, and prerequisite rules.
+            </p>
+          </div>
         </div>
 
         {/* Actions Bar: Add Unit & Dataset Upload */}
@@ -88,7 +97,7 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
           {onOpenAddUnit && (
             <button
               onClick={onOpenAddUnit}
-              className="px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5"
+              className="px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-4 h-4 text-red-400" />
               <span>Add Unit Manually</span>
@@ -97,7 +106,7 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
 
           <button
             onClick={onOpenImport}
-            className="px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-2 shrink-0"
+            className="px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-2 shrink-0 cursor-pointer"
             title="Upload or import unit offerings and prerequisites from CSV / Excel"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-300" />

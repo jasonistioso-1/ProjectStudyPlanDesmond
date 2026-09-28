@@ -30,23 +30,25 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
   const isLoadWarning = warning && (warning.includes('EXCEEDS') || warning.includes('exceeds') || warning.includes('CP limit'));
   const effectiveWarning = (isCompleted || isLoadWarning) ? null : warning;
 
+  let cardBorder = 'border-slate-200 dark:border-slate-800';
+
   if (isCompleted) {
-    cardBg = 'bg-emerald-50/50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800';
+    cardBorder = 'border-emerald-300 dark:border-emerald-800/80';
   } else if (isEnrolled) {
-    cardBg = 'bg-sky-50/50 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800';
+    cardBorder = 'border-sky-300 dark:border-sky-800/80';
   } else if (isAttempted) {
-    cardBg = 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800';
+    cardBorder = 'border-rose-300 dark:border-rose-800/80';
   } else if (effectiveWarning) {
-    cardBg = 'bg-rose-50/90 dark:bg-rose-950/80 border-2 border-rose-400 dark:border-rose-700 shadow-sm';
+    cardBorder = 'border-2 border-rose-400 dark:border-rose-700';
   }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative p-3.5 rounded-2xl border text-xs shadow-2xs transition-all group select-none space-y-2.5 ${cardBg}`}
+      className={`relative bg-white dark:bg-slate-900 border rounded-2xl p-4 text-xs shadow-2xs hover:shadow-md transition-all group select-none space-y-3 ${cardBorder}`}
     >
-      {/* Top Header Row: Drag Handle, Code & Actions */}
+      {/* Top Header Row: Drag Handle, Code, Status Pill & CP */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {!isReadOnly && !isCompleted && (
@@ -60,31 +62,31 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
             </div>
           )}
 
-          <span className="font-heading font-extrabold text-white bg-slate-900 dark:bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs shrink-0 font-mono">
+          <span className="bg-red-700 text-white font-bold text-xs px-2.5 py-0.5 rounded-lg shadow-2xs font-mono shrink-0">
             {unit.code}
           </span>
-        </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
           {isCompleted && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 shrink-0" title="Passed in academic record - sealed & locked">
-              <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> PASSED {historyRecord?.grade ? `(${historyRecord.grade})` : ''}
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans shrink-0" title="Passed in academic record - sealed & locked">
+              ✓ Passed {historyRecord?.grade || unit.grade ? `(${historyRecord?.grade || unit.grade})` : ''}
             </span>
           )}
 
           {isEnrolled && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80 shrink-0">
-              <Clock className="w-3 h-3 text-sky-600 dark:text-sky-400" /> ENROLLED
+            <span className="bg-sky-50 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-bold text-[11px] px-2.5 py-0.5 rounded-md border border-sky-200 dark:border-sky-800 flex items-center gap-1 font-sans shrink-0">
+              <Clock className="w-3 h-3 text-sky-600 dark:text-sky-400" /> Enrolled
             </span>
           )}
 
           {isAttempted && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 shrink-0">
-              <RotateCcw className="w-3 h-3 text-rose-600 dark:text-rose-400" /> FAILED ({historyRecord?.grade || 'F'})
+            <span className="bg-rose-50 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 font-bold text-[11px] px-2.5 py-0.5 rounded-md border border-rose-200 dark:border-rose-800 flex items-center gap-1 font-sans shrink-0">
+              <RotateCcw className="w-3 h-3 text-rose-600 dark:text-rose-400" /> Failed ({historyRecord?.grade || 'F'})
             </span>
           )}
+        </div>
 
-          <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 tabular-nums bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-600">
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 font-mono">
             {unit.credit_points || 3} CP
           </span>
 
@@ -100,10 +102,10 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
         </div>
       </div>
 
-      {/* Middle Row: Full Unit Title */}
-      <div className="text-slate-900 dark:text-slate-100 text-xs font-bold leading-snug break-words">
+      {/* Middle Row: Full Unit Title (Matching CourseCatalogPreview) */}
+      <h3 className="text-sm font-bold text-slate-900 dark:text-white font-heading mt-1 leading-snug break-words">
         {unit.title}
-      </div>
+      </h3>
 
       {/* Bottom Warning Message Box */}
       {effectiveWarning && (

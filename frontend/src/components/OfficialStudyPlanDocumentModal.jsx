@@ -223,17 +223,17 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
             </div>
 
             {/* DUAL DIGITAL SIGNATURE & AUTHORISATION BOX */}
-            <div className="grid grid-cols-2 gap-4 mb-4 border-2 border-slate-900 p-3 bg-slate-50/90 rounded-xs">
+            <div className="grid grid-cols-2 gap-4 mb-4 border-2 border-slate-900 p-3.5 bg-slate-50/90 rounded-xs">
               {/* Academic Chair Endorsement Column */}
-              <div className="border-r border-slate-300 pr-3 space-y-1">
+              <div className="border-r border-slate-300 pr-3.5 space-y-1">
                 <div className="text-[10px] font-extrabold uppercase text-slate-500 font-mono tracking-wider">
                   Academic Chair Endorsement
                 </div>
-                <div className="text-xs font-extrabold text-slate-900 font-heading">Dr. Aris Thorne</div>
+                <div className="text-xs font-black text-slate-900 font-heading">Dr. Aris Thorne</div>
                 <div className="text-[10px] text-slate-600 italic">Academic Chair & IT Course Director</div>
-                <div className="mt-2 pt-1 border-t border-slate-300 flex items-center justify-between text-[10px] text-emerald-800 font-bold font-mono">
-                  <span>Status: APPROVED & CERTIFIED</span>
-                  <span className="bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded border border-emerald-300 text-[9px]">OFFICIAL SEAL</span>
+                <div className="mt-2.5 pt-1.5 border-t border-slate-300 flex items-center justify-between text-[10px] font-mono">
+                  <span className="font-extrabold text-slate-900 font-heading">Status: <strong className="text-slate-900 font-black">APPROVED & CERTIFIED</strong></span>
+                  <span className="bg-slate-900 text-white px-2 py-0.5 rounded text-[9px] font-extrabold tracking-wider font-mono shadow-2xs">OFFICIAL SEAL</span>
                 </div>
               </div>
 
@@ -242,7 +242,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                 <div className="text-[10px] font-extrabold uppercase text-slate-500 font-mono tracking-wider flex items-center justify-between">
                   <span>Student Digital Sign-Off</span>
                   {currentPlan?.studentSignature?.verificationHash && (
-                    <span className="text-emerald-700 font-mono text-[9px] font-bold bg-emerald-50 px-1 rounded border border-emerald-200">
+                    <span className="text-slate-900 font-mono text-[9px] font-black bg-slate-200 px-1.5 py-0.5 rounded border border-slate-400">
                       {currentPlan.studentSignature.verificationHash}
                     </span>
                   )}
@@ -258,25 +258,25 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                   </div>
                 )}
 
-                <div className="text-[10px] text-slate-600 flex items-center justify-between font-mono pt-1 border-t border-slate-300">
-                  <span>Signee: {student.student_number || 'PT3-2026-001'}</span>
-                  <span className="text-slate-500">{currentPlan?.studentSignature?.timestamp || 'Digitally Endorsed'}</span>
+                <div className="text-[10px] text-slate-700 font-bold flex items-center justify-between font-mono pt-1.5 border-t border-slate-300">
+                  <span>Signee: <strong className="text-slate-900 font-black">{student.student_number || 'PT3-2026-001'}</strong></span>
+                  <span className="text-slate-600 font-semibold">{currentPlan?.studentSignature?.timestamp || 'Digitally Endorsed'}</span>
                 </div>
               </div>
             </div>
 
             {/* FOOTER INFORMATION & DISCOVERY UNITS BOX */}
             <div className="border border-slate-400 p-3 bg-slate-50/50 text-[11px] space-y-2 rounded-sm">
-              <h4 className="font-bold text-slate-900 text-xs flex items-center gap-1">
+              <h4 className="font-extrabold text-slate-900 text-xs flex items-center gap-1 font-heading">
                 *Discovery and Elective units
               </h4>
               <p className="text-slate-700 leading-normal">
                 There are other unit options available to choose from. Check the course visualiser and handbook. Contact your Academic Chair prior to those semesters if you are unsure about these options.
               </p>
-              <div className="pt-1 border-t border-slate-200 text-[10px] text-slate-600 font-mono flex items-center justify-between">
-                <span>Course Visualiser Handbook: <strong>https://handbook.pt3solutions.edu.au/course-visualiser/</strong></span>
-                <span className="text-emerald-700 font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Official Clearance Verified
+              <div className="pt-1.5 border-t border-slate-200 text-[10px] text-slate-600 font-mono flex items-center justify-between">
+                <span>Course Visualiser Handbook: <strong className="text-slate-900">https://handbook.pt3solutions.edu.au/course-visualiser/</strong></span>
+                <span className="text-slate-900 font-black flex items-center gap-1 font-heading text-[10px]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-slate-900 shrink-0" /> Official Clearance Verified
                 </span>
               </div>
             </div>
