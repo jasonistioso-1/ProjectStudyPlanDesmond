@@ -71,27 +71,9 @@ export default function DroppablePaletteContainer({
             )}
           </div>
 
-          {/* Level Filter Tabs & Hide Scheduled Toggle */}
-          <div className="flex flex-wrap items-center justify-between gap-2 font-sans">
-            {setSelectedLevel && (
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px]">
-                {['ALL', '100', '200', '300'].map(lvl => (
-                  <button
-                    key={lvl}
-                    type="button"
-                    onClick={() => setSelectedLevel(lvl)}
-                    className={`px-2.5 py-0.5 rounded-lg font-extrabold transition-all cursor-pointer ${
-                      selectedLevel === lvl
-                        ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    {lvl === 'ALL' ? 'All Levels' : `L${lvl}`}
-                  </button>
-                ))}
-              </div>
-            )}
-
+          {/* Hide Scheduled Toggle */}
+          <div className="flex items-center justify-between gap-2 font-sans">
+            <span className="text-[11px] text-slate-500 font-semibold">Course Catalog Units Palette</span>
             {setShowAllCatalogUnits && (
               <button
                 type="button"

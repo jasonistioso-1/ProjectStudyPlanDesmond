@@ -11,7 +11,14 @@ import {
   Sun,
   Moon,
   Menu,
-  X
+  X,
+  Bell,
+  Sparkles,
+  CheckCircle2,
+  MessageSquare,
+  Send,
+  Calendar,
+  ChevronRight
 } from 'lucide-react';
 
 export default function Navbar({
@@ -26,10 +33,19 @@ export default function Navbar({
   onOpenAudit,
   onOpenGuide,
   theme = 'light',
-  onToggleTheme
+  onToggleTheme,
+  notifications = [],
+  onSelectNotification,
+  onMarkAllNotificationsRead
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
   const isChair = activeRole === 'chair';
+  const roleTarget = isChair ? 'chair' : 'student';
+
+  const filteredNotifications = notifications.filter(n => n.role === roleTarget);
+  const unreadCount = filteredNotifications.filter(n => !n.read).length;
 
   const chairNavItems = [
     { id: 'STUDY_PLAN', label: 'Plan Builder', icon: Layers },
@@ -87,7 +103,92 @@ export default function Navbar({
         </nav>
 
         {/* Right: Desktop Tools & Controls (Hidden on small mobile) */}
-        <div className="hidden lg:flex items-center gap-2.5 shrink-0">
+        <div className="hidden lg:flex items-center gap-2.5 shrink-0 relative">
+          {/* Notifications Bell Icon Button & Dropdown Drawer */}
+          <div className="relative">
+            <button
+              onClick={() => setNotificationsOpen(prev => !prev)}
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center relative shrink-0"
+              title={`Notifications (${unreadCount} unread)`}
+              aria-label="View Notifications"
+            >
+              <Bell className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white rounded-full text-[9px] font-extrabold flex items-center justify-center animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notifications Dropdown Drawer */}
+            {notificationsOpen && (
+              <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden text-slate-900 dark:text-white font-sans animate-in fade-in duration-150">
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    <h3 className="text-xs font-extrabold font-heading text-slate-900 dark:text-white">
+                      Notifications ({isChair ? 'Academic Chair' : 'Student'})
+                    </h3>
+                    {unreadCount > 0 && (
+                      <span className="bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && onMarkAllNotificationsRead && (
+                    <button
+                      onClick={() => onMarkAllNotificationsRead(roleTarget)}
+                      className="text-[10px] font-bold text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredNotifications.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500 italic">
+                      No notifications yet.
+                    </div>
+                  ) : (
+                    filteredNotifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => {
+                          if (onSelectNotification) onSelectNotification(n);
+                          setNotificationsOpen(false);
+                        }}
+                        className={`p-3 text-xs transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/80 ${
+                          !n.read ? 'bg-red-50/40 dark:bg-red-950/20 font-medium' : 'opacity-85'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+                            {!n.read && <span className="w-2 h-2 rounded-full bg-red-600 shrink-0" />}
+                            <span>{n.title}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-mono shrink-0">{n.timestamp}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 leading-snug">
+                          {n.message}
+                        </p>
+                        {n.actionType && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white dark:bg-red-700">
+                              {n.actionType === 'AUTO_GENERATE' && <Sparkles className="w-3 h-3 text-amber-300" />}
+                              {n.actionType === 'REVIEW' && <ChevronRight className="w-3 h-3 text-white" />}
+                              <span>{n.actionLabel || 'View Details'}</span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Active Student Selector Trigger */}
           <button
             onClick={onOpenStudentSelectModal}
@@ -166,6 +267,20 @@ export default function Navbar({
 
         {/* Mobile Compact Bar Controls (Visible on mobile / tablet) */}
         <div className="flex lg:hidden items-center gap-2">
+          {/* Notifications Mobile Button */}
+          <button
+            onClick={() => setNotificationsOpen(prev => !prev)}
+            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 relative"
+            aria-label="View Notifications"
+          >
+            <Bell className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-600 text-white rounded-full text-[8px] font-extrabold flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
           {/* Active Student Selector Mobile */}
           <button
             onClick={onOpenStudentSelectModal}

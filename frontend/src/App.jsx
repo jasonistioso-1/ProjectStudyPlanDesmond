@@ -232,6 +232,176 @@ export default function App() {
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState(null);
 
+  // Notifications Drawer State
+  const [notifications, setNotifications] = useState([
+    {
+      id: 'n-1',
+      role: 'chair',
+      studentId: 1,
+      title: 'Study Plan Request',
+      message: 'Alex Mercer submitted a study plan request for Trimesters 1, 2, 3 (2026).',
+      timestamp: '09:30 AM',
+      read: false,
+      actionType: 'AUTO_GENERATE',
+      actionLabel: 'Review & Auto-Generate (2A)'
+    },
+    {
+      id: 'n-2',
+      role: 'student',
+      studentId: 1,
+      title: 'Study Plan Recommended',
+      message: 'Academic Chair Dr. Aris Thorne recommended your 72 CP Study Plan.',
+      timestamp: 'Yesterday',
+      read: true,
+      actionType: 'REVIEW',
+      actionLabel: 'Review Recommended Plan'
+    }
+  ]);
+
+  const handleMarkAllNotificationsRead = (targetRole) => {
+    setNotifications(prev => prev.map(n => n.role === targetRole ? { ...n, read: true } : n));
+  };
+
+  const handleSelectNotification = (notif) => {
+    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+
+    if (notif.studentId) {
+      const target = studentsList.find(s => s.student_id === notif.studentId);
+      if (target) {
+        handleSelectStudent(target);
+      }
+    }
+
+    if (notif.role === 'chair') {
+      setActiveRole('chair');
+    } else {
+      setActiveRole('student');
+    }
+
+    setActiveTab('STUDY_PLAN');
+
+    if (notif.actionType === 'AUTO_GENERATE' && notif.studentId) {
+      handleAutoGeneratePlan(notif.studentId);
+    }
+  };
+
+  const handleStudentSubmitPlanRequest = ({ year = 2026, periodIds = [3, 4, 5], comment = '' }) => {
+    if (!selectedStudent) return;
+    const stName = `${selectedStudent.first_name} ${selectedStudent.last_name}`;
+    const termLabels = periodIds.map(p => p === 3 ? 'Trimester 1 (T1)' : p === 4 ? 'Trimester 2 (T2)' : 'Trimester 3 (T3)').join(', ');
+    const msg = `${stName} requested a study plan for ${termLabels} ${year}.${comment ? ` Note: "${comment}"` : ''}`;
+
+    const newNotif = {
+      id: `n-${Date.now()}`,
+      role: 'chair',
+      studentId: selectedStudent.student_id,
+      title: `Plan Request from ${stName}`,
+      message: msg,
+      timestamp: 'Just now',
+      read: false,
+      actionType: 'AUTO_GENERATE',
+      actionLabel: 'Review & Auto-Generate (2A)'
+    };
+
+    setNotifications(prev => [newNotif, ...prev]);
+
+    if (currentPlan) {
+      const updatedPlan = {
+        ...currentPlan,
+        status: 'request_submitted',
+        requestYear: year,
+        requestPeriods: periodIds,
+        requestComment: comment,
+        updated_at: formatCurrentDateTime()
+      };
+      setCurrentPlan(updatedPlan);
+    }
+
+    showToast(`Study plan request submitted to Academic Chair!`);
+  };
+
+  const handleAutoGeneratePlan = (targetStudentId) => {
+    const targetStudent = studentsList.find(s => s.student_id === (targetStudentId || selectedStudent?.student_id)) || selectedStudent;
+    if (!targetStudent) return;
+
+    // Filter completed passed units
+    const completedCodes = new Set((history || []).filter(h => h.status === 'completed').map(h => h.unit_code || h.code));
+
+    const availableCatalog = (catalogUnits || []).filter(u => !completedCodes.has(u.code));
+
+    const scheduledUnits = [];
+    const scheduledCodes = new Set();
+    const periodLoads = {};
+
+    const years = [1, 2, 3];
+    const periodsList = [3, 4, 5]; // Trimester 1, 2, 3
+
+    for (const year of years) {
+      for (const periodId of periodsList) {
+        const pKey = `y${year}_p${periodId}`;
+        periodLoads[pKey] = 0;
+
+        for (const unit of availableCatalog) {
+          if (scheduledCodes.has(unit.code)) continue;
+
+          if ((periodLoads[pKey] || 0) + Number(unit.credit_points || 3) > 12) {
+            continue;
+          }
+
+          if (periodId === 5 && (unit.code === 'ICT302' || unit.code === 'ICT374')) {
+            continue;
+          }
+
+          const prereq = unit.prerequisite_code || unit.prereq_code;
+          if (prereq) {
+            const prereqPassed = completedCodes.has(prereq);
+            const prereqScheduledPrior = scheduledUnits.some(s => {
+              if (s.code !== prereq) return false;
+              if (s.year_level < year) return true;
+              if (s.year_level === year && s.period_id < periodId) return true;
+              return false;
+            });
+
+            if (!prereqPassed && !prereqScheduledPrior) {
+              continue;
+            }
+          }
+
+          const scheduledObj = {
+            ...unit,
+            unit_id: unit.unit_id || Math.floor(Math.random() * 100000),
+            year_level: year,
+            period_id: periodId,
+            credit_points: Number(unit.credit_points || 3),
+            sequence_order: scheduledUnits.length + 1
+          };
+
+          scheduledUnits.push(scheduledObj);
+          scheduledCodes.add(unit.code);
+          periodLoads[pKey] += Number(unit.credit_points || 3);
+        }
+      }
+    }
+
+    handleSetPlanUnits(scheduledUnits);
+    runValidation(targetStudent.student_id, targetStudent.location_id, scheduledUnits);
+
+    const notif = {
+      id: `n-${Date.now()}`,
+      role: 'student',
+      studentId: targetStudent.student_id,
+      title: 'Study Plan Auto-Generated',
+      message: `Academic Chair generated a recommended 72 CP Study Plan for your review.`,
+      timestamp: 'Just now',
+      read: false,
+      actionType: 'REVIEW',
+      actionLabel: 'Review Recommended Plan'
+    };
+    setNotifications(prev => [notif, ...prev]);
+
+    showToast(`✨ Auto System Generation (2A) complete for ${targetStudent.first_name}! 72 CP plan generated.`);
+  };
+
   // Per-semester change requests state (key format: 'Y{yearLevel}-P{periodId}')
   const [semesterRequests, setSemesterRequests] = useState({
     'Y2-P1': 'Student request: "Please swap ICT283 Data Structures to Trimester 2 due to timetable conflict."'
@@ -708,6 +878,9 @@ export default function App() {
           onOpenGuide={() => setShowGuideModal(true)}
           theme={theme}
           onToggleTheme={toggleTheme}
+          notifications={notifications}
+          onSelectNotification={handleSelectNotification}
+          onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
         />
 
         {/* Main Content Area */}
@@ -807,6 +980,8 @@ export default function App() {
               onRemoveSemesterRequest={handleRemoveSemesterRequest}
               onOpenOfficialDocument={() => setShowDocumentModal(true)}
               onOpenStudentSelectModal={() => setShowStudentSelectModal(true)}
+              onStudentSubmitPlanRequest={handleStudentSubmitPlanRequest}
+              onAutoGeneratePlan={handleAutoGeneratePlan}
             />
           )}
 

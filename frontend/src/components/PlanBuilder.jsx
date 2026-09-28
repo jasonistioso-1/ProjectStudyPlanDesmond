@@ -70,7 +70,9 @@ export default function PlanBuilder({
   onRejectPlan,
   semesterRequests = {},
   onSaveSemesterRequest,
-  onRemoveSemesterRequest
+  onRemoveSemesterRequest,
+  onStudentSubmitPlanRequest,
+  onAutoGeneratePlan
 }) {
   const isChair = activeRole === 'chair';
   const [unitFilter, setUnitFilter] = useState('');
@@ -86,6 +88,12 @@ export default function PlanBuilder({
   const [requestCommentInput, setRequestCommentInput] = useState('');
   const [dragWarningToast, setDragWarningToast] = useState(null);
   const [expandedTrimesters, setExpandedTrimesters] = useState({});
+
+  // Student Submit Request Modal State
+  const [showSubmitPlanRequestModal, setShowSubmitPlanRequestModal] = useState(false);
+  const [reqYear, setReqYear] = useState(2026);
+  const [reqPeriods, setReqPeriods] = useState([3, 4, 5]); // Default all 3 trimesters selected
+  const [reqComment, setReqComment] = useState('');
 
   const toggleTrimesterExpand = (key) => {
     setExpandedTrimesters(prev => ({
@@ -631,6 +639,16 @@ export default function PlanBuilder({
               </span>
             </div>
 
+            {/* Submit Plan Request Button (Step 2 in Process Flow) */}
+            <button
+              onClick={() => setShowSubmitPlanRequestModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 font-heading tracking-tight"
+              title="Submit a study plan request (new plan or replan) for Academic Chair review"
+            >
+              <Send className="w-3.5 h-3.5 text-white" />
+              <span>Submit Plan Request</span>
+            </button>
+
             {onOpenOfficialDocument && (
               <button
                 onClick={onOpenOfficialDocument}
@@ -967,6 +985,181 @@ export default function PlanBuilder({
             </div>
           </div>
         )}
+
+        {/* Student Submit Plan Request Modal (Step 2 in Process Flow) */}
+        {showSubmitPlanRequestModal && (
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200 font-sans">
+            <div className="bg-white dark:bg-slate-900 border-2 border-blue-500 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold shadow-2xs">
+                    <Send className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
+                      Submit Study Plan Request
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                      Step 2: Submit a request for a new plan or trimester replan.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSubmitPlanRequestModal(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Academic Year Selection */}
+              <div className="space-y-2">
+                <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-200 font-heading">
+                  1. Target Academic Year:
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[2026, 2027, 2028].map(yr => (
+                    <button
+                      key={yr}
+                      type="button"
+                      onClick={() => setReqYear(yr)}
+                      className={`py-2 px-3 rounded-xl text-xs font-extrabold border transition-all ${
+                        reqYear === yr
+                          ? 'bg-blue-600 text-white border-blue-700 shadow-2xs font-heading'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      Year {yr}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Teaching Period Selection: Trimester (Active) vs Semester (Inactive) */}
+              <div className="space-y-3 pt-1">
+                <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-200 font-heading">
+                  2. Select Teaching Periods:
+                </label>
+
+                {/* Trimester System (Active) */}
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 font-heading">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+                      Trimester System (Singapore Standard)
+                    </span>
+                    <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800">
+                      ACTIVE
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    {[
+                      { id: 3, label: 'Trimester 1 (T1)' },
+                      { id: 4, label: 'Trimester 2 (T2)' },
+                      { id: 5, label: 'Trimester 3 (T3)' }
+                    ].map(t => {
+                      const isChecked = reqPeriods.includes(t.id);
+                      return (
+                        <label
+                          key={t.id}
+                          className={`p-2 rounded-xl border text-center font-bold text-[11px] cursor-pointer transition-all flex items-center justify-center gap-1.5 ${
+                            isChecked
+                              ? 'bg-emerald-600 text-white border-emerald-700 shadow-2xs'
+                              : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setReqPeriods(prev => [...prev, t.id]);
+                              } else {
+                                setReqPeriods(prev => prev.filter(p => p !== t.id));
+                              }
+                            }}
+                            className="hidden"
+                          />
+                          <span>{t.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Semester System (Inactive Layout) */}
+                <div className="p-3 bg-slate-100/60 dark:bg-slate-800/30 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1.5 opacity-60">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-heading">
+                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                      Semester System (Perth Scalability)
+                    </span>
+                    <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700">
+                      INACTIVE
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-center font-bold text-[11px] text-slate-400 bg-slate-100 dark:bg-slate-800 cursor-not-allowed">
+                      Semester 1 (S1) - Disabled
+                    </div>
+                    <div className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-center font-bold text-[11px] text-slate-400 bg-slate-100 dark:bg-slate-800 cursor-not-allowed">
+                      Semester 2 (S2) - Disabled
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                    Note: Semester layout is inactive for Singapore campus, preserved for Perth campus multi-campus scalability.
+                  </p>
+                </div>
+              </div>
+
+              {/* Additional Request Comment */}
+              <div className="space-y-1.5 pt-1">
+                <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-200 font-heading">
+                  3. Request Comments / Notes for Chair (Optional):
+                </label>
+                <textarea
+                  rows={2}
+                  value={reqComment}
+                  onChange={(e) => setReqComment(e.target.value)}
+                  placeholder="e.g. Requesting study plan for 2026 Trimesters 1, 2, 3 with focus on AI major electives..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowSubmitPlanRequestModal(false)}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (reqPeriods.length === 0) {
+                      alert('Please select at least one trimester period.');
+                      return;
+                    }
+                    if (onStudentSubmitPlanRequest) {
+                      onStudentSubmitPlanRequest({
+                        year: reqYear,
+                        periodIds: reqPeriods,
+                        comment: reqComment.trim()
+                      });
+                    }
+                    setShowSubmitPlanRequestModal(false);
+                  }}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 cursor-pointer font-heading tracking-tight"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Submit Request</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1040,6 +1233,44 @@ export default function PlanBuilder({
               <span>{showWorkflowGuide ? 'Hide User Guide' : 'System User Guide'}</span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showWorkflowGuide ? 'rotate-180' : ''}`} />
             </button>
+          </div>
+        )}
+
+        {/* STUDENT SUBMITTED PLAN REQUEST ALERT BANNER (2A AUTO vs 2B MANUAL) */}
+        {currentPlan?.status === 'request_submitted' && (
+          <div className="bg-purple-50 dark:bg-purple-950/60 border-2 border-purple-400 dark:border-purple-700 p-4 rounded-2xl shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-sans text-purple-950 dark:text-purple-100">
+            <div className="flex items-start gap-3">
+              <Zap className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider font-heading text-purple-900 dark:text-purple-200">
+                    📩 Student Plan Request Submitted (Step 2)
+                  </span>
+                  <span className="text-[10px] font-mono bg-purple-200 dark:bg-purple-900 text-purple-900 dark:text-purple-100 px-2 py-0.5 rounded font-bold">
+                    Target Year {currentPlan.requestYear || 2026}
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  Student requested study plan for Trimesters 1, 2, 3 ({currentPlan.requestYear || 2026}). {currentPlan.requestComment && <em className="italic">"{currentPlan.requestComment}"</em>}
+                </p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                  Choose <strong>2A. Auto System Generation</strong> to build an optimal plan instantly, or <strong>2B. Manual Adjustment</strong> to arrange units manually.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 self-stretch md:self-auto">
+              {onAutoGeneratePlan && (
+                <button
+                  type="button"
+                  onClick={() => onAutoGeneratePlan(student?.student_id)}
+                  className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 cursor-pointer font-heading active:scale-95"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-300" />
+                  <span>2A. Auto Generate</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -1244,6 +1475,18 @@ export default function PlanBuilder({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
+                    {onAutoGeneratePlan && (
+                      <button
+                        type="button"
+                        onClick={() => onAutoGeneratePlan(student?.student_id)}
+                        className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 font-heading"
+                        title="Auto-generate optimal 72 CP study plan based on catalog & rules (Step 2A)"
+                      >
+                        <Zap className="w-3.5 h-3.5 text-amber-300" />
+                        <span>✨ Auto Generate Plan (2A)</span>
+                      </button>
+                    )}
+
                     {onOpenOfficialDocument && (
                       <button
                         onClick={onOpenOfficialDocument}

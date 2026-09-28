@@ -149,66 +149,94 @@ export default function GuideModal({ isOpen, onClose }) {
           {activeTab === 'chair_workflow' && (
             <div className="space-y-5">
               <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4.5 rounded-xl flex items-start gap-3.5 shadow-2xs">
-                <ShieldCheck className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <ShieldCheck className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">Academic Chair Quick Workflow</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">
+                    Academic Chair Governance Workflow (5-Step Process)
+                  </h3>
                   <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-xs">
-                    As an Academic Chair, you can select student profiles, structure their subjects across semesters or trimesters, run automated rule checks, and approve final study plans.
+                    Official Academic Chair process flow: Receive Request → Generate/Adjust (2A Auto vs 2B Manual) → Review & Validate → Finalise → Recommend to Student.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 5-Step Stepper Cards matching Process Flow Diagram */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">1. SELECT STUDENT</span>
+                    <span className="bg-slate-900 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">1. RECEIVE REQUEST</span>
                   </div>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Pick a Student Profile</h4>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Notification & Request Alert</h4>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs font-medium">
-                    Click <strong>Select Student</strong> in the top navigation bar to choose a student (such as Alex Mercer). The system immediately displays their degree major, completed subjects, and transcript history.
+                    Chair receives real-time notification drawer alert when a student submits a new study plan request or trimester replan request.
+                  </p>
+                </div>
+
+                <div className="bg-purple-50/70 dark:bg-purple-950/40 p-4 rounded-xl border-2 border-purple-300 dark:border-purple-800 space-y-2 shadow-2xs col-span-1 md:col-span-2 lg:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <span className="bg-purple-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">2. GENERATE / ADJUST STUDY PLAN</span>
+                    <span className="text-[10px] font-bold text-purple-800 dark:text-purple-300">Choice of 2 Pathways</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div className="bg-emerald-50 dark:bg-emerald-950/60 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800 space-y-1">
+                      <span className="text-[11px] font-extrabold text-emerald-900 dark:text-emerald-300 font-heading block">
+                        ✨ 2A. Auto System Generation
+                      </span>
+                      <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-snug">
+                        System automatically schedules an optimal 72-CP study plan based on unit offerings, prerequisites, and max 12 CP load limits.
+                      </p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-purple-200 dark:border-purple-800 space-y-1">
+                      <span className="text-[11px] font-extrabold text-purple-900 dark:text-purple-300 font-heading block">
+                        🛠️ 2B. Manual Adjustment
+                      </span>
+                      <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-snug">
+                        Academic Chair customizes and fine-tunes unit placements via drag-and-drop between trimesters as needed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="bg-slate-900 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">3. REVIEW</span>
+                  </div>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Automated Rule Engine Validation</h4>
+                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs font-medium">
+                    The rule validation console verifies BR-01 (Offerings), BR-02 (Prerequisites & failed retakes), and BR-04 (12 CP load limit).
                   </p>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">2. BUILD PLAN</span>
+                    <span className="bg-slate-900 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">4. FINALISE & RECOMMEND</span>
                   </div>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Drag & Drop Subjects</h4>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Recommend to Student</h4>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs font-medium">
-                    Drag subjects from the course catalog on the left into semester or trimester slots across Year 1, Year 2, and Year 3.
+                    Click <strong>Recommend to Student</strong>. The system automatically sends a notification to the student view informing them that their plan is ready for review.
                   </p>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">3. VALIDATE RULES</span>
+                    <span className="bg-emerald-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">5. FINAL APPROVAL</span>
                   </div>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Automatic Rule Checker</h4>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Grant Final Approval</h4>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs font-medium">
-                    The rule checker automatically alerts you if required prerequisite subjects are missing or if a semester load exceeds 12 credit points.
-                  </p>
-                </div>
-
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
-                  <div className="flex items-center justify-between">
-                    <span className="bg-red-700 text-white font-mono text-[10px] px-2.5 py-0.5 rounded font-bold">4. APPROVE & ARCHIVE</span>
-                  </div>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">Recommend & Approve</h4>
-                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs font-medium">
-                    Click <strong>Recommend to Student</strong>. Once the student reviews and signs off, click <strong>Final Approve Plan</strong> to complete the process.
+                    After the student digitally signs off, the Academic Chair grants final approval and archives the certified study plan.
                   </p>
                 </div>
               </div>
 
               {/* Data Sync info */}
-              <div className="bg-red-50/90 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 p-4 rounded-xl space-y-2 shadow-2xs">
+              <div className="bg-purple-50/90 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/60 p-4 rounded-xl space-y-2 shadow-2xs">
                 <h4 className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2 font-heading">
-                  <CheckCircle2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                  Real-Time Data Sync & Audit Logging
+                  <CheckCircle2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  Real-Time Notification & Audit Logging
                 </h4>
                 <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-medium">
-                  • <strong>Real-Time Updates</strong>: Subject additions, semester switches, and plan status changes update instantly across all screens.<br />
-                  • <strong>Audit History</strong>: Every status update (Draft, Recommended, Agreed, Approved) is recorded in the audit log so you can review version history anytime.
+                  • <strong>Notifications</strong>: Notifications flow automatically between Student View and Academic Chair View.<br />
+                  • <strong>Audit History</strong>: Version tracking logs every recommendation, sign-off, and approval step.
                 </p>
               </div>
             </div>
@@ -218,52 +246,64 @@ export default function GuideModal({ isOpen, onClose }) {
           {activeTab === 'student_workflow' && (
             <div className="space-y-5">
               <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4.5 rounded-xl flex items-start gap-3.5 shadow-2xs">
-                <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">Student Portal Review Guide</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm font-heading">
+                    Student Study Plan Flow (5-Step Process)
+                  </h3>
                   <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-xs">
-                    Students can inspect their recommended study plan, verify total credit points (72 CP target), digitally sign off on their plan, and download official PDF copies.
+                    Official Student process flow: Log In / View Baseline → Submit Request → Digital Sign-Off → Receive Updates → Enrol.
                   </p>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-mono text-[10px] font-bold flex items-center justify-center shrink-0">1</span>
                   <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">1. View Perspective</h4>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">Log In / View Baseline Plan</h4>
                     <p className="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed text-xs font-medium">
-                      Use the role toggle at the top of the navigation bar to switch between Academic Chair View and Student View.
+                      Student logs into the portal and views their current degree major baseline study plan and completed subjects in academic history.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 bg-blue-50/60 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800 shadow-2xs">
+                  <span className="w-6 h-6 rounded-full bg-blue-700 text-white font-mono text-[10px] font-bold flex items-center justify-center shrink-0">2</span>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">Submit Plan Request (New Plan or Replan)</h4>
+                    <p className="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed text-xs font-medium">
+                      Student clicks <strong>Submit Plan Request</strong> to specify target academic year and trimesters (e.g. T1, T2, T3 2026). The Academic Chair automatically receives a notification.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-mono text-[10px] font-bold flex items-center justify-center shrink-0">3</span>
                   <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">2. Review Subjects</h4>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">Digital Sign-Off</h4>
                     <p className="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed text-xs font-medium">
-                      Check your scheduled subjects for Year 1, Year 2, and Year 3 to ensure the workload suits your timetable.
+                      Once the Academic Chair recommends the study plan, the student reviews the unit layout and signs off using the digital signature pad.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-mono text-[10px] font-bold flex items-center justify-center shrink-0">4</span>
                   <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">3. Digital Sign-Off</h4>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">Receive Updates</h4>
                     <p className="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed text-xs font-medium">
-                      Tick the digital sign-off agreement box and click <strong>Submit Digital Sign-Off</strong> to confirm your agreement.
+                      Student receives real-time notification alerts whenever the Academic Chair makes updates or grants final approval.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-4 bg-emerald-50/60 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                  <span className="w-6 h-6 rounded-full bg-emerald-700 text-white font-mono text-[10px] font-bold flex items-center justify-center shrink-0">5</span>
                   <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">4. Export Document</h4>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white font-heading text-xs">Enrol in Classes</h4>
                     <p className="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed text-xs font-medium">
-                      Click <strong>Export PDF / Image</strong> to view or print your official formatted study plan document.
+                      Student uses the approved 72 CP Study Plan to enrol in classes for upcoming teaching periods.
                     </p>
                   </div>
                 </div>
