@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserCheck, GraduationCap, Building2, ChevronRight, X, ArrowUpDown, UserPlus, Edit3, ArrowLeft } from 'lucide-react';
+import { Search, UserPlus, Edit3, ArrowLeft, X, ArrowUpDown, ChevronRight, GraduationCap } from 'lucide-react';
 
 export default function StudentSelectModal({ students = [], onSelectStudent, onAddStudentClick, onEditStudentClick, onClose, isModal = false }) {
   const [categoryFilter, setCategoryFilter] = useState('ALL'); // 'ALL' | 'existing_student' | 'new_student'
@@ -51,26 +51,33 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
       return sortOrder === 'asc' ? comp : -comp;
     });
 
+  const countAll = studentOnlyList.length;
+  const countExisting = studentOnlyList.filter(s => s.account_category === 'existing_student').length;
+  const countNew = studentOnlyList.filter(s => s.account_category === 'new_student').length;
+
   const content = (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl max-w-2xl w-full mx-auto font-sans text-slate-900 dark:text-slate-100 transition-colors">
-      {/* Top Bar / Header */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xl max-w-5xl lg:max-w-6xl w-full mx-auto font-sans text-slate-900 dark:text-slate-100 transition-all">
+      {/* Header Bar */}
+      <div className="flex items-start justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight font-heading">
-            Select Student Profile
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Choose a student profile to view or edit active study plan and academic progress.
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-red-700 dark:text-red-500" />
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight font-heading">
+              Student Directory & Profiles
+            </h2>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Select an active student profile to review study plans, view academic progress, or update enrollment status.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0">
           {onAddStudentClick && (
             <button
               onClick={onAddStudentClick}
-              className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="px-4 py-2 bg-red-700 hover:bg-red-800 active:bg-red-900 text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-2 shadow-xs cursor-pointer"
             >
-              <UserPlus className="w-3.5 h-3.5" />
+              <UserPlus className="w-4 h-4" />
               <span>Add Student</span>
             </button>
           )}
@@ -78,7 +85,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
           {isModal && onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+              className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
               title="Close (ESC)"
             >
               <X className="w-4 h-4" />
@@ -87,24 +94,24 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
         </div>
       </div>
 
-      {/* Control Row: Search & Filters */}
+      {/* Controls Area: Search + Underline Line Tabs + Sort */}
       <div className="space-y-3 mb-4">
-        {/* Search Bar */}
+        {/* Search Input */}
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             id="student-select-search-input"
             type="text"
             placeholder="Search by student name, ID (e.g. PT3-2026-001), or major..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            className="w-full bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-10 pr-9 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all placeholder:text-slate-400"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-0.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
               title="Clear search"
             >
               <X className="w-3.5 h-3.5" />
@@ -112,84 +119,56 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
           )}
         </div>
 
-        {/* Filter Pills & Sort Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+        {/* Filter Line Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200/80 dark:border-slate-800 gap-3">
+          <div className="flex items-center gap-6 text-xs sm:text-sm font-medium">
             <button
               onClick={() => setCategoryFilter('ALL')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`pb-2.5 transition-all cursor-pointer relative ${
                 categoryFilter === 'ALL'
-                  ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'text-red-700 dark:text-red-400 font-bold border-b-2 border-red-700 dark:border-red-500'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              All ({studentOnlyList.length})
+              All Students <span className="text-xs text-slate-400 font-normal ml-1">({countAll})</span>
             </button>
             <button
               onClick={() => setCategoryFilter('existing_student')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`pb-2.5 transition-all cursor-pointer relative ${
                 categoryFilter === 'existing_student'
-                  ? 'bg-blue-600 text-white shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400'
+                  ? 'text-red-700 dark:text-red-400 font-bold border-b-2 border-red-700 dark:border-red-500'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              Existing ({studentOnlyList.filter(s => s.account_category === 'existing_student').length})
+              Existing Students <span className="text-xs text-slate-400 font-normal ml-1">({countExisting})</span>
             </button>
             <button
               onClick={() => setCategoryFilter('new_student')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`pb-2.5 transition-all cursor-pointer relative ${
                 categoryFilter === 'new_student'
-                  ? 'bg-emerald-600 text-white shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'
+                  ? 'text-red-700 dark:text-red-400 font-bold border-b-2 border-red-700 dark:border-red-500'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
-              New ({studentOnlyList.filter(s => s.account_category === 'new_student').length})
+              New Students <span className="text-xs text-slate-400 font-normal ml-1">({countNew})</span>
             </button>
           </div>
 
-          {/* Sort Selector */}
-          <div className="flex items-center gap-1.5 self-end sm:self-auto">
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase px-1">
-                Sort:
-              </span>
-              <button
-                onClick={() => setSortBy('name')}
-                className={`px-2 py-0.5 rounded-md text-xs transition-all cursor-pointer ${
-                  sortBy === 'name'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold shadow-2xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                Name
-              </button>
-              <button
-                onClick={() => setSortBy('id')}
-                className={`px-2 py-0.5 rounded-md text-xs transition-all cursor-pointer ${
-                  sortBy === 'id'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold shadow-2xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                ID
-              </button>
-              <button
-                onClick={() => setSortBy('course')}
-                className={`px-2 py-0.5 rounded-md text-xs transition-all cursor-pointer ${
-                  sortBy === 'course'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold shadow-2xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                Major
-              </button>
-            </div>
-
+          <div className="flex items-center gap-2 pb-2 text-xs text-slate-500">
+            <span>Sort by:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1 font-medium focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer text-xs"
+            >
+              <option value="name">Name</option>
+              <option value="id">Student ID</option>
+              <option value="course">Major</option>
+            </select>
             <button
               onClick={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
-              className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl transition-colors cursor-pointer"
-              title={`Order: ${sortOrder === 'asc' ? 'Ascending (A-Z)' : 'Descending (Z-A)'}`}
+              className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              title={`Order: ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`}
             >
               <ArrowUpDown className={`w-3.5 h-3.5 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
             </button>
@@ -197,88 +176,107 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
         </div>
       </div>
 
-      {/* Student List Grid */}
-      <div className="space-y-2.5 max-h-[380px] sm:max-h-[440px] overflow-y-auto pr-1">
+      {/* Structured Academic Directory Table */}
+      <div className="border border-slate-200/90 dark:border-slate-800 rounded-xl overflow-hidden max-h-[380px] overflow-y-auto">
         {filteredStudents.length === 0 ? (
-          <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-            <p className="text-xs text-slate-500 dark:text-slate-400">No students match your search criteria.</p>
+          <div className="text-center py-12 bg-slate-50/50 dark:bg-slate-800/30">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">No student profiles match your search criteria.</p>
           </div>
         ) : (
-          filteredStudents.map(student => (
-            <div
-              key={student.student_id}
-              onClick={() => onSelectStudent(student)}
-              className="group bg-slate-50/50 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 hover:border-red-500 dark:hover:border-red-500/80 rounded-xl p-3.5 transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-slate-900 dark:bg-slate-700 text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 group-hover:bg-red-600 transition-colors">
-                  {student.first_name ? student.first_name[0] : 'S'}
-                </div>
-                <div className="min-w-0 space-y-0.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors truncate">
-                      {student.first_name} {student.last_name}
-                    </h3>
-                    <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                      {student.course_code || 'PT3-BSIT'}
-                    </span>
-                    {student.account_category === 'new_student' ? (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                        New Student
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        Existing Student
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
-                    {student.course_name || 'Bachelor of Information Technology'}
-                  </p>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-                    <span>ID: <strong className="text-slate-600 dark:text-slate-300">{student.student_number}</strong></span>
-                    <span>•</span>
-                    <span className="truncate">Singapore Campus</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-1.5 shrink-0 pt-2 sm:pt-0 border-t border-slate-200/60 sm:border-t-0 dark:border-slate-700/50">
-                {onEditStudentClick && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditStudentClick(student);
-                    }}
-                    className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700 rounded-lg transition-all cursor-pointer"
-                    title="Edit Student Profile"
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200/90 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-3 px-4">Student Profile & ID</th>
+                <th className="py-3 px-4">Degree Program</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {filteredStudents.map(student => {
+                const isNew = student.account_category === 'new_student';
+                return (
+                  <tr
+                    key={student.student_id}
+                    onClick={() => onSelectStudent(student)}
+                    className="group hover:bg-slate-50/90 dark:hover:bg-slate-800/70 transition-colors cursor-pointer"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectStudent(student);
-                  }}
-                  className="px-3 py-1.5 bg-slate-900 dark:bg-red-700 group-hover:bg-red-600 text-white text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1 shadow-2xs cursor-pointer w-full sm:w-auto"
-                >
-                  <span>Select Student</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))
+                    {/* Student Name & ID */}
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200/80 dark:border-slate-600">
+                          {student.first_name ? student.first_name[0] : 'S'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors text-sm">
+                            {student.first_name} {student.last_name}
+                          </div>
+                          <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
+                            <span>ID: <strong className="text-slate-700 dark:text-slate-300 font-semibold">{student.student_number}</strong></span>
+                            <span className="text-slate-300 dark:text-slate-600">|</span>
+                            <span className="text-slate-500 font-semibold">{student.course_code || 'PT3-BSIT'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Degree Program */}
+                    <td className="py-3.5 px-4">
+                      <div className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        {student.course_name || 'Bachelor of Information Technology'}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        Singapore Campus
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${
+                        isNew
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60'
+                          : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60'
+                      }`}>
+                        {isNew ? 'New Student' : 'Existing Student'}
+                      </span>
+                    </td>
+
+                    {/* Action */}
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                        {onEditStudentClick && (
+                          <button
+                            onClick={() => onEditStudentClick(student)}
+                            className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all cursor-pointer"
+                            title="Edit Student Profile"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => onSelectStudent(student)}
+                          className="px-3.5 py-1.5 bg-red-700 hover:bg-red-800 active:bg-red-900 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
+                        >
+                          <span>Select</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+      {/* Footer Info */}
+      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
         <span>Showing {filteredStudents.length} student profiles</span>
         {isModal && onClose && (
           <button
             onClick={onClose}
-            className="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium transition-all flex items-center gap-1 cursor-pointer"
+            className="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
             <span>Back to Study Plan</span>
@@ -291,10 +289,10 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
   if (isModal) {
     return (
       <div 
-        className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
         onClick={onClose}
       >
-        <div onClick={(e) => e.stopPropagation()} className="w-full max-w-2xl my-auto">
+        <div onClick={(e) => e.stopPropagation()} className="w-full max-w-5xl lg:max-w-6xl my-auto">
           {content}
         </div>
       </div>
@@ -302,7 +300,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
   }
 
   return (
-    <div className="py-6 sm:py-12 px-3 sm:px-4 flex items-center justify-center">
+    <div className="py-3 sm:py-6 px-3 sm:px-4 flex items-center justify-center">
       {content}
     </div>
   );

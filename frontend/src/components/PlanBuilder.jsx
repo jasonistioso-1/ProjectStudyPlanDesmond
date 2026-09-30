@@ -1031,8 +1031,9 @@ export default function PlanBuilder({
 
                                     <div className="flex items-center gap-1.5 shrink-0">
                                       {isCompleted && (
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans shrink-0">
-                                          ✓ Passed {hist?.grade ? `(${hist.grade})` : ''}
+                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans shrink-0" title="Completed in official academic record">
+                                          <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                          <span>Grade: <strong className="font-mono text-emerald-900 dark:text-emerald-200 font-extrabold">{hist?.grade || 'P'}</strong></span>
                                         </span>
                                       )}
                                       {isEnrolled && (
