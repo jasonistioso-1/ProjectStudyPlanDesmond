@@ -6,7 +6,7 @@ export default function StudentTestimonials() {
     {
       name: 'Alex Johnson',
       role: 'Bachelor of IT (Software Major)',
-      campus: 'PT3 Solutions Perth Campus',
+      campus: 'Singapore Campus',
       rating: 5,
       avatarBg: 'bg-emerald-700',
       initials: 'AJ',

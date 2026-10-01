@@ -49,7 +49,7 @@ export default function GuideModal({ isOpen, onClose }) {
     { count: '8', name: 'StudyPlanUnit', desc: 'Scheduled subjects inside a plan mapped to specific study years and teaching periods.', schema: 'plan_unit_id (PK), plan_id (FK), unit_id (FK), period_id (FK), year_level' },
     { count: '9', name: 'StudyPlanVersion', desc: 'Audit trail records logging every change and version update made to a study plan.', schema: 'version_id (PK), plan_id (FK), version_number, plan_status, amendment_reason' },
     { count: '10', name: 'TeachingPeriod', desc: 'Study terms including Semesters (S1, S2) and Trimesters (T1, T2, T3).', schema: 'period_id (PK), code, name, period_type, sequence_order' },
-    { count: '11', name: 'Location', desc: 'University campus locations (Singapore, Perth, Dubai, Online).', schema: 'location_id (PK), code, name' }
+    { count: '11', name: 'Location', desc: 'University campus locations (Singapore, Dubai, Online).', schema: 'location_id (PK), code, name' }
   ];
 
   return (

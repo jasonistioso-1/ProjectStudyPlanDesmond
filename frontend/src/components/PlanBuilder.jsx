@@ -45,6 +45,7 @@ import {
   Clock,
   Sparkles,
   Sliders,
+  Wand2,
   Cpu,
   X
 } from 'lucide-react';
@@ -85,7 +86,7 @@ export default function PlanBuilder({
   const [viewMode, setViewMode] = useState('single'); // 'single' = Single Year Focus Slide, 'all' = All Years Grid
   const [agreedConfirmed, setAgreedConfirmed] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState(null);
-  const [showAllCatalogUnits, setShowAllCatalogUnits] = useState(true);
+  const [showAllCatalogUnits, setShowAllCatalogUnits] = useState(false);
   const [showWorkflowGuide, setShowWorkflowGuide] = useState(false);
   const [activeRequestModal, setActiveRequestModal] = useState(null);
   const [requestCommentInput, setRequestCommentInput] = useState('');
@@ -106,6 +107,7 @@ export default function PlanBuilder({
   const [showAutoGenModal, setShowAutoGenModal] = useState(false);
   const [scopeYear, setScopeYear] = useState('all');
   const [scopePeriods, setScopePeriods] = useState([3, 4, 5]);
+  const [modalLayoutType, setModalLayoutType] = useState('trimester');
 
   // Calculate completed/passed years from student history
   const passedYears = useMemo(() => {
@@ -179,6 +181,9 @@ export default function PlanBuilder({
       const targetLvl = Number(currentPlan.requestYear) === 2027 ? 2 : Number(currentPlan.requestYear) === 2028 ? 3 : 1;
       setActiveYearLevel(targetLvl);
       setViewMode('single');
+    }
+    if (currentPlan && currentPlan.layoutType) {
+      setLayoutType(currentPlan.layoutType);
     }
   }, [currentPlan, student]);
 
@@ -338,6 +343,18 @@ export default function PlanBuilder({
     }
   });
 
+  // General Elective Rule Check (MSP200 or COM203)
+  const hasMSP200 = planUnits.some(u => u.code === 'MSP200') || completedUnitCodes.has('MSP200');
+  const hasCOM203 = planUnits.some(u => u.code === 'COM203') || completedUnitCodes.has('COM203');
+
+  if (hasMSP200 && hasCOM203) {
+    warningsList.push({
+      type: 'GENERAL_ELECTIVE_NOTICE',
+      severity: 'info',
+      message: 'Both MSP200 and COM203 are scheduled. Note: Only one General Elective (MSP200 OR COM203) is required for graduation.'
+    });
+  }
+
   // Handle Drag Start
   const handleDragStart = (event) => {
     if (isPlanLocked) {
@@ -360,6 +377,53 @@ export default function PlanBuilder({
         if (catalogUnit) setActiveDragItem(catalogUnit);
       }
     }
+  };
+
+  // Validate prerequisite and max 12 CP capacity limit for unit placement
+  const validatePlacement = (unitCode, targetYear, targetPeriod, currentUnits, activeDragCode = null) => {
+    // 1. Prerequisite Validation
+    const prereqCode = prereqMap[unitCode];
+    if (prereqCode) {
+      const isCompletedInHistory = completedUnitCodes.has(prereqCode);
+      if (!isCompletedInHistory) {
+        const isScheduledPrior = currentUnits.some(other => {
+          if (activeDragCode && other.code === activeDragCode) return false;
+          if (other.code !== prereqCode) return false;
+          if (other.year_level < targetYear) return true;
+          if (other.year_level === targetYear && (other.period_id || 0) < targetPeriod) return true;
+          return false;
+        });
+
+        if (!isScheduledPrior) {
+          const unitObj = catalogUnits.find(u => u.code === unitCode);
+          const title = unitObj ? unitObj.title : unitCode;
+          return {
+            valid: false,
+            message: `Prerequisite Violation: Unit ${unitCode} (${title}) requires prerequisite ${prereqCode}, which has NOT been completed in an earlier teaching period!`
+          };
+        }
+      }
+    }
+
+    // 2. Maximum 12 CP Capacity Limit Validation
+    const periodUnits = currentUnits.filter(u => {
+      if (activeDragCode && u.code === activeDragCode) return false;
+      return Number(u.year_level) === Number(targetYear) && Number(u.period_id) === Number(targetPeriod);
+    });
+
+    const currentPeriodCP = periodUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+    const unitObj = catalogUnits.find(u => u.code === unitCode);
+    const unitCP = Number(unitObj?.credit_points || 3);
+
+    if (currentPeriodCP + unitCP > 12) {
+      const pName = targetPeriod === 1 ? 'Semester 1' : targetPeriod === 2 ? 'Semester 2' : targetPeriod === 3 ? 'Trimester 1' : targetPeriod === 4 ? 'Trimester 2' : 'Trimester 3';
+      return {
+        valid: false,
+        message: `Credit Load Exceeded: Adding ${unitCode} (${unitCP} CP) into Year ${targetYear} ${pName} would exceed the maximum 12 CP limit (${currentPeriodCP + unitCP} / 12 CP)!`
+      };
+    }
+
+    return { valid: true };
   };
 
   // Handle Drag End
@@ -422,6 +486,14 @@ export default function PlanBuilder({
           setTimeout(() => setDragWarningToast(null), 4500);
           return;
         }
+
+        const check = validatePlacement(unit.code, targetYear, targetPeriod, planUnits);
+        if (!check.valid) {
+          setDragWarningToast(check.message);
+          setTimeout(() => setDragWarningToast(null), 5000);
+          return;
+        }
+
         const updated = [
           ...planUnits,
           {
@@ -443,6 +515,14 @@ export default function PlanBuilder({
           setTimeout(() => setDragWarningToast(null), 4500);
           return;
         }
+
+        const check = validatePlacement(existingUnit.code, targetYear, targetPeriod, planUnits, existingUnit.code);
+        if (!check.valid) {
+          setDragWarningToast(check.message);
+          setTimeout(() => setDragWarningToast(null), 5000);
+          return;
+        }
+
         const updated = planUnits.map(u =>
           (String(u.unit_id || u.code) === activeId || u.code === existingUnit.code)
             ? { ...u, year_level: targetYear, period_id: targetPeriod }
@@ -486,11 +566,19 @@ export default function PlanBuilder({
     const existing = planUnits.find(u => u.code === unit.code);
     if (existing) {
       const info = getTermName(existing.year_level, existing.period_id);
-      showToast(`Unit ${unit.code} (${unit.title}) is ALREADY scheduled in ${info}.`, 'info');
+      setDragWarningToast(`Unit ${unit.code} (${unit.title}) is ALREADY scheduled in ${info}.`);
+      setTimeout(() => setDragWarningToast(null), 4500);
       return;
     }
 
     const defaultPeriod = defaultPeriodList[0] ? defaultPeriodList[0].period_id : 3;
+    const check = validatePlacement(unit.code, 1, defaultPeriod, planUnits);
+    if (!check.valid) {
+      setDragWarningToast(check.message);
+      setTimeout(() => setDragWarningToast(null), 5000);
+      return;
+    }
+
     const newPlanUnit = {
       unit_id: unit.unit_id,
       code: unit.code,
@@ -504,7 +592,6 @@ export default function PlanBuilder({
     const updated = [...planUnits, newPlanUnit];
     setPlanUnits(updated);
     if (onValidate) onValidate(updated);
-    showToast(`Added ${unit.code} to ${getTermName(1, defaultPeriod)}`);
   };
 
   // Add unit from palette to a specific target semester
@@ -524,7 +611,15 @@ export default function PlanBuilder({
     const existing = planUnits.find(u => u.code === unit.code);
     if (existing) {
       const info = getTermName(existing.year_level, existing.period_id);
-      showToast(`Unit ${unit.code} (${unit.title}) is ALREADY scheduled in ${info}.`, 'info');
+      setDragWarningToast(`Unit ${unit.code} (${unit.title}) is ALREADY scheduled in ${info}.`);
+      setTimeout(() => setDragWarningToast(null), 4500);
+      return;
+    }
+
+    const check = validatePlacement(unit.code, yearLevel, periodId, planUnits);
+    if (!check.valid) {
+      setDragWarningToast(check.message);
+      setTimeout(() => setDragWarningToast(null), 5000);
       return;
     }
 
@@ -541,7 +636,6 @@ export default function PlanBuilder({
     const updated = [...planUnits, newPlanUnit];
     setPlanUnits(updated);
     if (onValidate) onValidate(updated);
-    showToast(`Added ${unit.code} to ${getTermName(yearLevel, periodId)}`);
   };
 
   // Preset 3-Year Singapore Trimester Fast-Track Plan (72 CP across 3 Years)
@@ -664,22 +758,81 @@ export default function PlanBuilder({
     if (onValidate) onValidate(updated);
   };
 
-  const scheduledCodesSet = new Set(planUnits.map(pu => pu.code));
+  const scheduledCodesSet = useMemo(() => {
+    const set = new Set(planUnits.map(pu => pu.code));
+    (history || []).filter(h => h.status === 'completed').forEach(h => set.add(h.unit_code || h.code));
+    return set;
+  }, [planUnits, history]);
+
+  const defaultFullCatalogUnits = useMemo(() => [
+    { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, level: 100, prereqs: 'None' },
+    { unit_id: 2, code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, level: 100, prereqs: 'None' },
+    { unit_id: 3, code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, level: 100, prereqs: 'None' },
+    { unit_id: 4, code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, level: 100, prereqs: 'ICT159' },
+    { unit_id: 5, code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, level: 100, prereqs: 'None' },
+    { unit_id: 6, code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, level: 100, prereqs: 'None' },
+    { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, level: 100, prereqs: 'None' },
+    { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200, prereqs: 'ICT158' },
+    { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, level: 200, prereqs: 'ICT159' },
+    { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, level: 200, prereqs: 'ICT167' },
+    { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, level: 200, prereqs: 'ICT167' },
+    { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, level: 200, prereqs: 'ICT167' },
+    { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200, prereqs: 'ICT158' },
+    { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, level: 200, prereqs: 'ICT159' },
+    { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, level: 200, prereqs: 'ICT158' },
+    { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, level: 200, prereqs: 'ICT158' },
+    { unit_id: 17, code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, level: 100, prereqs: 'None' },
+    { unit_id: 18, code: 'MAS164', title: 'Fundamentals of Mathematics', credit_points: 3, level: 100, prereqs: 'None' },
+    { unit_id: 19, code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, level: 100, prereqs: 'None' },
+    { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, level: 300, prereqs: 'ICT292' },
+    { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, level: 300, prereqs: 'ICT201' },
+    { unit_id: 22, code: 'ICT303', title: 'Advanced Machine Learning', credit_points: 3, level: 300, prereqs: 'ICT202' },
+    { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, level: 300, prereqs: 'ICT203' },
+    { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, level: 300, prereqs: 'ICT202' },
+    { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300, prereqs: 'ICT283' },
+    { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300, prereqs: 'ICT283' },
+    { unit_id: 27, code: 'ICT393', title: 'Advanced Business Analysis', credit_points: 3, level: 300, prereqs: 'ICT284' },
+    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prereqs: 'ICT285' },
+    { unit_id: 29, code: 'MSP200', title: 'Building Employability Skills', credit_points: 3, level: 200, prereqs: 'None' },
+    { unit_id: 30, code: 'COM203', title: 'Consulting and Freelancing', credit_points: 3, level: 200, prereqs: 'None' }
+  ], []);
+
+  const effectiveCatalog = useMemo(() => {
+    if (!catalogUnits || catalogUnits.length === 0) return defaultFullCatalogUnits;
+    const existingCodes = new Set(catalogUnits.map(u => u.code));
+    const missingUnits = defaultFullCatalogUnits.filter(u => !existingCodes.has(u.code));
+    return [...catalogUnits, ...missingUnits];
+  }, [catalogUnits, defaultFullCatalogUnits]);
 
   // Filtered available offerings
-  const filteredOfferings = catalogUnits.filter(unit => {
-    const isAlreadyScheduled = scheduledCodesSet.has(unit.code);
-    if (!showAllCatalogUnits && isAlreadyScheduled) return false;
-    if (selectedLevel !== 'ALL' && String(unit.level) !== selectedLevel) return false;
-    if (unitFilter.trim()) {
-      const query = unitFilter.toLowerCase();
-      return (
-        unit.code.toLowerCase().includes(query) ||
-        (unit.title && unit.title.toLowerCase().includes(query))
-      );
-    }
-    return true;
-  });
+  const filteredOfferings = useMemo(() => {
+    return effectiveCatalog.filter(unit => {
+      const isAlreadyScheduled = scheduledCodesSet.has(unit.code);
+      if (!showAllCatalogUnits && isAlreadyScheduled) return false;
+
+      if (selectedLevel === 'ELECTIVE') {
+        if (!['MSP200', 'COM203'].includes(unit.code)) return false;
+      } else if (selectedLevel === 'CORE') {
+        if (['MSP200', 'COM203'].includes(unit.code)) return false;
+      } else if (selectedLevel !== 'ALL' && String(unit.level) !== selectedLevel) {
+        return false;
+      }
+
+      if (unitFilter.trim()) {
+        const query = unitFilter.toLowerCase();
+        return (
+          unit.code.toLowerCase().includes(query) ||
+          (unit.title && unit.title.toLowerCase().includes(query))
+        );
+      }
+      return true;
+    }).sort((a, b) => {
+      if (selectedLevel === 'CORE') {
+        return (a.level || 100) - (b.level || 100);
+      }
+      return 0;
+    });
+  }, [effectiveCatalog, scheduledCodesSet, showAllCatalogUnits, selectedLevel, unitFilter]);
 
   const years = [
     { level: 1, yearName: 'Year 1 (2026)' },
@@ -1245,26 +1398,69 @@ export default function PlanBuilder({
                 </div>
               </div>
 
-              {/* Teaching Period Selection: Trimester (Active) vs Semester (Inactive) */}
+              {/* Teaching Period Selection: Trimester vs Semester Layout Choice */}
               <div className="space-y-3 pt-1">
                 <label className="block text-xs font-black text-slate-800 dark:text-slate-200 font-heading uppercase tracking-wider">
-                  2. Select Teaching Periods:
+                  2. Select Teaching Period System & Terms:
                 </label>
 
-                {/* Trimester System - Clean Standard Layout */}
+                {/* System Choice Radio Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLayoutType('trimester');
+                      setReqPeriods([3, 4, 5]);
+                    }}
+                    className={`p-3.5 rounded-2xl border text-left text-xs font-black transition-all cursor-pointer font-heading flex flex-col justify-between gap-1.5 ${
+                      layoutType === 'trimester'
+                        ? 'bg-slate-900 text-white border-slate-900 dark:bg-red-700 dark:border-red-600 shadow-md scale-[1.01]'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>Trimester System</span>
+                      {layoutType === 'trimester' && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded font-mono font-bold">Active</span>}
+                    </div>
+                    <span className="text-[10px] opacity-80 font-sans font-medium">3 Periods / Year (T1, T2, T3)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLayoutType('semester');
+                      setReqPeriods([1, 2]);
+                    }}
+                    className={`p-3.5 rounded-2xl border text-left text-xs font-black transition-all cursor-pointer font-heading flex flex-col justify-between gap-1.5 ${
+                      layoutType === 'semester'
+                        ? 'bg-slate-900 text-white border-slate-900 dark:bg-red-700 dark:border-red-600 shadow-md scale-[1.01]'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>Semester System</span>
+                      {layoutType === 'semester' && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded font-mono font-bold">Active</span>}
+                    </div>
+                    <span className="text-[10px] opacity-80 font-sans font-medium">2 Semesters / Year (S1, S2)</span>
+                  </button>
+                </div>
+
+                {/* Period Selection for Selected System */}
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs md:text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2 font-heading">
-                      <Calendar className="w-4 h-4 text-slate-700 dark:text-slate-300" />
-                      Trimester System (Singapore Standard)
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2.5 text-xs">
-                    {[
+                  <span className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-2 font-heading">
+                    <Calendar className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    <span>{layoutType === 'semester' ? 'Select Target Semesters (2 Terms/Year):' : 'Select Target Trimesters (3 Terms/Year):'}</span>
+                  </span>
+
+                  <div className={`grid ${layoutType === 'semester' ? 'grid-cols-2' : 'grid-cols-3'} gap-2.5 text-xs`}>
+                    {(layoutType === 'semester' ? [
+                      { id: 1, label: 'Semester 1 (S1)' },
+                      { id: 2, label: 'Semester 2 (S2)' }
+                    ] : [
                       { id: 3, label: 'Trimester 1 (T1)' },
                       { id: 4, label: 'Trimester 2 (T2)' },
                       { id: 5, label: 'Trimester 3 (T3)' }
-                    ].map(t => {
+                    ]).map(t => {
                       const isChecked = reqPeriods.includes(t.id);
                       return (
                         <label
@@ -1293,27 +1489,6 @@ export default function PlanBuilder({
                     })}
                   </div>
                 </div>
-
-                {/* Semester System (Inactive Layout) */}
-                <div className="p-3.5 bg-slate-100/50 dark:bg-slate-800/20 rounded-2xl border border-slate-200/60 dark:border-slate-800 space-y-2 opacity-50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2 font-heading">
-                      <Lock className="w-3.5 h-3.5 text-slate-400" />
-                      Semester System (Perth Scalability)
-                    </span>
-                    <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold px-2.5 py-0.5 rounded-md border border-slate-300 dark:border-slate-700">
-                      INACTIVE
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5 text-xs">
-                    <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-center font-bold text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 cursor-not-allowed">
-                      Semester 1 (S1) - Disabled
-                    </div>
-                    <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-center font-bold text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 cursor-not-allowed">
-                      Semester 2 (S2) - Disabled
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Additional Request Comment */}
@@ -1330,7 +1505,7 @@ export default function PlanBuilder({
                   {[
                     `Full ${reqYear} Fast-Track Replan`,
                     `Focus on Core Major Electives`,
-                    `Adjust Trimester 3 Unit Load`
+                    layoutType === 'semester' ? `Adjust Semester 2 Unit Load` : `Adjust Trimester 3 Unit Load`
                   ].map((chip, idx) => (
                     <button
                       key={idx}
@@ -1347,7 +1522,7 @@ export default function PlanBuilder({
                   rows={3}
                   value={reqComment}
                   onChange={(e) => setReqComment(e.target.value)}
-                  placeholder="e.g. Requesting study plan for 2026 Trimesters 1, 2, 3 with focus on major core electives..."
+                  placeholder={layoutType === 'semester' ? "e.g. Requesting study plan for 2026 Semesters 1 & 2 with focus on major core electives..." : "e.g. Requesting study plan for 2026 Trimesters 1, 2, 3 with focus on major core electives..."}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-2xl text-xs md:text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-red-600 shadow-inner"
                 />
               </div>
@@ -1364,13 +1539,14 @@ export default function PlanBuilder({
                   type="button"
                   onClick={() => {
                     if (reqPeriods.length === 0) {
-                      alert('Please select at least one trimester period.');
+                      alert(layoutType === 'semester' ? 'Please select at least one semester period.' : 'Please select at least one trimester period.');
                       return;
                     }
                     if (onStudentSubmitPlanRequest) {
                       onStudentSubmitPlanRequest({
                         year: reqYear,
                         periodIds: reqPeriods,
+                        layoutType: layoutType,
                         comment: reqComment.trim()
                       });
                     }
@@ -1508,10 +1684,10 @@ export default function PlanBuilder({
                   type="button"
                   onClick={handleOpenAutoGenModal}
                   className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-900 dark:hover:bg-purple-800 rounded-xl text-xs font-extrabold shadow-2xs flex items-center gap-2 cursor-pointer transition-all active:scale-95 border border-slate-700 font-sans"
-                  title="Generate recommended study plan automatically based on course offerings and prerequisite rules"
+                  title="Auto-fill recommended study plan based on course offerings and prerequisite rules"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-purple-200 dark:text-purple-300 shrink-0" />
-                  <span>Auto System Generation</span>
+                  <Wand2 className="w-3.5 h-3.5 text-purple-200 dark:text-purple-300 shrink-0" />
+                  <span>Auto-Fill Preset Plan</span>
                 </button>
               )}
             </div>
@@ -1666,9 +1842,11 @@ export default function PlanBuilder({
                 setSelectedLevel={setSelectedLevel}
                 showAllCatalogUnits={showAllCatalogUnits}
                 setShowAllCatalogUnits={setShowAllCatalogUnits}
-                totalCatalogCount={catalogUnits.length}
+                totalCatalogCount={effectiveCatalog.length}
                 scheduledCodesSet={scheduledCodesSet}
                 scheduledUnitsMap={scheduledUnitsMap}
+                historyMap={historyMap}
+                studentMajor={stMajor}
                 onAddUnit={handleAddUnitFromPalette}
                 onAddToSpecificSemester={handleAddToSpecificSemester}
                 layoutType={layoutType}
@@ -1736,10 +1914,10 @@ export default function PlanBuilder({
                         type="button"
                         onClick={handleOpenAutoGenModal}
                         className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl text-xs font-extrabold shadow-2xs transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-slate-700 font-sans"
-                        title="Generate recommended study plan automatically based on course offerings and prerequisite rules"
+                        title="Auto-fill recommended study plan based on course offerings and prerequisite rules"
                       >
-                        <Sliders className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                        <span>Auto System Generation</span>
+                        <Wand2 className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                        <span>Auto-Fill Preset Plan</span>
                       </button>
                     )}
 
@@ -1756,25 +1934,30 @@ export default function PlanBuilder({
                 </div>
 
                 {/* Year Slide Navigation Control Bar */}
-                <div id="study-plan-years-section" className="bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-2.5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs font-sans scroll-mt-24">
+                <div id="study-plan-years-section" className="bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-3 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 shadow-md font-sans scroll-mt-24">
                   
                   {/* Left & Right Slide Controls & Year Tabs */}
-                  <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                  <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
                     <button
                       type="button"
                       onClick={() => {
-                        setViewMode('single');
-                        setActiveYearLevel(prev => (typeof prev === 'number' && prev > 1 ? prev - 1 : 1));
+                        const targetLvl = activeYearLevel > 1 ? activeYearLevel - 1 : 1;
+                        setActiveYearLevel(targetLvl);
+                        if (viewMode === 'all') {
+                          const el = document.getElementById(`year-block-${targetLvl}`);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
                       }}
-                      disabled={viewMode === 'single' && activeYearLevel === 1}
-                      className={`p-2 rounded-xl border transition-all flex items-center justify-center shrink-0 ${
-                        viewMode === 'single' && activeYearLevel === 1
-                          ? 'opacity-40 cursor-not-allowed bg-slate-200/50 dark:bg-slate-800/50 text-slate-400 border-transparent'
-                          : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-white border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs cursor-pointer active:scale-95'
+                      disabled={activeYearLevel === 1}
+                      className={`px-3 py-2 rounded-xl border transition-all flex items-center gap-1.5 shrink-0 font-extrabold text-xs shadow-2xs font-heading ${
+                        activeYearLevel === 1
+                          ? 'opacity-40 cursor-not-allowed bg-slate-200/60 dark:bg-slate-800/60 text-slate-400 border-transparent'
+                          : 'bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer active:scale-95'
                       }`}
-                      title="Slide to Previous Academic Year"
+                      title="Slide to Previous Academic Year (<)"
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                      <span>&lt; Prev Year</span>
                     </button>
 
                     {years.map(y => {
@@ -1790,20 +1973,20 @@ export default function PlanBuilder({
                           key={y.level}
                           type="button"
                           onClick={() => {
+                            setActiveYearLevel(y.level);
                             if (viewMode === 'all') {
                               const el = document.getElementById(`year-block-${y.level}`);
                               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             } else {
                               setViewMode('single');
-                              setActiveYearLevel(y.level);
                             }
                           }}
-                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shrink-0 border ${
+                          className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer shrink-0 border ${
                             isActive
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-heading border-blue-700'
+                              ? 'bg-red-700 hover:bg-red-800 text-white shadow-md font-heading border-red-800 scale-[1.02]'
                               : isPassed
                               ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'
-                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                              : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                           }`}
                         >
                           <span>{y.yearName}</span>
@@ -1818,8 +2001,8 @@ export default function PlanBuilder({
                           )}
                           <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
                             isActive
-                              ? 'bg-blue-700 text-white'
-                              : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                              ? 'bg-white/20 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                           }`}>
                             {yearCP} CP
                           </span>
@@ -1830,45 +2013,83 @@ export default function PlanBuilder({
                     <button
                       type="button"
                       onClick={() => {
-                        setViewMode('single');
-                        setActiveYearLevel(prev => (typeof prev === 'number' && prev < 3 ? prev + 1 : 3));
+                        const targetLvl = activeYearLevel < 3 ? activeYearLevel + 1 : 3;
+                        setActiveYearLevel(targetLvl);
+                        if (viewMode === 'all') {
+                          const el = document.getElementById(`year-block-${targetLvl}`);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
                       }}
-                      disabled={viewMode === 'single' && activeYearLevel === 3}
-                      className={`p-2 rounded-xl border transition-all flex items-center justify-center shrink-0 ${
-                        viewMode === 'single' && activeYearLevel === 3
-                          ? 'opacity-40 cursor-not-allowed bg-slate-200/50 dark:bg-slate-800/50 text-slate-400 border-transparent'
-                          : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-white border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs cursor-pointer active:scale-95'
+                      disabled={activeYearLevel === 3}
+                      className={`px-3 py-2 rounded-xl border transition-all flex items-center gap-1.5 shrink-0 font-extrabold text-xs shadow-2xs font-heading ${
+                        activeYearLevel === 3
+                          ? 'opacity-40 cursor-not-allowed bg-slate-200/60 dark:bg-slate-800/60 text-slate-400 border-transparent'
+                          : 'bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer active:scale-95'
                       }`}
-                      title="Slide to Next Academic Year"
+                      title="Slide to Next Academic Year (>)"
                     >
-                      <ChevronRight className="w-4 h-4" />
+                      <span>Next Year &gt;</span>
+                      <ChevronRight className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
                     </button>
                   </div>
 
-                  {/* Mode Switcher: Single Year vs 3-Year Overview */}
-                  <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl p-1 text-xs shrink-0 font-sans shadow-2xs">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('single')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        viewMode === 'single'
-                          ? 'bg-white text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs font-heading'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Single Year
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('all')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        viewMode === 'all'
-                          ? 'bg-white text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs font-heading'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      3-Year Overview
-                    </button>
+                  {/* Mode & Layout Switchers */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Layout Mode Switcher: Trimester (3 Terms) vs Semester (2 Semesters) */}
+                    <div className="flex items-center gap-1 bg-slate-900 text-white dark:bg-slate-900/90 border border-slate-800 rounded-2xl p-1 text-xs shrink-0 font-sans shadow-md">
+                      <button
+                        type="button"
+                        onClick={() => setLayoutType('trimester')}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
+                          layoutType === 'trimester'
+                            ? 'bg-red-700 text-white shadow-md'
+                            : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                        }`}
+                        title="Switch canvas view to 3 Trimesters / Year layout (T1, T2, T3)"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Trimester View (3 Terms)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLayoutType('semester')}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
+                          layoutType === 'semester'
+                            ? 'bg-red-700 text-white shadow-md'
+                            : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                        }`}
+                        title="Switch canvas view to 2 Semesters / Year layout (S1, S2)"
+                      >
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>Semester View (2 Semesters)</span>
+                      </button>
+                    </div>
+
+                    {/* Mode Switcher: Single Year vs 3-Year Overview */}
+                    <div className="flex items-center gap-1 bg-slate-200/80 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-800 rounded-2xl p-1 text-xs shrink-0 font-sans shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('single')}
+                        className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer font-heading ${
+                          viewMode === 'single'
+                            ? 'bg-white text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        Single Year
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('all')}
+                        className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer font-heading ${
+                          viewMode === 'all'
+                            ? 'bg-white text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        3-Year Overview
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1905,26 +2126,32 @@ export default function PlanBuilder({
                               Year Load: {yearDisplayCP} / 36 CP
                             </span>
 
-                            {/* Active Official Trimester Layout & Inactive Semester Layout */}
+                            {/* Layout Mode Switcher: Trimester vs Semester */}
                             <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-0.5 text-xs font-sans">
                               <button
                                 type="button"
-                                className="px-3 py-1 rounded-lg text-xs font-extrabold bg-red-700 text-white dark:bg-red-700 dark:text-white shadow-2xs font-heading flex items-center gap-1.5 cursor-default"
-                                title="Active Official Layout: 3 Trimesters per year"
+                                onClick={() => setLayoutType('trimester')}
+                                className={`px-3 py-1 rounded-lg text-xs font-extrabold shadow-2xs font-heading flex items-center gap-1.5 cursor-pointer transition-all ${
+                                  layoutType === 'trimester'
+                                    ? 'bg-red-700 text-white dark:bg-red-700 dark:text-white'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                                title="Switch to Trimester Layout (3 trimesters per year)"
                               >
                                 <span>Trimester Layout</span>
                               </button>
 
                               <button
                                 type="button"
-                                disabled
-                                className="px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-500"
-                                title="Semester views can remain in the UI as inactive/untouched layouts for future scalability, but are out of scope for this build."
+                                onClick={() => setLayoutType('semester')}
+                                className={`px-3 py-1 rounded-lg text-xs font-extrabold shadow-2xs font-heading flex items-center gap-1.5 cursor-pointer transition-all ${
+                                  layoutType === 'semester'
+                                    ? 'bg-red-700 text-white dark:bg-red-700 dark:text-white'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                                title="Switch to Semester Layout (2 semesters per year)"
                               >
                                 <span>Semester Layout</span>
-                                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 uppercase tracking-tight">
-                                  Inactive
-                                </span>
                               </button>
                             </div>
                           </div>
@@ -2232,20 +2459,20 @@ export default function PlanBuilder({
         {/* AUTO SYSTEM GENERATION SCOPE SELECTION MODAL */}
         {showAutoGenModal && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[999] flex items-center justify-center p-4 font-sans animate-in fade-in duration-150">
-            <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-3xl shadow-2xl max-w-lg w-full p-6 text-slate-900 dark:text-white space-y-5">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6 text-slate-900 dark:text-white space-y-5">
               
               {/* Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-xl">
-                    <Sliders className="w-5 h-5" />
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-red-100/80 dark:bg-red-950/80 text-red-700 dark:text-red-300 rounded-2xl border border-red-200/60 dark:border-red-900/60 shadow-2xs">
+                    <Wand2 className="w-5 h-5 text-red-600 dark:text-red-400" />
                   </div>
                   <div>
                     <h3 className="text-base font-extrabold font-heading text-slate-900 dark:text-white tracking-tight">
-                      Auto System Generation Options
+                      Auto-Fill Preset Plan Options
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Select target academic year and trimesters to fulfill
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Configure study layout, academic scope, and core unit placement rules
                     </p>
                   </div>
                 </div>
@@ -2260,69 +2487,119 @@ export default function PlanBuilder({
 
               {/* Student Request Notice if available */}
               {currentPlan?.requestYear && (
-                <div className="bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 p-3 rounded-xl text-xs text-purple-900 dark:text-purple-200 flex items-center gap-2 font-medium">
-                  <span className="font-mono font-bold bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded text-[11px]">
+                <div className="bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 p-3 rounded-2xl text-xs text-purple-900 dark:text-purple-200 flex items-center gap-2 font-medium">
+                  <span className="font-mono font-bold bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-lg text-[11px]">
                     Student Request
                   </span>
                   <span>Requested Year {currentPlan.requestYear} ({currentPlan.requestPeriods ? currentPlan.requestPeriods.map(p=> p===3?'T1':p===4?'T2':'T3').join(', ') : 'All Trimesters'})</span>
                 </div>
               )}
 
-              {/* Year Selection */}
+              {/* 1. Study Mode Layout */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
-                  1. Target Academic Year Scope:
+                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
+                  1. Study Mode Layout:
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalLayoutType('trimester');
+                      setScopePeriods([3, 4, 5]);
+                    }}
+                    className={`p-3 rounded-2xl border text-left text-xs font-extrabold transition-all cursor-pointer font-heading ${
+                      modalLayoutType === 'trimester'
+                        ? 'border-red-700 bg-red-700 text-white shadow-xs'
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>Trimester Layout</span>
+                      {modalLayoutType === 'trimester' && <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-mono">Active</span>}
+                    </div>
+                    <span className="block text-[10px] opacity-80 font-sans font-medium mt-0.5">3 Terms / Year (Singapore)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalLayoutType('semester');
+                      setScopePeriods([1, 2]);
+                    }}
+                    className={`p-3 rounded-2xl border text-left text-xs font-extrabold transition-all cursor-pointer font-heading ${
+                      modalLayoutType === 'semester'
+                        ? 'border-red-700 bg-red-700 text-white shadow-xs'
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>Semester Layout</span>
+                      {modalLayoutType === 'semester' && <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-mono">Active</span>}
+                    </div>
+                    <span className="block text-[10px] opacity-80 font-sans font-medium mt-0.5">2 Semesters / Year (Singapore)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Target Academic Year Scope */}
+              <div className="space-y-2">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
+                  2. Target Academic Year Scope:
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
                   {[
-                    { id: 'all', label: 'All 3 Years (Full 72 CP)' },
+                    { id: 'all', label: 'All 3 Years (72 CP)' },
                     { id: 1, label: 'Year 1 (2026)' },
                     { id: 2, label: 'Year 2 (2027)' },
                     { id: 3, label: 'Year 3 (2028)' }
                   ].map(opt => {
                     const isPassed = typeof opt.id === 'number' && passedYears.has(opt.id);
+                    const isSelected = scopeYear === opt.id;
                     return (
                       <button
                         key={opt.id}
                         type="button"
                         onClick={() => {
                           if (isPassed) {
-                            setDragWarningToast(`Year ${opt.id} is already completed/passed by student. Selecting 'All 3 Years' will auto-fulfill open units in Year 2 & 3.`);
+                            setDragWarningToast(`Year ${opt.id} is already completed in history. Selecting 'All 3 Years' will auto-fulfill open units in Year 2 & 3.`);
                             setScopeYear('all');
                           } else {
                             setScopeYear(opt.id);
                           }
                         }}
-                        className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer flex flex-col justify-between gap-1 ${
-                          scopeYear === opt.id
-                            ? 'border-slate-900 bg-slate-900 text-white dark:bg-red-700 dark:border-red-600 shadow-sm'
+                        className={`p-3 rounded-2xl border text-left text-xs font-extrabold transition-all cursor-pointer flex flex-col justify-between gap-1 font-heading ${
+                          isSelected
+                            ? 'border-red-700 bg-red-700 text-white shadow-xs'
                             : isPassed
                             ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300'
-                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                         }`}
                       >
                         <span className="flex items-center justify-between">
-                          <span>{opt.label}</span>
-                          {isPassed && <span className="text-[10px] font-extrabold font-mono bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 px-1.5 py-0.5 rounded">🔒 Passed</span>}
+                          <span>{isSelected ? '✓ ' : ''}{opt.label}</span>
+                          {isPassed && <span className="text-[10px] font-extrabold font-mono bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 px-1.5 py-0.5 rounded-md">🔒 Passed</span>}
                         </span>
-                        {isPassed && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal">Completed in History</span>}
+                        {isPassed && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal font-sans">Completed in History</span>}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Trimester Selection */}
+              {/* 3. Target Periods to Prioritize */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
-                  2. Target Trimesters to Prioritize:
+                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
+                  3. Target Periods to Prioritize:
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
+                <div className={`grid ${modalLayoutType === 'semester' ? 'grid-cols-2' : 'grid-cols-3'} gap-2.5`}>
+                  {(modalLayoutType === 'semester' ? [
+                    { id: 1, label: 'Semester 1 (S1)' },
+                    { id: 2, label: 'Semester 2 (S2)' }
+                  ] : [
                     { id: 3, label: 'Trimester 1 (T1)' },
                     { id: 4, label: 'Trimester 2 (T2)' },
                     { id: 5, label: 'Trimester 3 (T3)' }
-                  ].map(t => {
+                  ]).map(t => {
                     const selected = scopePeriods.includes(t.id);
                     return (
                       <button
@@ -2337,16 +2614,34 @@ export default function PlanBuilder({
                             setScopePeriods([...scopePeriods, t.id]);
                           }
                         }}
-                        className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all cursor-pointer ${
+                        className={`p-2.5 rounded-xl border text-center text-xs font-extrabold transition-all cursor-pointer font-heading ${
                           selected
-                            ? 'border-slate-900 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 dark:border-white shadow-sm'
-                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                            ? 'border-red-700 bg-red-700 text-white shadow-xs'
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-100'
                         }`}
                       >
                         {selected ? '✓ ' : ''}{t.label}
                       </button>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* 4. Core-Only Strategy Option Toggle */}
+              <div className="space-y-2 pt-1">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
+                  4. Auto-Fill Content Strategy:
+                </label>
+                <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-3.5 rounded-2xl space-y-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse shrink-0" />
+                    <span className="font-extrabold text-slate-900 dark:text-white font-heading">
+                      Prescribed Core Units Only (Recommended)
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                    Automatically schedules official Degree Core & Major Core requirements according to your major catalog. Elective slots are left open for manual drag-and-drop customization.
+                  </p>
                 </div>
               </div>
 
@@ -2363,17 +2658,19 @@ export default function PlanBuilder({
                   type="button"
                   onClick={() => {
                     setShowAutoGenModal(false);
+                    setLayoutType(modalLayoutType);
                     if (onAutoGeneratePlan) {
                       onAutoGeneratePlan(student?.student_id, {
                         targetYearLevel: scopeYear,
-                        requestPeriods: scopePeriods
+                        requestPeriods: scopePeriods,
+                        layoutType: modalLayoutType
                       });
                     }
                   }}
-                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-red-700 dark:hover:bg-red-800 rounded-xl text-xs font-extrabold shadow-md flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+                  className="px-5 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-extrabold shadow-md flex items-center gap-2 cursor-pointer transition-all active:scale-95 font-heading"
                 >
-                  <Sliders className="w-4 h-4 text-slate-300 dark:text-red-200" />
-                  <span>Generate Recommended Plan</span>
+                  <Wand2 className="w-4 h-4 text-white" />
+                  <span>Apply Auto-Fill Preset</span>
                 </button>
               </div>
 

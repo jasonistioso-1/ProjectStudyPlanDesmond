@@ -2,7 +2,7 @@
 // Rich 6-student dataset across multiple campuses, majors, and study statuses
 
 export const mockLocations = [
-    { location_id: 1, code: 'PT3-MAIN', name: 'PT3 Solutions Main Campus (Perth)' },
+    { location_id: 1, code: 'PT3-SG', name: 'Singapore Campus' },
     { location_id: 2, code: 'PT3-SGP', name: 'PT3 Solutions Singapore Campus' },
     { location_id: 3, code: 'PT3-DXB', name: 'PT3 Solutions Dubai Campus' },
     { location_id: 4, code: 'PT3-ONL', name: 'PT3 Solutions Online Portal' }
@@ -51,7 +51,9 @@ export const mockUnits = [
     { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300 },
     { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300 },
     { unit_id: 27, code: 'ICT393', title: 'Advanced Business Analysis', credit_points: 3, level: 300 },
-    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence', credit_points: 3, level: 300 }
+    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence', credit_points: 3, level: 300 },
+    { unit_id: 29, code: 'MSP200', title: 'Building Employability Skills', credit_points: 3, level: 200 },
+    { unit_id: 30, code: 'COM203', title: 'Consulting and Freelancing', credit_points: 3, level: 200 }
 ];
 
 export const mockStudents = [

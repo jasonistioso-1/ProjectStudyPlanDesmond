@@ -1,15 +1,89 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, ChevronDown, Zap, Calendar, CheckCircle2 } from 'lucide-react';
+import { GripVertical, Plus, ChevronDown, Calendar, CheckCircle2 } from 'lucide-react';
 
-export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyRecord, onAdd, onAddToSpecificSemester, layoutType = 'trimester' }) {
+export function getUnitClassification(unitCode, studentMajor = 'Artificial Intelligence') {
+  const code = (unitCode || '').toUpperCase();
+  const major = (studentMajor || '').toLowerCase();
+  
+  if (code === 'ICT302') {
+    return {
+      label: 'Core Capstone',
+      badgeStyle: 'bg-purple-100/90 text-purple-900 border-purple-200 dark:bg-purple-950/80 dark:text-purple-200 dark:border-purple-800'
+    };
+  }
+  
+  if (['MSP200', 'COM203'].includes(code)) {
+    return {
+      label: null,
+      badgeStyle: ''
+    };
+  }
+  
+  if (['MAS183', 'MAS162', 'MAS164'].includes(code)) {
+    return {
+      label: 'Core / Math',
+      badgeStyle: 'bg-teal-100/90 text-teal-900 border-teal-200 dark:bg-teal-950/80 dark:text-teal-200 dark:border-teal-800'
+    };
+  }
+
+  const isAI = major.includes('ai') || major.includes('artificial');
+  const isCS = major.includes('cs') || major.includes('computer science');
+  const isBIS = major.includes('bis') || major.includes('business');
+
+  // Degree Cores common to multiple majors
+  if (['ICT100', 'ICT159', 'ICT169', 'ICT145', 'ICT158', 'ICT170'].includes(code)) {
+    return {
+      label: 'Degree Core',
+      badgeStyle: 'bg-indigo-100/90 text-indigo-900 border-indigo-200 dark:bg-indigo-950/80 dark:text-indigo-200 dark:border-indigo-800'
+    };
+  }
+
+  if (isAI) {
+    if (['ICT167'].includes(code)) return { label: 'Degree Core', badgeStyle: 'bg-indigo-100/90 text-indigo-900 border-indigo-200 dark:bg-indigo-950/80 dark:text-indigo-200 dark:border-indigo-800' };
+    if (['ICT283', 'ICT203', 'ICT202', 'ICT206', 'ICT303', 'ICT304', 'ICT305'].includes(code)) {
+      return { label: 'Major Core', badgeStyle: 'bg-blue-100/90 text-blue-900 border-blue-200 dark:bg-blue-950/80 dark:text-blue-200 dark:border-blue-800' };
+    }
+  } else if (isCS) {
+    if (['ICT167'].includes(code)) return { label: 'Degree Core', badgeStyle: 'bg-indigo-100/90 text-indigo-900 border-indigo-200 dark:bg-indigo-950/80 dark:text-indigo-200 dark:border-indigo-800' };
+    if (['ICT283', 'MAS162', 'ICT285', 'MAS164', 'ICT373', 'ICT374'].includes(code)) {
+      return { label: 'Major Core', badgeStyle: 'bg-blue-100/90 text-blue-900 border-blue-200 dark:bg-blue-950/80 dark:text-blue-200 dark:border-blue-800' };
+    }
+  } else if (isBIS) {
+    if (['ICT167'].includes(code)) return { label: 'Degree Core', badgeStyle: 'bg-indigo-100/90 text-indigo-900 border-indigo-200 dark:bg-indigo-950/80 dark:text-indigo-200 dark:border-indigo-800' };
+    if (['ICT201', 'ICT284', 'ICT292', 'ICT285', 'BSC203', 'ICT301', 'ICT393', 'ICT394'].includes(code)) {
+      return { label: 'Major Core', badgeStyle: 'bg-blue-100/90 text-blue-900 border-blue-200 dark:bg-blue-950/80 dark:text-blue-200 dark:border-blue-800' };
+    }
+  } else {
+    if (['ICT203', 'ICT202', 'ICT206', 'ICT303', 'ICT304', 'ICT305', 'ICT283', 'ICT373', 'ICT374', 'ICT201', 'ICT284', 'ICT292', 'ICT301', 'ICT393', 'ICT394'].includes(code)) {
+      return { label: 'Major Core', badgeStyle: 'bg-blue-100/90 text-blue-900 border-blue-200 dark:bg-blue-950/80 dark:text-blue-200 dark:border-blue-800' };
+    }
+  }
+
+  return { label: 'Elective', badgeStyle: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' };
+}
+
+export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyRecord, studentMajor = 'Artificial Intelligence', onAdd, onAddToSpecificSemester, layoutType = 'trimester' }) {
   const [showPicker, setShowPicker] = useState(false);
   const cardRef = useRef(null);
 
   const isScheduled = !!scheduledInfo;
   const isPassedHistory = historyRecord && historyRecord.status === 'completed';
   const isFailedHistory = historyRecord && historyRecord.status === 'attempted';
+
+  const classification = getUnitClassification(unit.code, studentMajor);
+
+  const getPrereqText = () => {
+    if (unit.prerequisites && Array.isArray(unit.prerequisites) && unit.prerequisites.length > 0) {
+      return unit.prerequisites.map(p => typeof p === 'string' ? p : p.prereq_code || p.code).join(', ');
+    }
+    if (unit.prereqs) return unit.prereqs;
+    if (unit.prereq_code) return unit.prereq_code;
+    return 'None';
+  };
+
+  const prereqText = getPrereqText();
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `palette_${unit.unit_id || unit.code}`,
@@ -64,7 +138,7 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
         cardRef.current = node;
       }}
       style={style}
-      className={`border p-3 rounded-xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative font-sans ${
+      className={`border p-3.5 rounded-xl text-xs transition-all shadow-2xs hover:shadow-xs group flex items-center justify-between select-none relative font-sans ${
         isPassedHistory
           ? 'bg-emerald-50/20 dark:bg-emerald-950/20 border-emerald-200/60 dark:border-emerald-900/50 opacity-90'
           : isFailedHistory
@@ -92,6 +166,13 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-heading font-extrabold text-white bg-slate-900 dark:bg-red-700 text-xs tracking-tight px-2.5 py-0.5 rounded-md shadow-2xs font-mono">{unit.code}</span>
 
+            {/* Core Classification Badge */}
+            {classification.label && (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border font-heading ${classification.badgeStyle}`}>
+                {classification.label}
+              </span>
+            )}
+
             {isPassedHistory ? (
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans shrink-0" title="Completed in official academic record">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -107,13 +188,19 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
               </span>
             ) : null}
           </div>
+
           <div className="text-slate-900 dark:text-slate-100 text-xs font-bold truncate mt-1">
             {unit.title}
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2 font-medium">
+
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5 flex-wrap font-medium">
             <span className="tabular-nums font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-600 font-mono text-[10px]">{unit.credit_points || 3} CP</span>
             <span className="text-slate-300 dark:text-slate-600">•</span>
-            <span className="text-slate-500 dark:text-slate-400">Singapore Campus</span>
+            <span className="font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700">Lvl {unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : 100)}</span>
+            <span className="text-slate-300 dark:text-slate-600">•</span>
+            <span className="text-slate-500 dark:text-slate-400">
+              Prereq: <strong className={`font-mono px-1 rounded ${prereqText === 'None' ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>{prereqText}</strong>
+            </span>
           </div>
         </div>
       </div>
@@ -176,3 +263,5 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
     </div>
   );
 }
+
+

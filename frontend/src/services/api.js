@@ -212,7 +212,9 @@ export async function fetchCatalogUnits() {
             { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT283' }], offerings: ['T1', 'T2', 'T3'] },
             { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT283' }], offerings: ['T1', 'T2', 'T3'] },
             { unit_id: 27, code: 'ICT393', title: 'Advanced Business Intelligence', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT284' }], offerings: ['T1', 'T2', 'T3'] },
-            { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT285' }], offerings: ['T1', 'T2', 'T3'] }
+            { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prerequisites: [{ prereq_code: 'ICT285' }], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 29, code: 'MSP200', title: 'Workplace Learning', credit_points: 3, level: 200, prerequisites: [], offerings: ['T1', 'T2', 'T3'] },
+            { unit_id: 30, code: 'COM203', title: 'Professional Communications', credit_points: 3, level: 200, prerequisites: [], offerings: ['T1', 'T2', 'T3'] }
         ];
     }
 }

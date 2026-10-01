@@ -90,7 +90,7 @@ ICT393,Advanced Business Intelligence,ICT284,"Tri 1, Tri 3"
 ICT394,Business Intelligence & Analytics,ICT285,"Tri 1, Tri 2, Tri 3"`,
 
     locations: `Location Code,Location Name
-PT3-MAIN,PT3 Solutions Main Campus (Perth)
+PT3-SG,Singapore Campus
 PT3-SGP,PT3 Solutions Singapore Campus
 PT3-DXB,PT3 Solutions Dubai Campus
 PT3-SYD,PT3 Solutions Sydney Campus

@@ -420,11 +420,12 @@ export default function App() {
     setTimeout(scrollToTargetYear, 700);
   };
 
-  const handleStudentSubmitPlanRequest = ({ year = 2026, periodIds = [3, 4, 5], comment = '' }) => {
+  const handleStudentSubmitPlanRequest = ({ year = 2026, periodIds = [3, 4, 5], layoutType = 'trimester', comment = '' }) => {
     if (!selectedStudent) return;
     const stName = `${selectedStudent.first_name} ${selectedStudent.last_name}`;
-    const termLabels = periodIds.map(p => p === 3 ? 'Trimester 1 (T1)' : p === 4 ? 'Trimester 2 (T2)' : 'Trimester 3 (T3)').join(', ');
-    const msg = `${stName} requested a study plan for ${termLabels} ${year}.${comment ? ` Note: "${comment}"` : ''}`;
+    const detectedLayout = layoutType || (periodIds.some(p => p === 1 || p === 2) ? 'semester' : 'trimester');
+    const termLabels = periodIds.map(p => p === 1 ? 'Semester 1 (S1)' : p === 2 ? 'Semester 2 (S2)' : p === 3 ? 'Trimester 1 (T1)' : p === 4 ? 'Trimester 2 (T2)' : 'Trimester 3 (T3)').join(', ');
+    const msg = `${stName} requested a ${detectedLayout} study plan for ${termLabels} ${year}.${comment ? ` Note: "${comment}"` : ''}`;
 
     const targetYrLvl = year === 2027 ? 2 : year === 2028 ? 3 : 1;
     const wasApproved = currentPlan?.status === 'approved' || currentPlan?.status === 'agreed' || currentPlan?.status === 'stored';
@@ -448,6 +449,7 @@ export default function App() {
       const updatedPlan = {
         ...currentPlan,
         status: 'request_submitted',
+        layoutType: detectedLayout,
         studentSignature: wasApproved ? null : currentPlan?.studentSignature,
         signature: wasApproved ? null : currentPlan?.signature,
         requestYear: year,
@@ -462,8 +464,8 @@ export default function App() {
       updatePlanRecordAndLogAudit(
         'request_submitted',
         wasApproved
-          ? `Previously APPROVED study plan re-opened: Student submitted new replan request for Year ${targetYrLvl} (${year})`
-          : `Student submitted study plan request for Year ${targetYrLvl} (${year})`,
+          ? `Previously APPROVED study plan re-opened: Student submitted new replan request for Year ${targetYrLvl} (${year}) (${detectedLayout.toUpperCase()} layout)`
+          : `Student submitted study plan request for Year ${targetYrLvl} (${year}) (${detectedLayout.toUpperCase()} layout)`,
         `Student: ${stName}`
       );
     }
@@ -492,26 +494,26 @@ export default function App() {
 
     const reqYear = options.requestYear || currentPlan?.requestYear || 2026;
     let targetYearLvl = options.targetYearLevel !== undefined ? options.targetYearLevel : (currentPlan?.targetYearLevel || (reqYear === 2027 ? 2 : reqYear === 2028 ? 3 : 1));
-    const requestedPeriods = options.requestPeriods || currentPlan?.requestPeriods || [3, 4, 5];
+
+    const layoutType = options.layoutType || currentPlan?.layoutType || (options.requestPeriods && options.requestPeriods.some(p => p === 1 || p === 2) ? 'semester' : 'trimester');
+    const defaultPeriods = layoutType === 'semester' ? [1, 2] : [3, 4, 5];
+    const requestedPeriods = (options.requestPeriods && options.requestPeriods.length > 0) ? options.requestPeriods : (currentPlan?.requestPeriods || defaultPeriods);
 
     // Determine numerical target year level if specific year (1, 2, 3) selected
     const targetLvlNum = typeof targetYearLvl === 'number'
       ? targetYearLvl
       : (targetYearLvl !== 'all' && !isNaN(Number(targetYearLvl)) ? Number(targetYearLvl) : null);
 
-    // Open years in chronological order excluding passed ones
-    const chronologicalOpenYears = [1, 2, 3].filter(y => !passedYears.has(y));
-    if (chronologicalOpenYears.length === 0) chronologicalOpenYears.push(3);
+    const yearsToFill = targetLvlNum && !passedYears.has(targetLvlNum)
+      ? [targetLvlNum]
+      : [1, 2, 3].filter(y => !passedYears.has(y));
 
-    let yearOrder = chronologicalOpenYears;
-    let preserveOtherYears = false;
-
-    if (targetLvlNum && !passedYears.has(targetLvlNum)) {
-      yearOrder = [targetLvlNum];
-      preserveOtherYears = true;
-    }
-
-    const periodOrder = requestedPeriods.length > 0 ? requestedPeriods : [3, 4, 5];
+    // Determine exact target slots (year_level, period_id) being auto-filled
+    const isTargetSlot = (yearLevel, periodId) => {
+      const matchesYear = yearsToFill.includes(yearLevel);
+      const matchesPeriod = requestedPeriods.includes(periodId);
+      return matchesYear && matchesPeriod;
+    };
 
     // Units that are failed, enrolled, or not yet taken ARE available!
     const availableCatalog = (catalogUnits || []).filter(u => !completedCodes.has(u.code));
@@ -520,10 +522,10 @@ export default function App() {
     const scheduledCodes = new Set();
     const periodLoads = {};
 
-    // If targeting a specific year level (e.g. Year 3), preserve existing draft units from other year levels
-    if (preserveOtherYears) {
-      const existingDraftUnits = (planUnits || currentPlan?.plan_units || []).filter(u => u.year_level !== targetLvlNum);
-      for (const u of existingDraftUnits) {
+    // Preserve any existing draft units whose slot is NOT in the target auto-fill scope
+    const existingDraftUnits = (planUnits || currentPlan?.plan_units || []);
+    for (const u of existingDraftUnits) {
+      if (!isTargetSlot(u.year_level, u.period_id)) {
         scheduledUnits.push(u);
         scheduledCodes.add(u.code);
         const pKey = `y${u.year_level}_p${u.period_id}`;
@@ -531,21 +533,66 @@ export default function App() {
       }
     }
 
-    const studentMajor = ((targetStudent.major || targetStudent.course_name || '') + '').toLowerCase();
-
-    const getMajorRelevanceScore = (unit) => {
-      const code = (unit.code || '').toLowerCase();
-      const title = (unit.title || '').toLowerCase();
-      
-      if (studentMajor.includes('artificial intelligence') || studentMajor.includes('ai')) {
-        if (code.includes('303') || code.includes('304') || code.includes('305') || code.includes('206') || code.includes('183') || title.includes('machine learning') || title.includes('ai') || title.includes('intelligent') || title.includes('data')) return 10;
-      } else if (studentMajor.includes('computer science') || studentMajor.includes('cs')) {
-        if (code.includes('283') || code.includes('373') || code.includes('374') || code.includes('167') || title.includes('algorithm') || title.includes('system') || title.includes('software')) return 10;
-      } else if (studentMajor.includes('business') || studentMajor.includes('bis')) {
-        if (code.includes('301') || code.includes('393') || code.includes('394') || title.includes('business') || title.includes('enterprise')) return 10;
+    const MAJOR_PRESETS = {
+      ai: {
+        trimester: [
+          { year: 1, period_id: 3, cores: ['ICT100', 'ICT159'] },
+          { year: 1, period_id: 4, cores: ['ICT167', 'ICT145'] },
+          { year: 1, period_id: 5, cores: ['ICT169', 'MAS183'] },
+          { year: 2, period_id: 3, cores: ['ICT283', 'ICT203'] },
+          { year: 2, period_id: 4, cores: ['ICT202', 'ICT206'] },
+          { year: 2, period_id: 5, cores: ['ICT303', 'ICT304', 'ICT305', 'ICT302'] }
+        ],
+        semester: [
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT159', 'ICT167', 'ICT145'] },
+          { year: 1, period_id: 2, cores: ['ICT169', 'MAS183', 'ICT283'] },
+          { year: 2, period_id: 1, cores: ['ICT203', 'ICT202', 'ICT206'] },
+          { year: 2, period_id: 2, cores: ['ICT303', 'ICT304', 'ICT305', 'ICT302'] }
+        ]
+      },
+      cs: {
+        trimester: [
+          { year: 1, period_id: 3, cores: ['ICT100', 'ICT159'] },
+          { year: 1, period_id: 4, cores: ['ICT167', 'ICT145'] },
+          { year: 1, period_id: 5, cores: ['ICT169', 'ICT170'] },
+          { year: 2, period_id: 3, cores: ['ICT283', 'MAS162'] },
+          { year: 2, period_id: 4, cores: ['ICT285', 'MAS164'] },
+          { year: 2, period_id: 5, cores: ['ICT373', 'ICT374', 'ICT302'] }
+        ],
+        semester: [
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT159', 'ICT167', 'ICT145'] },
+          { year: 1, period_id: 2, cores: ['ICT169', 'ICT170', 'MAS162'] },
+          { year: 2, period_id: 1, cores: ['MAS164', 'ICT283', 'ICT285'] },
+          { year: 2, period_id: 2, cores: ['ICT373', 'ICT374', 'ICT302'] }
+        ]
+      },
+      bis: {
+        trimester: [
+          { year: 1, period_id: 3, cores: ['ICT100', 'ICT158'] },
+          { year: 1, period_id: 4, cores: ['ICT159', 'ICT169'] },
+          { year: 1, period_id: 5, cores: ['ICT167', 'ICT201'] },
+          { year: 2, period_id: 3, cores: ['ICT284', 'ICT292'] },
+          { year: 2, period_id: 4, cores: ['ICT285', 'BSC203'] },
+          { year: 2, period_id: 5, cores: ['ICT301', 'ICT393', 'ICT394', 'ICT302'] }
+        ],
+        semester: [
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'ICT169'] },
+          { year: 1, period_id: 2, cores: ['ICT167', 'ICT201', 'ICT284'] },
+          { year: 2, period_id: 1, cores: ['BSC203', 'ICT292', 'ICT285'] },
+          { year: 2, period_id: 2, cores: ['ICT301', 'ICT393', 'ICT394', 'ICT302'] }
+        ]
       }
-      return 1;
     };
+
+    const majorStr = ((targetStudent.major || targetStudent.course_name || '') + '').toLowerCase();
+    let majorKey = 'ai';
+    if (majorStr.includes('computer science') || majorStr.includes('cs')) {
+      majorKey = 'cs';
+    } else if (majorStr.includes('business') || majorStr.includes('bis')) {
+      majorKey = 'bis';
+    }
+
+    const presetsList = MAJOR_PRESETS[majorKey][layoutType] || MAJOR_PRESETS.ai.trimester;
 
     const getUnitPrereqCode = (unit) => {
       const staticMap = {
@@ -577,193 +624,74 @@ export default function App() {
       });
     };
 
-    // Pass 1: Schedule in chronological period order (Year -> Period) with strict prerequisite checking
-    for (const year of yearOrder) {
-      for (const periodId of periodOrder) {
+    // STEP 1: Core Units First from Major Preset ONLY for target slots
+    for (const year of yearsToFill) {
+      for (const periodId of requestedPeriods) {
         const pKey = `y${year}_p${periodId}`;
-        periodLoads[pKey] = 0;
+        periodLoads[pKey] = periodLoads[pKey] || 0;
 
-        const targetLvl = String(year === 1 ? 1 : year === 2 ? 2 : 3);
-        const sortedCatalog = [...availableCatalog].sort((a, b) => {
-          // 1. Target Level Priority (Level 200 for Yr 2, Level 300 for Yr 3)
-          const aMatch = String(a.level) === targetLvl ? 0 : 1;
-          const bMatch = String(b.level) === targetLvl ? 0 : 1;
-          if (aMatch !== bMatch) return aMatch - bMatch;
+        const presetBlock = presetsList.find(b => b.year === year && b.period_id === periodId);
+        if (presetBlock && presetBlock.cores) {
+          for (const coreCode of presetBlock.cores) {
+            if (scheduledCodes.has(coreCode) || completedCodes.has(coreCode)) continue;
 
-          // 2. Student Major Priority Score
-          const aScore = getMajorRelevanceScore(a);
-          const bScore = getMajorRelevanceScore(b);
-          if (aScore !== bScore) return bScore - aScore;
+            const unit = catalogUnits.find(u => u.code === coreCode) || { code: coreCode, title: coreCode, credit_points: 3, level: 100 };
+            if (!isPrereqSatisfied(unit, year, periodId, scheduledUnits)) continue;
 
-          // 3. Lower Level units first (Level 100/200 before 300)
-          const aLvlNum = Number(a.level || 100);
-          const bLvlNum = Number(b.level || 100);
-          if (aLvlNum !== bLvlNum) return aLvlNum - bLvlNum;
-
-          return (a.code || '').localeCompare(b.code || '');
-        });
-
-        for (const unit of sortedCatalog) {
-          if (scheduledCodes.has(unit.code)) continue;
-
-          // Check trimester offering compatibility (T1=3, T2=4, T3=5)
-          const termCode = periodId === 3 ? 'T1' : periodId === 4 ? 'T2' : 'T3';
-          if (unit.offerings && Array.isArray(unit.offerings) && unit.offerings.length > 0) {
-            if (!unit.offerings.includes(termCode)) continue;
-          }
-
-          // Max 12 CP per period limit check for Pass 1
-          if ((periodLoads[pKey] || 0) + Number(unit.credit_points || 3) > 12) {
-            continue;
-          }
-
-          // BR-01 Tri 3 restriction
-          if (periodId === 5 && (unit.code === 'ICT302' || unit.code === 'ICT374')) {
-            continue;
-          }
-
-          // BR-02 Prerequisite check - MUST BE STRICT
-          if (!isPrereqSatisfied(unit, year, periodId, scheduledUnits)) {
-            continue;
-          }
-
-          const scheduledObj = {
-            ...unit,
-            unit_id: unit.unit_id || Math.floor(Math.random() * 100000),
-            year_level: year,
-            period_id: periodId,
-            credit_points: Number(unit.credit_points || 3),
-            sequence_order: scheduledUnits.length + 1
-          };
-
-          scheduledUnits.push(scheduledObj);
-          scheduledCodes.add(unit.code);
-          periodLoads[pKey] += Number(unit.credit_points || 3);
-        }
-      }
-    }
-
-    // Pass 2: Fallback fill loop to guarantee every open trimester reaches 12 CP (4 units)
-    for (const year of yearOrder) {
-      for (const periodId of periodOrder) {
-        const pKey = `y${year}_p${periodId}`;
-        const termCode = periodId === 3 ? 'T1' : periodId === 4 ? 'T2' : 'T3';
-
-        while ((periodLoads[pKey] || 0) < 12 && (scheduledUnits.length + completedCodes.size) < 24) {
-          const candidate = availableCatalog.find(u => {
-            if (scheduledCodes.has(u.code)) return false;
-            if (periodId === 5 && (u.code === 'ICT302' || u.code === 'ICT374')) return false;
-            if (u.offerings && Array.isArray(u.offerings) && u.offerings.length > 0) {
-              if (!u.offerings.includes(termCode)) return false;
+            if ((periodLoads[pKey] || 0) + Number(unit.credit_points || 3) <= 12) {
+              scheduledUnits.push({
+                ...unit,
+                unit_id: unit.unit_id || Math.floor(Math.random() * 100000),
+                year_level: year,
+                period_id: periodId,
+                credit_points: Number(unit.credit_points || 3),
+                sequence_order: scheduledUnits.length + 1
+              });
+              scheduledCodes.add(unit.code);
+              periodLoads[pKey] += Number(unit.credit_points || 3);
             }
-            if (!isPrereqSatisfied(u, year, periodId, scheduledUnits)) return false;
-            return true;
-          });
-
-          if (!candidate) break; // no more unscheduled catalog units with satisfied prerequisites
-
-          const scheduledObj = {
-            ...candidate,
-            unit_id: candidate.unit_id || Math.floor(Math.random() * 100000),
-            year_level: year,
-            period_id: periodId,
-            credit_points: Number(candidate.credit_points || 3),
-            sequence_order: scheduledUnits.length + 1
-          };
-
-          scheduledUnits.push(scheduledObj);
-          scheduledCodes.add(candidate.code);
-          periodLoads[pKey] = (periodLoads[pKey] || 0) + Number(candidate.credit_points || 3);
+          }
         }
       }
     }
 
-    // Pass 3: Relax offering filter to fill open trimesters to 12 CP (4 units)
-    for (const year of yearOrder) {
-      for (const periodId of periodOrder) {
-        const pKey = `y${year}_p${periodId}`;
+    // STEP 2: Optional step to fill remaining open terms with electives (runs only if explicitly requested)
+    if (options.fillCoreOnly === false) {
+      for (const year of yearOrder) {
+        for (const periodId of periodOrder) {
+          const pKey = `y${year}_p${periodId}`;
+          const targetLvl = year === 1 ? 100 : year === 2 ? 200 : 300;
 
-        while ((periodLoads[pKey] || 0) < 12 && (scheduledUnits.length + completedCodes.size) < 24) {
-          const candidate = availableCatalog.find(u => {
-            if (scheduledCodes.has(u.code)) return false;
-            if (periodId === 5 && (u.code === 'ICT302' || u.code === 'ICT374')) return false;
-            return true;
+          const sortedCandidates = [...availableCatalog].sort((a, b) => {
+            const aLvl = Number(a.level || 100);
+            const bLvl = Number(b.level || 100);
+            const aMatch = Math.abs(aLvl - targetLvl);
+            const bMatch = Math.abs(bLvl - targetLvl);
+            if (aMatch !== bMatch) return aMatch - bMatch;
+            return (a.code || '').localeCompare(b.code || '');
           });
 
-          if (!candidate) break;
+          for (const candidate of sortedCandidates) {
+            if ((periodLoads[pKey] || 0) >= 12) break;
+            if (scheduledCodes.has(candidate.code)) continue;
 
-          const scheduledObj = {
-            ...candidate,
-            unit_id: candidate.unit_id || Math.floor(Math.random() * 100000),
-            year_level: year,
-            period_id: periodId,
-            credit_points: Number(candidate.credit_points || 3),
-            sequence_order: scheduledUnits.length + 1
-          };
+            if (candidate.code === 'MSP200' || candidate.code === 'COM203') continue; // Keep General Electives in palette for Chair selection
+            if (periodId === 5 && (candidate.code === 'ICT302' || candidate.code === 'ICT374')) continue;
+            if (!isPrereqSatisfied(candidate, year, periodId, scheduledUnits)) continue;
 
-          scheduledUnits.push(scheduledObj);
-          scheduledCodes.add(candidate.code);
-          periodLoads[pKey] = (periodLoads[pKey] || 0) + Number(candidate.credit_points || 3);
-        }
-      }
-    }
-
-    // Pass 4: Fill from degree fallback pool if needed to ensure 12 CP per trimester until 72 CP total is reached
-    const fallbackDegreeUnits = [
-      { code: 'ICT100', title: 'Transition to IT', credit_points: 3, level: 100 },
-      { code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, level: 100 },
-      { code: 'ICT158', title: 'Intro to Computer Systems', credit_points: 3, level: 100 },
-      { code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, level: 100 },
-      { code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, level: 100 },
-      { code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, level: 100 },
-      { code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, level: 100 },
-      { code: 'ICT145', title: 'Python Programming', credit_points: 3, level: 100 },
-      { code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, level: 100 },
-      { code: 'MAS164', title: 'Fundamentals of Mathematics', credit_points: 3, level: 100 },
-      { code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200 },
-      { code: 'ICT202', title: 'Data Analytics & Processing', credit_points: 3, level: 200 },
-      { code: 'ICT285', title: 'Databases', credit_points: 3, level: 200 },
-      { code: 'ICT203', title: 'Software Architecture & Design', credit_points: 3, level: 200 },
-      { code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, level: 200 },
-      { code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200 },
-      { code: 'ICT206', title: 'Distributed Systems', credit_points: 3, level: 200 },
-      { code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, level: 200 },
-      { code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, level: 200 },
-      { code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, level: 300 },
-      { code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, level: 300 },
-      { code: 'ICT305', title: 'Data Visualisation', credit_points: 3, level: 300 },
-      { code: 'ICT303', title: 'Cloud Infrastructure & DevOps', credit_points: 3, level: 300 },
-      { code: 'ICT304', title: 'Enterprise Software Systems', credit_points: 3, level: 300 },
-      { code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300 },
-      { code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300 }
-    ];
-
-    for (const year of yearOrder) {
-      for (const periodId of periodOrder) {
-        const pKey = `y${year}_p${periodId}`;
-
-        while ((periodLoads[pKey] || 0) < 12 && (scheduledUnits.length + completedCodes.size) < 24) {
-          const candidate = fallbackDegreeUnits.find(u => {
-            if (scheduledCodes.has(u.code)) return false;
-            if (completedCodes.has(u.code)) return false;
-            if (periodId === 5 && (u.code === 'ICT302' || u.code === 'ICT374')) return false;
-            return true;
-          });
-
-          if (!candidate) break;
-
-          const scheduledObj = {
-            ...candidate,
-            unit_id: candidate.unit_id || Math.floor(Math.random() * 100000),
-            year_level: year,
-            period_id: periodId,
-            credit_points: Number(candidate.credit_points || 3),
-            sequence_order: scheduledUnits.length + 1
-          };
-
-          scheduledUnits.push(scheduledObj);
-          scheduledCodes.add(candidate.code);
-          periodLoads[pKey] = (periodLoads[pKey] || 0) + Number(candidate.credit_points || 3);
+            if ((periodLoads[pKey] || 0) + Number(candidate.credit_points || 3) <= 12) {
+              scheduledUnits.push({
+                ...candidate,
+                unit_id: candidate.unit_id || Math.floor(Math.random() * 100000),
+                year_level: year,
+                period_id: periodId,
+                credit_points: Number(candidate.credit_points || 3),
+                sequence_order: scheduledUnits.length + 1
+              });
+              scheduledCodes.add(candidate.code);
+              periodLoads[pKey] += Number(candidate.credit_points || 3);
+            }
+          }
         }
       }
     }
@@ -828,18 +756,28 @@ export default function App() {
       [key]: comment
     }));
 
+    const stName = selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student';
+    const author = `Student: ${stName}`;
+
     if (currentPlan) {
       const updatedPlan = {
         ...currentPlan,
-        status: 'rejected',
+        status: 'request_submitted',
         updated_at: formatCurrentDateTime(),
         version_number: (currentPlan?.version_number || 1) + 1
       };
       setCurrentPlan(updatedPlan);
       setStoredPlansList(prevList =>
-        prevList.map(p => p.plan_id === updatedPlan.plan_id ? { ...p, status: 'rejected', updated_at: updatedPlan.updated_at, version_number: updatedPlan.version_number } : p)
+        prevList.map(p => p.plan_id === updatedPlan.plan_id ? { ...p, status: 'request_submitted', updated_at: updatedPlan.updated_at, version_number: updatedPlan.version_number } : p)
       );
     }
+
+    updatePlanRecordAndLogAudit(
+      'request_submitted',
+      `Student requested unit period amendment for ${key}${comment ? `: "${comment}"` : ''}`,
+      author
+    );
+
     showToast(`Semester change request submitted to Academic Chair!`);
   };
 
@@ -849,6 +787,16 @@ export default function App() {
       delete next[key];
       return next;
     });
+
+    const stName = selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student';
+    const author = activeRole === 'student' ? `Student: ${stName}` : 'Academic Chair';
+
+    updatePlanRecordAndLogAudit(
+      currentPlan?.status || 'draft',
+      `Period amendment request resolved/cleared for ${key}`,
+      author
+    );
+
     showToast(`Semester change request resolved and cleared.`);
   };
 
@@ -945,7 +893,7 @@ export default function App() {
     });
   };
 
-  const handleSelectStudent = async (student) => {
+  const handleSelectStudent = async (student, roleOverride = null) => {
     // 1. Preserve current student's working draft in cache map before switching
     if (selectedStudent && currentPlan) {
       setAllStudentPlansMap(prev => ({
@@ -960,6 +908,11 @@ export default function App() {
     setSelectedStudent(student);
     setShowStudentSelectModal(false);
 
+    const effectiveRole = roleOverride || activeRole;
+    const authorName = effectiveRole === 'student' || (student && student.account_category !== 'admin' && student.student_id !== 0)
+      ? `Student: ${student.first_name} ${student.last_name}`
+      : 'Academic Chair';
+
     // Record login / account switch event into Audit Log
     setAuditLogsList(prev => [
       {
@@ -968,9 +921,10 @@ export default function App() {
         student_number: student.student_number || 'PT3-2026-000',
         first_name: student.first_name,
         last_name: student.last_name,
+        student_name: `${student.first_name} ${student.last_name}`,
         plan_title: `${student.course_code || 'PT3-BSIT'} Account Session`,
         amendment_reason: `Account Profile Switch: Loaded profile for ${student.first_name} ${student.last_name}${student.account_category === 'admin' || student.student_id === 0 ? '' : ` (${(student.account_category || 'STUDENT').replace('_', ' ').toUpperCase()})`}`,
-        created_by: activeRole === 'chair' ? 'Academic Chair' : `Student: ${student.first_name} ${student.last_name}`,
+        created_by: authorName,
         created_at: new Date().toISOString(),
         plan_status: 'logged_in'
       },
@@ -1479,12 +1433,23 @@ export default function App() {
               <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shadow-2xs">
                 <Clock className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
-                  Study Plan Change Log & Data Audit Trail
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  Real-time database audit log recording study plan status changes, recommendations, and unit amendments.
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
+                    Study Plan Change Log
+                  </h3>
+                  <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full border ${
+                    activeRole === 'student'
+                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                      : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
+                  }`}>
+                    {activeRole === 'student' ? 'Student View (My Actions Only)' : 'Academic Chair (Full Audit Log)'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                  {activeRole === 'student'
+                    ? `Showing change log activity performed by ${selectedStudent ? selectedStudent.first_name : 'student'}.`
+                    : 'Real-time database audit log recording study plan status changes, recommendations, and unit amendments.'}
                 </p>
               </div>
             </div>
@@ -1505,6 +1470,17 @@ export default function App() {
             <div className="space-y-3 max-h-80 overflow-y-auto text-xs font-sans pr-1">
               {(() => {
                 const filtered = auditLogsList.filter(log => {
+                  // In Student View mode, show ONLY actions matching current student!
+                  if (activeRole === 'student') {
+                    const matchesCurrentStudent = selectedStudent ? (
+                      (log.student_number && log.student_number === selectedStudent.student_number) ||
+                      (log.first_name && log.first_name.toLowerCase() === selectedStudent.first_name.toLowerCase()) ||
+                      (log.student_name && log.student_name.toLowerCase().includes(selectedStudent.first_name.toLowerCase()))
+                    ) : true;
+
+                    if (!matchesCurrentStudent) return false;
+                  }
+
                   if (!auditSearchQuery.trim()) return true;
                   const q = auditSearchQuery.toLowerCase();
                   const name = (log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : '')).toLowerCase();
@@ -1528,6 +1504,12 @@ export default function App() {
                 return filtered.map((log, idx) => {
                   const studentName = log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : (selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student Profile'));
                   const studentNum = log.student_number || selectedStudent?.student_number || 'PT3-2026-001';
+
+                  const logAuthorDisplay = activeRole === 'student'
+                    ? (log.created_by && log.created_by.toLowerCase().includes('student')
+                        ? log.created_by
+                        : `Student: ${studentName}`)
+                    : (log.created_by || 'Academic Chair');
 
                   return (
                     <div key={log.version_id || idx} className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs">
@@ -1556,7 +1538,7 @@ export default function App() {
 
                       <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
                         <span>Student: {studentName} <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">({studentNum})</span></span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium">By: <strong className="text-slate-800 dark:text-slate-200 font-bold">{log.created_by || 'Academic Chair'}</strong></span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium">By: <strong className="text-slate-800 dark:text-slate-200 font-bold">{logAuthorDisplay}</strong></span>
                       </div>
 
                       <p className="text-xs text-slate-600 dark:text-slate-300 font-medium pt-0.5">

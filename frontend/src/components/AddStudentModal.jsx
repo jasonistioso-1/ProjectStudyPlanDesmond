@@ -178,7 +178,7 @@ export default function AddStudentModal({ onSaveStudent, editStudent = null, onC
               className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-bold"
             >
               <option value="PT3 Solutions Singapore Campus">PT3 Solutions Singapore Campus (Trimester System)</option>
-              <option value="PT3 Solutions Main Campus (Perth)">PT3 Solutions Main Campus - Perth (Semester System)</option>
+              <option value="Singapore Campus">Singapore Campus</option>
               <option value="PT3 Solutions Dubai Campus">PT3 Solutions Dubai Campus</option>
               <option value="PT3 Solutions Online Portal">PT3 Solutions Online Portal</option>
             </select>
