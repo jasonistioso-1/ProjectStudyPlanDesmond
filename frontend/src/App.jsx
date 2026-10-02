@@ -402,7 +402,11 @@ export default function App() {
     }));
 
     if (notif.actionType === 'AUTO_GENERATE' && notif.studentId) {
-      handleAutoGeneratePlan(notif.studentId, { targetYearLevel: targetYr });
+      handleAutoGeneratePlan(notif.studentId, {
+        targetYearLevel: targetYr,
+        requestPeriods: notif.requestPeriods,
+        layoutType: notif.layoutType
+      });
     }
 
     // Auto-scroll directly down past student header banner & workflow guide to Year 1 / 2 / 3 grid block

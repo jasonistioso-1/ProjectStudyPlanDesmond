@@ -64,13 +64,20 @@ export function getUnitClassification(unitCode, studentMajor = 'Artificial Intel
   return { label: 'Elective', badgeStyle: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700' };
 }
 
-export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyRecord, studentMajor = 'Artificial Intelligence', onAdd, onAddToSpecificSemester, layoutType = 'trimester' }) {
+export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyRecord, scheduledCodesSet, studentMajor = 'Artificial Intelligence', onAdd, onAddToSpecificSemester, layoutType = 'trimester' }) {
   const [showPicker, setShowPicker] = useState(false);
   const cardRef = useRef(null);
 
   const isScheduled = !!scheduledInfo;
   const isPassedHistory = historyRecord && historyRecord.status === 'completed';
   const isFailedHistory = historyRecord && historyRecord.status === 'attempted';
+
+  const isElective = unit.code === 'MSP200' || unit.code === 'COM203';
+  const otherElectiveCode = unit.code === 'MSP200' ? 'COM203' : 'MSP200';
+  const isOtherElectiveScheduled = isElective && (
+    (scheduledCodesSet && scheduledCodesSet.has(otherElectiveCode)) ||
+    (historyRecord && historyRecord[otherElectiveCode] && historyRecord[otherElectiveCode].status === 'completed')
+  );
 
   const classification = getUnitClassification(unit.code, studentMajor);
 
@@ -86,9 +93,9 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
   const prereqText = getPrereqText();
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `palette_${unit.unit_id || unit.code}`,
+    id: `palette_${unit.code || unit.unit_id}`,
     data: { unit },
-    disabled: isPassedHistory
+    disabled: isPassedHistory || isOtherElectiveScheduled
   });
 
   useEffect(() => {
@@ -186,6 +193,10 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans">
                 ✓ Added in {scheduledInfo.termName}
               </span>
+            ) : isOtherElectiveScheduled ? (
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-100/90 dark:bg-amber-950 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 flex items-center gap-1 font-sans shrink-0" title={`Degree requirements require only 1 General Elective. ${otherElectiveCode} is already scheduled.`}>
+                🔒 Elective Met ({otherElectiveCode} Scheduled)
+              </span>
             ) : null}
           </div>
 
@@ -206,7 +217,7 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
       </div>
 
       <div className="flex items-center gap-1 shrink-0 relative">
-        {isPassedHistory || isScheduled ? null : (
+        {isPassedHistory || isScheduled || isOtherElectiveScheduled ? null : (
           <button
             onClick={() => setShowPicker(!showPicker)}
             className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1.5 active:scale-95 cursor-pointer"

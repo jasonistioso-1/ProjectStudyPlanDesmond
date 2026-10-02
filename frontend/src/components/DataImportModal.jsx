@@ -59,35 +59,37 @@ export default function DataImportModal({ onClose, onImportSuccess }) {
 
   // Sample CSV templates for all database entity schemas:
   const sampleTemplates = {
-    units: `Unit Code,Unit Name,Strict Prerequisite,2027 & 2028 Trimester Offerings
-ICT100,Transition to IT,None,"Tri 1, Tri 2, Tri 3"
-ICT158,Introduction to Information Systems,None,"Tri 1, Tri 3"
-ICT159,Foundations of Programming,None,"Tri 1, Tri 2, Tri 3"
-ICT167,Principles of Computer Science,ICT159,"Tri 1, Tri 2"
-ICT169,Foundations of Data Communications,None,"Tri 1, Tri 2"
-ICT170,Foundations of Computer Systems,None,"Tri 1, Tri 3"
-ICT145,Python Programming,None,"Tri 1, Tri 2, Tri 3"
-ICT201,IT Project Management,ICT158,"Tri 1, Tri 2, Tri 3"
-ICT202,Machine Learning,ICT159,"Tri 2, Tri 3"
-ICT203,Artificial Intelligence,ICT167,"Tri 1, Tri 3"
-ICT206,Intelligent Systems,ICT167,"Tri 2, Tri 3"
-ICT283,Data Structures & Algorithms,ICT167,"Tri 1, Tri 2"
-ICT284,Systems Analysis & Design,ICT158,"Tri 1, Tri 2"
-ICT285,Databases,ICT159,"Tri 1, Tri 2, Tri 3"
-ICT292,Information Systems Architecture,ICT158,"Tri 1, Tri 2, Tri 3"
-BSC203,Intro to ICT Research Methods,ICT158,"Tri 1, Tri 2, Tri 3"
-MAS162,Discrete Mathematics,None,"Tri 1, Tri 2, Tri 3"
-MAS164,Fundamentals of Mathematics,None,"Tri 1, Tri 2, Tri 3"
-MAS183,Statistical Data Analysis,None,"Tri 1, Tri 3"
-ICT301,Enterprise Architecture,ICT292,"Tri 1, Tri 2"
-ICT302,IT Professional Practice (Capstone),ICT201,"Tri 1, Tri 2, Tri 3"
-ICT303,Advanced Machine Learning,ICT202,"Tri 2, Tri 3"
-ICT304,AI System Design,ICT203,"Tri 1, Tri 3"
-ICT305,Data Visualisation,ICT202,"Tri 2, Tri 3"
-ICT373,Software Architecture,ICT283,"Tri 1, Tri 3"
-ICT374,Operating Systems,ICT283,"Tri 2, Tri 3"
-ICT393,Advanced Business Intelligence,ICT284,"Tri 1, Tri 3"
-ICT394,Business Intelligence & Analytics,ICT285,"Tri 1, Tri 2, Tri 3"`,
+    units: `Unit Code,Unit Name,Credit Points,Academic Level,Pathway Category,Strict Prerequisite,Teaching Period Offerings
+ICT100,Transition to IT,3,100,Master Directory,None,"Tri 1, Tri 2, Tri 3, Sem 1"
+ICT158,Introduction to Computer Systems,3,100,Master Directory,None,"Tri 1, Tri 3, Sem 1"
+ICT159,Foundations of Programming,3,100,Master Directory,None,"Tri 1, Tri 2, Tri 3, Sem 1"
+ICT169,Foundations of Data Communications,3,100,Master Directory,None,"Tri 1, Tri 2, Sem 1, Sem 2"
+ICT170,Foundations of Computer Systems,3,100,Master Directory,None,"Tri 1, Tri 3, Sem 2"
+ICT145,Python Programming,3,100,Master Directory,None,"Tri 1, Tri 2, Tri 3, Sem 1"
+ICT201,IT Project Management,3,200,Master Directory,ICT158,"Tri 1, Tri 2, Tri 3, Sem 2"
+ICT302,IT Professional Practice (Capstone),3,300,Master Directory,ICT201,"Tri 1, Tri 2, Tri 3, Sem 2"
+ICT202,Machine Learning,3,200,Artificial Intelligence (AI),ICT159,"Tri 2, Tri 3, Sem 1"
+ICT203,Artificial Intelligence,3,200,Artificial Intelligence (AI),ICT167,"Tri 1, Tri 3, Sem 1"
+ICT206,Intelligent Systems,3,200,Artificial Intelligence (AI),ICT167,"Tri 2, Tri 3, Sem 1"
+ICT303,Advanced Machine Learning,3,300,Artificial Intelligence (AI),ICT202,"Tri 2, Tri 3, Sem 2"
+ICT304,AI System Design,3,300,Artificial Intelligence (AI),ICT203,"Tri 1, Tri 3, Sem 2"
+ICT305,Data Visualisation,3,300,Artificial Intelligence (AI),ICT202,"Tri 2, Tri 3, Sem 2"
+ICT167,Principles of Computer Science,3,100,Computer Science (CS),ICT159,"Tri 1, Tri 2, Sem 1, Sem 2"
+ICT283,Data Structures & Algorithms,3,200,Computer Science (CS),ICT167,"Tri 1, Tri 2, Sem 1, Sem 2"
+MAS162,Discrete Mathematics,3,100,Computer Science (CS),None,"Tri 1, Tri 2, Tri 3, Sem 2"
+MAS164,Fundamentals of Mathematics,3,100,Computer Science (CS),None,"Tri 1, Tri 2, Tri 3, Sem 1"
+ICT373,Software Architecture,3,300,Computer Science (CS),ICT283,"Tri 1, Tri 3, Sem 2"
+ICT374,Operating Systems,3,300,Computer Science (CS),ICT283,"Tri 2, Tri 3, Sem 2"
+ICT284,Systems Analysis & Design,3,200,Business Information Systems (BIS),ICT158,"Tri 1, Tri 2, Sem 2"
+ICT285,Databases,3,200,Business Information Systems (BIS),ICT159,"Tri 1, Tri 2, Tri 3, Sem 1"
+ICT292,Information Systems Architecture,3,200,Business Information Systems (BIS),ICT158,"Tri 1, Tri 2, Tri 3, Sem 1"
+BSC203,Intro to ICT Research Methods,3,200,Business Information Systems (BIS),ICT158,"Tri 1, Tri 2, Tri 3, Sem 1"
+MAS183,Statistical Data Analysis,3,100,Business Information Systems (BIS),None,"Tri 1, Tri 3, Sem 2"
+ICT301,Enterprise Architecture,3,300,Business Information Systems (BIS),ICT292,"Tri 1, Tri 2, Sem 2"
+ICT393,Advanced Business Analysis,3,300,Business Information Systems (BIS),ICT284,"Tri 1, Tri 3, Sem 2"
+ICT394,Business Intelligence & Analytics,3,300,Business Information Systems (BIS),ICT285,"Tri 1, Tri 2, Tri 3, Sem 2"
+MSP200,Building Employability Skills,3,200,General Electives,None,"Tri 1, Tri 2, Tri 3, Sem 1, Sem 2"
+COM203,Consulting and Freelancing,3,200,General Electives,None,"Tri 1, Tri 2, Tri 3, Sem 1, Sem 2"`,
 
     locations: `Location Code,Location Name
 PT3-SG,Singapore Campus
@@ -167,10 +169,33 @@ S2,Semester 2,semester,2`
       const cols = splitCSVRow(line, isTab);
 
       if (entity === 'units') {
-        const unitCode = cols[0] || '';
-        const unitName = cols[1] || '';
-        const prereq = cols[2] || 'None';
-        const offeringsRaw = cols[3] || 'T1, T2';
+        let unitCode = '', unitName = '', creditPoints = 3, level = 100, category = 'Master Directory', prereq = 'None', offeringsRaw = 'T1, T2, T3';
+        
+        if (cols.length >= 7) {
+          unitCode = cols[0] || '';
+          unitName = cols[1] || '';
+          creditPoints = Number(cols[2] || 3);
+          level = Number(cols[3] || 100);
+          category = cols[4] || 'Master Directory';
+          prereq = cols[5] || 'None';
+          offeringsRaw = cols[6] || 'T1, T2, T3';
+        } else if (cols.length === 6) {
+          unitCode = cols[0] || '';
+          unitName = cols[1] || '';
+          creditPoints = Number(cols[2] || 3);
+          level = Number(cols[3] || 100);
+          category = 'Master Directory';
+          prereq = cols[4] || 'None';
+          offeringsRaw = cols[5] || 'T1, T2, T3';
+        } else {
+          unitCode = cols[0] || '';
+          unitName = cols[1] || '';
+          creditPoints = 3;
+          level = 100;
+          category = 'Master Directory';
+          prereq = cols[2] || 'None';
+          offeringsRaw = cols[3] || 'T1, T2, T3';
+        }
 
         if (!unitCode) { errors.push(`Row ${rowNum}: 'Unit Code' (Column 1) cannot be empty.`); continue; }
         if (!unitName) { errors.push(`Row ${rowNum} (${unitCode}): 'Unit Name' (Column 2) cannot be empty.`); continue; }
@@ -186,8 +211,11 @@ S2,Semester 2,semester,2`
           rowNum,
           code: unitCode.toUpperCase(),
           title: unitName,
+          credit_points: creditPoints,
+          level: level,
+          category: category,
           prerequisites: prereq === 'None' || !prereq ? [] : prereq.split(/[,;&/]+/).map(p => p.trim().toUpperCase()),
-          offerings: parsedOfferings.length > 0 ? parsedOfferings : ['T1', 'T2']
+          offerings: parsedOfferings.length > 0 ? parsedOfferings : ['T1', 'T2', 'T3']
         });
       } else if (entity === 'students') {
         const studentNum = cols[0] || '';
@@ -499,6 +527,7 @@ S2,Semester 2,semester,2`
                       {importEntity === 'units' && <>
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Code</th>
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Unit Name</th>
+                        <th className="p-2 border-b border-slate-200 dark:border-slate-700">Pathway Category</th>
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Prerequisite</th>
                         <th className="p-2 border-b border-slate-200 dark:border-slate-700">Offerings</th>
                       </>}
@@ -551,6 +580,7 @@ S2,Semester 2,semester,2`
                         {importEntity === 'units' && <>
                           <td className="p-2 font-mono font-bold text-red-600 dark:text-red-400">{row.code}</td>
                           <td className="p-2 font-semibold text-slate-900 dark:text-white">{row.title}</td>
+                          <td className="p-2 font-sans font-bold text-indigo-600 dark:text-indigo-400">{row.category || 'Master Directory'}</td>
                           <td className="p-2 font-mono text-amber-600 dark:text-amber-400">{row.prerequisites?.length > 0 ? row.prerequisites.join(', ') : 'None'}</td>
                           <td className="p-2 font-mono text-emerald-600 dark:text-emerald-400">{row.offerings?.join(', ')}</td>
                         </>}

@@ -379,8 +379,21 @@ export default function PlanBuilder({
     }
   };
 
-  // Validate prerequisite and max 12 CP capacity limit for unit placement
+  // Validate prerequisite, general elective rule, and max 12 CP capacity limit for unit placement
   const validatePlacement = (unitCode, targetYear, targetPeriod, currentUnits, activeDragCode = null) => {
+    // 0. General Elective Mutual Exclusion Check (Only ONE of MSP200 or COM203 can be selected)
+    if (unitCode === 'MSP200' || unitCode === 'COM203') {
+      const otherCode = unitCode === 'MSP200' ? 'COM203' : 'MSP200';
+      const isOtherCompleted = completedUnitCodes.has(otherCode);
+      const isOtherScheduled = currentUnits.some(u => u.code === otherCode && (!activeDragCode || u.code !== activeDragCode));
+      if (isOtherCompleted || isOtherScheduled) {
+        return {
+          valid: false,
+          message: `General Elective Conflict: Student has ALREADY ${isOtherCompleted ? 'completed in history' : 'scheduled'} ${otherCode}. Only ONE General Elective (${unitCode} OR ${otherCode}) is required for degree completion.`
+        };
+      }
+    }
+
     // 1. Prerequisite Validation
     const prereqCode = prereqMap[unitCode];
     if (prereqCode) {
@@ -475,7 +488,10 @@ export default function PlanBuilder({
 
     if (activeId.startsWith('palette_')) {
       const code = activeId.replace('palette_', '');
-      const unit = catalogUnits.find(u => String(u.unit_id || u.code) === code || u.code === code);
+      let unit = catalogUnits.find(u => String(u.unit_id || u.code) === code || u.code === code);
+      if (!unit && active.data?.current?.unit) {
+        unit = active.data.current.unit;
+      }
       if (unit) {
         const existingInPlan = planUnits.find(u => u.code === unit.code);
         if (existingInPlan) {
@@ -1000,10 +1016,10 @@ export default function PlanBuilder({
               <button
                 onClick={onOpenOfficialDocument}
                 className="bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 font-sans"
-                title="Export official Study Plan as PDF"
+                title="Preview Official Study Plan document and select export format (PDF, CSV, PNG, JPG)"
               >
                 <BookOpen className="w-3.5 h-3.5 text-white" />
-                <span>Export PDF</span>
+                <span>Export Document</span>
               </button>
             )}
           </div>
@@ -1055,10 +1071,10 @@ export default function PlanBuilder({
 
             <div className="bg-slate-50/90 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-700/90 space-y-1 shadow-2xs">
               <div className="font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-2 font-heading">
-                <FileText className="w-3.5 h-3.5 shrink-0" /> 4. Export Certified PDF
+                <FileText className="w-3.5 h-3.5 shrink-0" /> 4. Export Document
               </div>
               <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
-                Click <strong>Export PDF</strong> to generate or print your official certified 72 CP Study Plan document.
+                Click <strong>Export Document</strong> to preview your official 72 CP Study Plan and choose your format (PDF, CSV, PNG, JPG).
               </p>
             </div>
           </div>
@@ -1817,10 +1833,10 @@ export default function PlanBuilder({
 
                 <div className="bg-slate-50/90 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200/90 dark:border-slate-700/90 space-y-1.5 shadow-2xs">
                   <div className="font-extrabold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-heading">
-                    <FileText className="w-4 h-4 shrink-0" /> 4. Export Certified PDF
+                    <FileText className="w-4 h-4 shrink-0" /> 4. Export Document
                   </div>
                   <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed font-sans">
-                    Click <strong>Export PDF</strong> to generate or print your official certified 72 CP Study Plan document.
+                    Click <strong>Export Document</strong> to preview your official 72 CP Study Plan and choose your format (PDF, CSV, PNG, JPG).
                   </p>
                 </div>
               </div>
@@ -1933,11 +1949,11 @@ export default function PlanBuilder({
                   </div>
                 </div>
 
-                {/* Year Slide Navigation Control Bar */}
-                <div id="study-plan-years-section" className="bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-3 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 shadow-md font-sans scroll-mt-24">
+                {/* Year Slide Navigation & Layout Control Bar */}
+                <div id="study-plan-years-section" className="bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-3 rounded-2xl flex flex-col gap-3 shadow-md font-sans scroll-mt-24">
                   
-                  {/* Left & Right Slide Controls & Year Tabs */}
-                  <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                  {/* Row 1: Slide Navigation (< Prev Year, Year Tabs, Next Year >) */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full justify-start md:justify-center">
                     <button
                       type="button"
                       onClick={() => {
@@ -1957,7 +1973,7 @@ export default function PlanBuilder({
                       title="Slide to Previous Academic Year (<)"
                     >
                       <ChevronLeft className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-                      <span>&lt; Prev Year</span>
+                      <span>Prev Year</span>
                     </button>
 
                     {years.map(y => {
@@ -2028,22 +2044,48 @@ export default function PlanBuilder({
                       }`}
                       title="Slide to Next Academic Year (>)"
                     >
-                      <span>Next Year &gt;</span>
+                      <span>Next Year</span>
                       <ChevronRight className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
                     </button>
                   </div>
 
-                  {/* Mode & Layout Switchers */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Layout Mode Switcher: Trimester (3 Terms) vs Semester (2 Semesters) */}
-                    <div className="flex items-center gap-1 bg-slate-900 text-white dark:bg-slate-900/90 border border-slate-800 rounded-2xl p-1 text-xs shrink-0 font-sans shadow-md">
+                  {/* Row 2 (Underneath): Layout Mode Switcher & View Mode Controls */}
+                  <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
+                    {/* View Mode Switcher */}
+                    <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-1 text-xs shrink-0 font-sans shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('single')}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer font-heading ${
+                          viewMode === 'single'
+                            ? 'bg-slate-900 text-white dark:bg-slate-700 dark:text-white shadow-2xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        Single Year
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('all')}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer font-heading ${
+                          viewMode === 'all'
+                            ? 'bg-slate-900 text-white dark:bg-slate-700 dark:text-white shadow-2xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        3-Year Overview
+                      </button>
+                    </div>
+
+                    {/* Layout Mode Switcher: Trimester View vs Semester View */}
+                    <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-1 text-xs shrink-0 font-sans shadow-2xs">
                       <button
                         type="button"
                         onClick={() => setLayoutType('trimester')}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
+                        className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
                           layoutType === 'trimester'
                             ? 'bg-red-700 text-white shadow-md'
-                            : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
                         }`}
                         title="Switch canvas view to 3 Trimesters / Year layout (T1, T2, T3)"
                       >
@@ -2053,41 +2095,15 @@ export default function PlanBuilder({
                       <button
                         type="button"
                         onClick={() => setLayoutType('semester')}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
+                        className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
                           layoutType === 'semester'
                             ? 'bg-red-700 text-white shadow-md'
-                            : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
                         }`}
                         title="Switch canvas view to 2 Semesters / Year layout (S1, S2)"
                       >
                         <Layers className="w-3.5 h-3.5" />
                         <span>Semester View (2 Semesters)</span>
-                      </button>
-                    </div>
-
-                    {/* Mode Switcher: Single Year vs 3-Year Overview */}
-                    <div className="flex items-center gap-1 bg-slate-200/80 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-800 rounded-2xl p-1 text-xs shrink-0 font-sans shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => setViewMode('single')}
-                        className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer font-heading ${
-                          viewMode === 'single'
-                            ? 'bg-white text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }`}
-                      >
-                        Single Year
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setViewMode('all')}
-                        className={`px-3 py-1 rounded-xl text-xs font-black transition-all cursor-pointer font-heading ${
-                          viewMode === 'all'
-                            ? 'bg-white text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }`}
-                      >
-                        3-Year Overview
                       </button>
                     </div>
                   </div>
@@ -2443,16 +2459,22 @@ export default function PlanBuilder({
 
         {/* Drag Warning Toast Banner */}
         {dragWarningToast && (
-          <div className="fixed bottom-6 right-6 z-[9999] max-w-md bg-amber-500 text-white font-sans text-xs font-bold px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 shrink-0 text-white" />
-              <span>{dragWarningToast}</span>
+          <div className="fixed bottom-6 right-6 z-[9999] max-w-lg bg-slate-900/95 dark:bg-slate-950/95 text-white font-sans text-xs font-bold px-4 py-3.5 rounded-2xl shadow-2xl border border-amber-500/40 backdrop-blur-md flex items-center justify-between gap-3.5 animate-in fade-in slide-in-from-bottom-5 duration-200 ring-2 ring-amber-500/30">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-[11px] font-heading uppercase text-amber-400 font-extrabold tracking-wider">Validation Rule Notice</div>
+                <div className="text-slate-100 font-medium leading-normal">{dragWarningToast}</div>
+              </div>
             </div>
             <button
               onClick={() => setDragWarningToast(null)}
-              className="hover:bg-amber-600 p-1 rounded-lg transition-colors cursor-pointer"
+              className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+              title="Close notification"
             >
-              <X className="w-4 h-4 text-white" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}

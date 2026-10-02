@@ -152,6 +152,7 @@ export default function DroppablePaletteContainer({
                 unit={unit}
                 scheduledInfo={scheduledUnitsMap?.get(unit.code)}
                 historyRecord={historyMap ? historyMap[unit.code] : undefined}
+                scheduledCodesSet={scheduledCodesSet}
                 studentMajor={studentMajor}
                 onAdd={onAddUnit}
                 onAddToSpecificSemester={onAddToSpecificSemester}
