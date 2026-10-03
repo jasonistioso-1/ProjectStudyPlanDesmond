@@ -152,20 +152,20 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
             <span className="bg-red-700 text-white font-mono font-bold text-xs px-2.5 py-0.5 rounded-md shadow-2xs">{unit.code}</span>
 
             {isPassedHistory ? (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans shrink-0" title="Completed in official academic record">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>Grade: <strong className="font-mono text-emerald-900 dark:text-emerald-200 font-extrabold">{historyRecord?.grade || 'P'}</strong></span>
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border-2 border-emerald-500 dark:border-emerald-600 flex items-center gap-1.5 font-sans shrink-0 shadow-2xs" title="Completed in official academic record">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span>Grade: <strong className="font-mono text-emerald-900 dark:text-emerald-100 font-black">{historyRecord?.grade || 'P'}</strong></span>
               </span>
             ) : isFailedHistory ? (
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800 flex items-center gap-1 font-sans">
+              <span className="text-[10px] font-black px-2.5 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/70 text-rose-900 dark:text-rose-200 border-2 border-rose-500 dark:border-rose-600 flex items-center gap-1.5 font-sans shrink-0 shadow-2xs">
                 ⚠ RE-TAKE ALLOWED
               </span>
             ) : isScheduled ? (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans">
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border-2 border-emerald-500 dark:border-emerald-600 flex items-center gap-1.5 font-sans shrink-0 shadow-2xs">
                 ✓ Added in {scheduledInfo.termName}
               </span>
             ) : isOtherElectiveScheduled ? (
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-100/90 dark:bg-amber-950 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 flex items-center gap-1 font-sans shrink-0" title={`Degree requirements require only 1 General Elective. ${otherElectiveCode} is already scheduled.`}>
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 border-2 border-amber-500 dark:border-amber-600 flex items-center gap-1.5 font-sans shrink-0 shadow-2xs" title={`Degree requirements require only 1 General Elective. ${otherElectiveCode} is already scheduled.`}>
                 🔒 Elective Met ({otherElectiveCode} Scheduled)
               </span>
             ) : null}

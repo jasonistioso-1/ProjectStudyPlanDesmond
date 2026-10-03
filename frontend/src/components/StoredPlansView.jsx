@@ -86,31 +86,31 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
     switch (status) {
       case 'approved':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-700 text-white border border-emerald-800 shadow-2xs">
             Approved
           </span>
         );
       case 'agreed':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-700 text-white border border-sky-800 shadow-2xs">
             Student Agreed
           </span>
         );
       case 'recommended':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-600 text-white border border-amber-700 shadow-2xs">
             Recommended
           </span>
         );
       case 'rejected':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-700 text-white border border-rose-800 shadow-2xs">
             Change Requested
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-white border border-slate-800 shadow-2xs">
             Draft
           </span>
         );
@@ -194,9 +194,9 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
                     <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 font-heading">
                       <span>{plan.student_name}</span>
                       {isNewStudent ? (
-                        <span className="bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-semibold px-2 py-0.5 rounded-md font-sans">New Student</span>
+                        <span className="bg-emerald-50 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 font-extrabold border-2 border-emerald-500 dark:border-emerald-600 text-[10px] px-2.5 py-0.5 rounded-md font-sans shadow-2xs">New Student</span>
                       ) : (
-                        <span className="bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80 text-[10px] font-semibold px-2 py-0.5 rounded-md font-sans">Existing Student</span>
+                        <span className="bg-sky-50 dark:bg-sky-950/70 text-sky-900 dark:text-sky-200 font-extrabold border-2 border-sky-500 dark:border-sky-600 text-[10px] px-2.5 py-0.5 rounded-md font-sans shadow-2xs">Existing Student</span>
                       )}
                     </div>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 block">{plan.student_number}</span>

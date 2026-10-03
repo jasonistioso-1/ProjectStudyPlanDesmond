@@ -232,10 +232,10 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
 
                     {/* Status */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-extrabold border-2 shadow-2xs ${
                         isNew
-                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60'
-                          : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border-emerald-500 dark:border-emerald-600'
+                          : 'bg-sky-50 dark:bg-sky-950/70 text-sky-900 dark:text-sky-200 border-sky-500 dark:border-sky-600'
                       }`}>
                         {isNew ? 'New Student' : 'Existing Student'}
                       </span>

@@ -105,10 +105,10 @@ export default function DroppablePaletteContainer({
               <button
                 type="button"
                 onClick={() => setShowAllCatalogUnits(!showAllCatalogUnits)}
-                className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-lg border-2 text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs ${
                   showAllCatalogUnits
-                    ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
-                    : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                    ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border-amber-500 dark:border-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/80'
+                    : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 border-emerald-500 dark:border-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/80'
                 }`}
                 title="Toggle showing units that are already scheduled in the study plan"
               >

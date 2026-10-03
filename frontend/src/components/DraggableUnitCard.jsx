@@ -95,32 +95,32 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
             {unit.code}
           </span>
 
-          <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 font-mono shrink-0">
+          <span className="bg-slate-800 text-white dark:bg-slate-700 dark:text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md font-mono shrink-0 shadow-2xs">
             Lvl {unitLevel}
           </span>
 
           {isCompleted && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans shrink-0" title="Passed in academic record - sealed & locked">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>Grade: <strong className="font-mono text-emerald-900 dark:text-emerald-200 font-extrabold">{historyRecord?.grade || unit.grade || 'P'}</strong></span>
+            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border-2 border-emerald-500 dark:border-emerald-600 flex items-center gap-1.5 font-sans shrink-0 shadow-2xs" title="Passed in academic record - sealed & locked">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span>Grade: <strong className="font-mono text-emerald-900 dark:text-emerald-100 font-black">{historyRecord?.grade || unit.grade || 'P'}</strong></span>
             </span>
           )}
 
           {isEnrolled && (
-            <span className="bg-sky-50 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-bold text-[11px] px-2.5 py-0.5 rounded-md border border-sky-200 dark:border-sky-800 flex items-center gap-1 font-sans shrink-0">
-              <Clock className="w-3 h-3 text-sky-600 dark:text-sky-400" /> Enrolled
+            <span className="bg-sky-50 dark:bg-sky-950/70 text-sky-900 dark:text-sky-200 font-extrabold text-[10px] px-2.5 py-0.5 rounded-md border-2 border-sky-500 dark:border-sky-600 flex items-center gap-1.5 font-sans shrink-0 shadow-2xs">
+              <Clock className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" /> Enrolled
             </span>
           )}
 
           {isAttempted && (
-            <span className="bg-rose-50 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 font-bold text-[11px] px-2.5 py-0.5 rounded-md border border-rose-200 dark:border-rose-800 flex items-center gap-1 font-sans shrink-0">
-              <RotateCcw className="w-3 h-3 text-rose-600 dark:text-rose-400" /> Failed ({historyRecord?.grade || 'F'})
+            <span className="bg-rose-50 dark:bg-rose-950/70 text-rose-900 dark:text-rose-200 font-extrabold text-[10px] px-2.5 py-0.5 rounded-md border-2 border-rose-500 dark:border-rose-600 flex items-center gap-1.5 font-sans shrink-0 shadow-2xs">
+              <RotateCcw className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" /> Failed ({historyRecord?.grade || 'F'})
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md font-mono shrink-0">
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-0.5 rounded-md font-mono shrink-0">
             {unit.credit_points || 3} CP
           </span>
 

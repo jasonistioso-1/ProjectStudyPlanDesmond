@@ -768,9 +768,7 @@ export default function App() {
   };
 
   // Per-semester change requests state (key format: 'Y{yearLevel}-P{periodId}')
-  const [semesterRequests, setSemesterRequests] = useState({
-    'Y2-P1': 'Student request: "Please swap ICT283 Data Structures to Trimester 2 due to timetable conflict."'
-  });
+  const [semesterRequests, setSemesterRequests] = useState({});
 
   const handleSaveSemesterRequest = (key, comment) => {
     setSemesterRequests(prev => ({

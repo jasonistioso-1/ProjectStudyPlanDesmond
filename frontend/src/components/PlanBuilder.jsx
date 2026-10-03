@@ -82,6 +82,7 @@ export default function PlanBuilder({
   const [unitFilter, setUnitFilter] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('ALL');
   const [layoutType, setLayoutType] = useState('trimester'); // Default to Singapore Trimester Focus
+  const [studentLayoutMode, setStudentLayoutMode] = useState('trimester'); // Independent Student View Layout Mode
   const [paletteLayoutMode, setPaletteLayoutMode] = useState('trimester'); // Independent Palette Layout Mode
   const [activeYearLevel, setActiveYearLevel] = useState(1); // 1: Year 1 (2026), 2: Year 2 (2027), 3: Year 3 (2028)
   const [viewMode, setViewMode] = useState('single'); // 'single' = Single Year Focus Slide, 'all' = All Years Grid
@@ -884,27 +885,50 @@ export default function PlanBuilder({
     { level: 3, yearName: 'Year 3 (2028)' }
   ];
 
-  const getSemesterUnits = (yearLevel, periodId) => {
+  const getSemesterUnits = (yearLevel, periodId, activeLayout = layoutType) => {
     const yL = Number(yearLevel);
     const pI = Number(periodId);
 
     // If this year is a passed year in student academic history (e.g. Year 1)
     if (passedYears.has(yL)) {
+      if (activeLayout === 'semester') {
+        const completedHistory = (history || []).filter(h => h.status === 'completed');
+        const yearHistory = completedHistory.filter(h => {
+          const yTaken = Number(h.year_taken || 2026);
+          const calcLvl = yTaken === 2026 ? 1 : yTaken === 2027 ? 2 : 3;
+          return calcLvl === yL && Number(h.period_id) === pI;
+        });
+
+        return yearHistory.map(h => {
+          const uCode = h.unit_code || h.code;
+          const catUnit = catalogUnits.find(c => c.code === uCode);
+          return {
+            ...(catUnit || {}),
+            code: uCode,
+            title: h.title || catUnit?.title || uCode,
+            credit_points: Number(h.credit_points || catUnit?.credit_points || 3),
+            year_level: yL,
+            period_id: pI,
+            status: 'completed',
+            isCompleted: true,
+            isLocked: true
+          };
+        });
+      }
+
       const completedHistory = (history || []).filter(h => h.status === 'completed');
-      
       const yearHistory = completedHistory.filter(h => {
         const yTaken = Number(h.year_taken || 2026);
         const calcLvl = yTaken === 2026 ? 1 : yTaken === 2027 ? 2 : 3;
         return calcLvl === yL;
       });
 
-      const itemsWithPeriod = yearHistory.filter(h => Number(h.period_id) === pI);
+      const itemsWithPeriod = yearHistory.filter(h => Number(h.period_id) === pI || (pI === 3 && h.period_code === 'T1') || (pI === 4 && h.period_code === 'T2') || (pI === 5 && h.period_code === 'T3'));
 
       let targetHistoryUnits = [];
       if (itemsWithPeriod.length > 0) {
         targetHistoryUnits = itemsWithPeriod;
       } else if (yearHistory.length > 0) {
-        // Partition history units evenly into 4 units per trimester (T1=3, T2=4, T3=5)
         const termIdx = pI === 3 ? 0 : pI === 4 ? 1 : 2;
         targetHistoryUnits = yearHistory.slice(termIdx * 4, (termIdx + 1) * 4);
       }
@@ -933,18 +957,7 @@ export default function PlanBuilder({
       if (uY !== yL) return false;
 
       const uP = Number(u.period_id);
-      if (uP === pI) return true;
-
-      // Period aliases for Trimester (T1: 3, T2: 4, T3: 5) vs Semester (S1: 1, S2: 2)
-      if (layoutType === 'trimester') {
-        const seq = Number(u.sequence_order || 1);
-        if (pI === 3) return uP === 3 || (uP === 1 && seq <= 3);
-        if (pI === 4) return uP === 4 || (uP === 2 && seq <= 3);
-        if (pI === 5) return uP === 5 || (uP === 1 && seq > 3) || (uP === 2 && seq > 3);
-        if (pI === 1) return uP === 1 || uP === 3;
-        if (pI === 2) return uP === 2 || uP === 4 || uP === 5;
-      }
-      return false;
+      return uP === pI;
     });
   };
 
@@ -1021,6 +1034,36 @@ export default function PlanBuilder({
             <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-xl shadow-2xs">
               {totalCP} / 72 CP
             </span>
+
+            {/* Student View Independent Layout Mode Switcher */}
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-0.5 text-xs font-sans shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setStudentLayoutMode('trimester')}
+                className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
+                  studentLayoutMode === 'trimester'
+                    ? 'bg-red-700 text-white shadow-2xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+                title="Switch Student View to Trimester Layout (3 Terms)"
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Trimester View (3 Terms)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudentLayoutMode('semester')}
+                className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
+                  studentLayoutMode === 'semester'
+                    ? 'bg-red-700 text-white shadow-2xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+                title="Switch Student View to Semester Layout (2 Semesters)"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Semester View (2 Semesters)</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0 self-stretch md:self-auto justify-end">
@@ -1045,8 +1088,6 @@ export default function PlanBuilder({
             )}
           </div>
         </div>
-
-
 
         {/* Student Degree Plan Guide Card */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xs font-sans space-y-3.5">
@@ -1102,21 +1143,24 @@ export default function PlanBuilder({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {years.map(y => (
-            <div key={y.level} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
-              <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-extrabold text-slate-900 dark:text-white font-heading tracking-tight">
-                    {y.yearName}
+          {years.map(y => {
+            const studentPeriods = studentLayoutMode === 'semester' ? semesterPeriods : trimesterPeriods;
+
+            return (
+              <div key={y.level} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+                <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-white font-heading tracking-tight">
+                      {y.yearName}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full uppercase">
+                    Max 12 CP
                   </span>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full uppercase">
-                  Max 12 CP
-                </span>
-              </div>
 
-              {defaultPeriodList.map(p => {
-                const sUnits = getSemesterUnits(y.level, p.period_id);
+                {studentPeriods.map(p => {
+                  const sUnits = getSemesterUnits(y.level, p.period_id, studentLayoutMode);
                 const semCP = sUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0);
                 const isOptimalLoad = semCP === 12;
                 const periodKey = `Y${y.level}-P${p.period_id}`;
@@ -1221,19 +1265,19 @@ export default function PlanBuilder({
 
                                     <div className="flex items-center gap-1.5 shrink-0">
                                       {isCompleted && (
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 font-sans shrink-0" title="Completed in official academic record">
-                                          <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                          <span>Grade: <strong className="font-mono text-emerald-900 dark:text-emerald-200 font-extrabold">{hist?.grade || 'P'}</strong></span>
+                                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border-2 border-emerald-500 dark:border-emerald-600 flex items-center gap-1.5 font-sans shrink-0 shadow-2xs" title="Completed in official academic record">
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                          <span>Grade: <strong className="font-mono text-emerald-900 dark:text-emerald-100 font-black">{hist?.grade || 'P'}</strong></span>
                                         </span>
                                       )}
                                       {isEnrolled && (
-                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">
-                                          <Clock className="w-3 h-3 text-sky-600 dark:text-sky-400" /> ENROLLED
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-sky-50 dark:bg-sky-950/70 text-sky-900 dark:text-sky-200 border-2 border-sky-500 dark:border-sky-600 shadow-2xs">
+                                          <Clock className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" /> ENROLLED
                                         </span>
                                       )}
                                       {isAttempted && (
-                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80">
-                                          <RotateCcw className="w-3 h-3 text-rose-600 dark:text-rose-400" /> FAILED ({hist?.grade || 'F'})
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-50 dark:bg-rose-950/70 text-rose-900 dark:text-rose-200 border-2 border-rose-500 dark:border-rose-600 shadow-2xs">
+                                          <RotateCcw className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" /> FAILED ({hist?.grade || 'F'})
                                         </span>
                                       )}
                                     </div>
@@ -1273,8 +1317,9 @@ export default function PlanBuilder({
                 );
               })}
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
         {/* Unified Student Digital Signature Pad Component (Single Card for 72 CP Plan) */}
         <SignaturePad
@@ -1941,7 +1986,7 @@ export default function PlanBuilder({
                   </div>
 
                   {/* Centered Major Badge Pill */}
-                  <div className="inline-flex items-center gap-1.5 bg-red-50/90 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/80 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide shadow-2xs font-heading">
+                  <div className="inline-flex items-center gap-1.5 bg-red-50 dark:bg-red-950/70 text-red-900 dark:text-red-200 border-2 border-red-500 dark:border-red-600 px-3.5 py-1 rounded-full text-xs font-black tracking-wide shadow-2xs font-heading">
                     <BookOpen className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
                     <span>Major: {stMajor}</span>
                   </div>
@@ -2134,11 +2179,9 @@ export default function PlanBuilder({
                 {/* Drag & Drop Year Grid Canvas */}
                 <div className="space-y-5">
                   {(viewMode === 'all' ? years : years.filter(y => y.level === activeYearLevel)).map(yearObj => {
-                    const isYearPassed = passedYears.has(yearObj.level);
-                    const yearUnitsCP = planUnits
-                      .filter(u => u.year_level === yearObj.level)
-                      .reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
-                    const yearDisplayCP = isYearPassed ? 36 : yearUnitsCP;
+                    const isYearPassed = layoutType === 'trimester' && passedYears.has(yearObj.level);
+                    const yearRenderedUnits = defaultPeriodList.flatMap(p => getSemesterUnits(yearObj.level, p.period_id));
+                    const yearDisplayCP = yearRenderedUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
 
                     return (
                       <div
