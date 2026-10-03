@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import DraggablePaletteUnitCard from './DraggablePaletteUnitCard';
-import { BookOpen, Search, X, RefreshCw } from 'lucide-react';
+import { BookOpen, Search, X, RefreshCw, Calendar, Layers } from 'lucide-react';
 
 export default function DroppablePaletteContainer({
   filteredOfferings,
@@ -18,7 +18,8 @@ export default function DroppablePaletteContainer({
   studentMajor = 'Artificial Intelligence',
   onAddUnit,
   onAddToSpecificSemester,
-  layoutType = 'trimester'
+  layoutType = 'trimester',
+  setLayoutType
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'available_units_dropzone'

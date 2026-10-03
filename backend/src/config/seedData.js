@@ -17,10 +17,10 @@ export const mockTeachingPeriods = [
 ];
 
 export const mockCourses = [
-    { course_id: 1, code: 'PT3-BSIT-AI01', name: 'Bachelor of Information Technology (Major: Artificial Intelligence)', degree_level: 'Bachelor', total_credit_points: 72 },
+    { course_id: 1, code: 'PT3-BSIT-SE01', name: 'Bachelor of Information Technology (Major: Software Engineering)', degree_level: 'Bachelor', total_credit_points: 72 },
     { course_id: 2, code: 'PT3-BSIT-CS02', name: 'Bachelor of Information Technology (Major: Computer Science)', degree_level: 'Bachelor', total_credit_points: 72 },
     { course_id: 3, code: 'PT3-BSIT-BIS03', name: 'Bachelor of Information Technology (Major: Business Information Systems)', degree_level: 'Bachelor', total_credit_points: 72 },
-    { course_id: 4, code: 'PT3-BSIT-AI04', name: 'Bachelor of Information Technology (Major: Artificial Intelligence)', degree_level: 'Bachelor', total_credit_points: 72 }
+    { course_id: 4, code: 'PT3-BSIT-SE04', name: 'Bachelor of Information Technology (Major: Software Engineering)', degree_level: 'Bachelor', total_credit_points: 72 }
 ];
 
 export const mockUnits = [
@@ -33,7 +33,7 @@ export const mockUnits = [
     { unit_id: 7, code: 'ICT145', title: 'Python Programming', credit_points: 3, level: 100 },
     { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200 },
     { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, level: 200 },
-    { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, level: 200 },
+    { unit_id: 10, code: 'ICT203', title: 'Advanced Systems Architecture', credit_points: 3, level: 200 },
     { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, level: 200 },
     { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, level: 200 },
     { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200 },
@@ -46,14 +46,12 @@ export const mockUnits = [
     { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, level: 300 },
     { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice', credit_points: 3, level: 300 },
     { unit_id: 22, code: 'ICT303', title: 'Advanced Machine Learning', credit_points: 3, level: 300 },
-    { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, level: 300 },
+    { unit_id: 23, code: 'ICT304', title: 'Software System Design', credit_points: 3, level: 300 },
     { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, level: 300 },
     { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300 },
     { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300 },
     { unit_id: 27, code: 'ICT393', title: 'Advanced Business Analysis', credit_points: 3, level: 300 },
-    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence', credit_points: 3, level: 300 },
-    { unit_id: 29, code: 'MSP200', title: 'Building Employability Skills', credit_points: 3, level: 200 },
-    { unit_id: 30, code: 'COM203', title: 'Consulting and Freelancing', credit_points: 3, level: 200 }
+    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence', credit_points: 3, level: 300 }
 ];
 
 export const mockStudents = [
@@ -79,8 +77,8 @@ export const mockStudents = [
         last_name: 'Mercer',
         email: 'alex.mercer@student.pt3solutions.edu.sg',
         course_id: 1,
-        course_code: 'PT3-BSIT-AI01',
-        course_name: 'Bachelor of Information Technology (Major: Artificial Intelligence)',
+        course_code: 'PT3-BSIT-SE01',
+        course_name: 'Bachelor of Information Technology (Major: Software Engineering)',
         location_id: 2,
         location_name: 'PT3 Solutions Singapore Campus',
         commencement_year: 2026,
@@ -124,8 +122,8 @@ export const mockStudents = [
         last_name: 'Watson',
         email: 'e.watson@student.pt3solutions.edu.sg',
         course_id: 1,
-        course_code: 'PT3-BSIT-AI04',
-        course_name: 'Bachelor of Information Technology (Major: Artificial Intelligence)',
+        course_code: 'PT3-BSIT-SE04',
+        course_name: 'Bachelor of Information Technology (Major: Software Engineering)',
         location_id: 2,
         location_name: 'PT3 Solutions Singapore Campus',
         commencement_year: 2026,

@@ -38,10 +38,10 @@ INSERT INTO TeachingPeriod (period_id, code, name, period_type, sequence_order) 
 
 -- 3. Seed Courses (Bachelor of Information Technology Majors: AI, CS, BIS)
 INSERT INTO Course (course_id, code, name, degree_level, total_credit_points) VALUES
-(1, 'PT3-BSIT-AI01', 'Bachelor of Information Technology (Major: Artificial Intelligence)', 'Bachelor', 72),
+(1, 'PT3-BSIT-SE01', 'Bachelor of Information Technology (Major: Software Engineering)', 'Bachelor', 72),
 (2, 'PT3-BSIT-CS02', 'Bachelor of Information Technology (Major: Computer Science)', 'Bachelor', 72),
 (3, 'PT3-BSIT-BIS03', 'Bachelor of Information Technology (Major: Business Information Systems)', 'Bachelor', 72),
-(4, 'PT3-BSIT-AI04', 'Bachelor of Information Technology (Major: Artificial Intelligence)', 'Bachelor', 72);
+(4, 'PT3-BSIT-SE04', 'Bachelor of Information Technology (Major: Software Engineering)', 'Bachelor', 72);
 
 -- 4. Seed Units (Standard Curriculum Dataset)
 INSERT INTO Unit (unit_id, code, title, credit_points, level) VALUES
@@ -72,9 +72,7 @@ INSERT INTO Unit (unit_id, code, title, credit_points, level) VALUES
 (25, 'ICT373', 'Software Architecture', 3, 300),
 (26, 'ICT374', 'Operating Systems', 3, 300),
 (27, 'ICT393', 'Advanced Business Analysis', 3, 300),
-(28, 'ICT394', 'Business Intelligence', 3, 300),
-(29, 'MSP200', 'Building Employability Skills', 3, 200),
-(30, 'COM203', 'Consulting and Freelancing', 3, 200);
+(28, 'ICT394', 'Business Intelligence', 3, 300);
 
 -- 5. Seed Unit Offerings (Year 2026 PT3 Main Campus offerings)
 INSERT INTO UnitOffering (unit_id, location_id, period_id, year_version, delivery_mode, is_active) VALUES

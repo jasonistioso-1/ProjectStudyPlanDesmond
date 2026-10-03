@@ -1,11 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Printer, Download, X, CheckCircle2, FileText, FileSpreadsheet, Image as ImageIcon, ShieldCheck, ExternalLink, Award, Sparkles, Layers, Eye } from 'lucide-react';
+import { Printer, Download, X, CheckCircle2, FileText, FileSpreadsheet, Image as ImageIcon, ShieldCheck, ExternalLink, Award, Sparkles, Layers, Eye, Copy, Check } from 'lucide-react';
 
 export default function OfficialStudyPlanDocumentModal({ student, planUnits = [], currentPlan, onClose }) {
   const documentRef = useRef(null);
   const [activeTab, setActiveTab] = useState('pdf'); // 'pdf' | 'csv' | 'png' | 'jpg'
   const [isExporting, setIsExporting] = useState(false);
   const [exportingType, setExportingType] = useState(null);
+  const [copiedCSV, setCopiedCSV] = useState(false);
 
   useEffect(() => {
     if (!student) return;
@@ -26,8 +27,51 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
     { level: 3, yearLabel: 'Year 3 – 2028' }
   ];
 
-  const getSemesterUnits = (yearLevel, periodId) => {
-    return planUnits.filter(u => u.year_level === yearLevel && u.period_id === periodId);
+  const getPeriodName = (u) => {
+    if (!u) return 'Trimester 1';
+    if (u.period_name) return u.period_name;
+    const code = String(u.period_code || '').toUpperCase();
+    if (code === 'T1' || code === 'TRI1') return 'Trimester 1';
+    if (code === 'T2' || code === 'TRI2') return 'Trimester 2';
+    if (code === 'T3' || code === 'TRI3') return 'Trimester 3';
+    if (code === 'S1' || code === 'SEM1') return 'Semester 1';
+    if (code === 'S2' || code === 'SEM2') return 'Semester 2';
+
+    const pid = Number(u.period_id);
+    if (pid === 1) return 'Semester 1';
+    if (pid === 2) return 'Semester 2';
+    if (pid === 3) return 'Trimester 1';
+    if (pid === 4) return 'Trimester 2';
+    if (pid === 5) return 'Trimester 3';
+    if (pid) return `Trimester ${pid}`;
+    return 'Trimester 1';
+  };
+
+  const isTrimester = planUnits.some(u => Number(u.period_id) >= 3 || String(u.period_code || '').toUpperCase().startsWith('T'));
+  const activePeriods = isTrimester ? [
+    { period_id: 3, label: 'Trimester 1 Units' },
+    { period_id: 4, label: 'Trimester 2 Units' },
+    { period_id: 5, label: 'Trimester 3 Units' }
+  ] : [
+    { period_id: 1, label: 'Semester 1 Units' },
+    { period_id: 2, label: 'Semester 2 Units' }
+  ];
+
+  const getPeriodUnits = (yearLevel, targetPid) => {
+    return planUnits.filter(u => {
+      const uYear = Number(u.year_level || 1);
+      const uPid = Number(u.period_id);
+      if (uYear !== Number(yearLevel)) return false;
+
+      if (uPid === Number(targetPid)) return true;
+      if (targetPid === 3 && (u.period_code === 'T1' || uPid === 1)) return true;
+      if (targetPid === 4 && (u.period_code === 'T2' || uPid === 2)) return true;
+      if (targetPid === 5 && (u.period_code === 'T3')) return true;
+      if (targetPid === 1 && (u.period_code === 'S1' || uPid === 3)) return true;
+      if (targetPid === 2 && (u.period_code === 'S2' || uPid === 4 || uPid === 5)) return true;
+
+      return false;
+    });
   };
 
   // Helper to dynamically obtain html2canvas instance without static import analysis issues
@@ -107,40 +151,45 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
     }
   };
 
+  // Helper to extract clean course name and major without double/duplicate words
+  const rawCourseName = student.course_name || 'Bachelor of Information Technology';
+  const cleanCourseName = rawCourseName.replace(/\s*\(Major:[^)]+\)/gi, '').trim();
+  const majorName = student.major || (rawCourseName.match(/\(Major:\s*([^)]+)\)/i)?.[1]) || 'Software Engineering';
+  const courseCode = student.course_code || 'PT3-BSIT-SE01';
+  const courseTitle = `${courseCode} ${cleanCourseName}${majorName ? ` (Major: ${majorName})` : ''}`;
+
   // Build CSV raw lines
   const buildCSVLines = () => {
     const lines = [];
     lines.push(`"PT3 SOLUTIONS OFFICIAL ACADEMIC STUDY PLAN DOCUMENT"`);
-    lines.push(`"Student Name","${student.first_name || ''} ${student.last_name || ''}"`);
+    lines.push(`"Student Name","${(student.first_name || '') + ' ' + (student.last_name || '')}"`);
     lines.push(`"Student Number","${student.student_number || ''}"`);
-    lines.push(`"Course Code","${student.course_code || 'B1390'}"`);
-    lines.push(`"Course Name","${student.course_name || 'Bachelor of Information Technology'}"`);
-    lines.push(`"Major Pathway","${student.major || 'Artificial Intelligence'}"`);
+    lines.push(`"Course Code","${courseCode}"`);
+    lines.push(`"Course Name","${cleanCourseName}"`);
+    lines.push(`"Major Pathway","${majorName}"`);
     lines.push(`"Total Credit Load","${planUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP"`);
     lines.push('');
     lines.push('"Year Level","Teaching Period","Unit Code","Unit Title","Credit Points"');
 
-    const periodMap = {
-      1: 'Semester 1',
-      2: 'Semester 2',
-      3: 'Trimester 1',
-      4: 'Trimester 2',
-      5: 'Trimester 3'
-    };
-
-    const sorted = [...planUnits].sort((a, b) => a.year_level - b.year_level || a.period_id - b.period_id);
-    sorted.forEach(u => {
-      const pName = periodMap[u.period_id] || `Period ${u.period_id}`;
-      const titleClean = (u.title || '').replace(/"/g, '""');
-      lines.push(`"Year ${u.year_level}","${pName}","${u.code}","${titleClean}","${u.credit_points || 3}"`);
-    });
+    const sorted = [...planUnits].sort((a, b) => (Number(a.year_level) - Number(b.year_level)) || (Number(a.period_id) - Number(b.period_id)));
+    if (sorted.length === 0) {
+      lines.push('"No Units Scheduled","No units selected in this study plan","","","0 CP"');
+    } else {
+      sorted.forEach(u => {
+        const pName = getPeriodName(u);
+        const titleClean = (u.title || u.unit_title || '').replace(/"/g, '""');
+        const unitCode = u.code || u.unit_code || '';
+        lines.push(`"Year ${u.year_level || 1}","${pName}","${unitCode}","${titleClean}","${u.credit_points || 3} CP"`);
+      });
+    }
     return lines;
   };
 
-  // Trigger CSV Spreadsheet Download
+  // Trigger CSV Spreadsheet Download with UTF-8 BOM
   const handleExportCSV = () => {
     const lines = buildCSVLines();
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = '\uFEFF' + lines.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -149,7 +198,12 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
     URL.revokeObjectURL(url);
   };
 
-  const courseTitle = `${student.course_code || 'B1390'} ${student.course_name || 'Bachelor of Information Technology'} (Major: ${student.major || 'Artificial Intelligence'})`;
+  const handleCopyCSV = () => {
+    const lines = buildCSVLines();
+    navigator.clipboard.writeText(lines.join('\n'));
+    setCopiedCSV(true);
+    setTimeout(() => setCopiedCSV(false), 2500);
+  };
 
   // Determine current active tab download trigger
   const handleCurrentDownload = () => {
@@ -178,9 +232,6 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
             <div>
               <h3 className="text-sm font-extrabold font-heading tracking-tight flex items-center gap-2 text-white">
                 Official Academic Study Plan Document
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
-                  VERIFIED RECORD
-                </span>
               </h3>
               <p className="text-[11px] text-slate-400 font-medium">Select a format below to preview before downloading</p>
             </div>
@@ -253,73 +304,11 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
         {/* PREVIEW CONTAINER ACCORDING TO ACTIVE FORMAT TAB */}
         <div className="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex-1">
           
-          {/* Format Preview Status Banner */}
-          <div className="max-w-4xl mx-auto mb-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-2xs font-sans">
-            <div className="flex items-center gap-3">
-              <span className={`p-2.5 rounded-xl text-white shadow-2xs ${
-                activeTab === 'pdf' ? 'bg-red-700' :
-                activeTab === 'csv' ? 'bg-emerald-600' :
-                activeTab === 'png' ? 'bg-sky-600' : 'bg-amber-600'
-              }`}>
-                {activeTab === 'pdf' ? <FileText className="w-4 h-4" /> :
-                 activeTab === 'csv' ? <FileSpreadsheet className="w-4 h-4" /> :
-                 activeTab === 'png' ? <ImageIcon className="w-4 h-4" /> :
-                 <Download className="w-4 h-4" />}
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-black text-slate-900 dark:text-white font-heading tracking-tight">
-                    {activeTab === 'pdf' && 'Official PDF Document Preview'}
-                    {activeTab === 'csv' && 'CSV Spreadsheet Dataset Preview'}
-                    {activeTab === 'png' && 'High-Resolution PNG Image Preview'}
-                    {activeTab === 'jpg' && 'Compressed JPG Photo Snapshot Preview'}
-                  </h4>
-                  <span className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full border ${
-                    activeTab === 'pdf' ? 'bg-red-50 text-red-700 border-red-200' :
-                    activeTab === 'csv' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                    activeTab === 'png' ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}>
-                    LIVE PREVIEW MODE
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                  {activeTab === 'pdf' && 'Previewing exact printable A4 paper format with PT3 Solutions official seal'}
-                  {activeTab === 'csv' && 'Previewing tabular study plan dataset and raw CSV payload format'}
-                  {activeTab === 'png' && 'Previewing lossless 200% High-DPI graphic snapshot format'}
-                  {activeTab === 'jpg' && 'Previewing optimized 95% quality graphic image format'}
-                </p>
-              </div>
-            </div>
 
-            <button
-              onClick={handleCurrentDownload}
-              disabled={isExporting}
-              className={`px-4.5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-md active:scale-95 cursor-pointer font-heading flex items-center gap-1.5 ${
-                activeTab === 'pdf' ? 'bg-red-700 hover:bg-red-600' :
-                activeTab === 'csv' ? 'bg-emerald-600 hover:bg-emerald-500' :
-                activeTab === 'png' ? 'bg-sky-600 hover:bg-sky-500' : 'bg-amber-600 hover:bg-amber-500'
-              }`}
-            >
-              {activeTab === 'pdf' ? <Printer className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
-              <span>
-                {isExporting ? `Generating ${activeTab.toUpperCase()}...` : `Download ${activeTab.toUpperCase()}`}
-              </span>
-            </button>
-          </div>
 
           {/* TAB 1: PDF PRINTABLE PAPER DOCUMENT PREVIEW */}
           {(activeTab === 'pdf' || activeTab === 'png' || activeTab === 'jpg') && (
             <div className="relative">
-              {/* Badge for Image Previews */}
-              {(activeTab === 'png' || activeTab === 'jpg') && (
-                <div className="max-w-4xl mx-auto mb-2 text-right">
-                  <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${
-                    activeTab === 'png' ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}>
-                    {activeTab === 'png' ? '🖼️ PNG Format (High DPI 200%)' : '📸 JPG Format (95% Quality Image)'}
-                  </span>
-                </div>
-              )}
 
               <div
                 ref={documentRef}
@@ -337,9 +326,6 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                     <div>
                       <div className="text-base font-black tracking-tight text-slate-900 font-heading flex items-center gap-2">
                         <span>PT3 SOLUTIONS</span>
-                        <span className="text-[10px] font-extrabold uppercase bg-red-100 text-red-800 border border-red-300 px-2 py-0.5 rounded font-mono">
-                          ACADEMIC REPOSITORY
-                        </span>
                       </div>
                       <div className="text-xs text-slate-600 font-bold font-sans">
                         Office of Academic Chair & Course Governance System
@@ -382,92 +368,58 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
 
                 {/* MAIN 3-YEAR STUDY PLAN GRID TABLE */}
                 <div className="border-2 border-slate-900 mb-4">
-                  {years.map((y, yearIdx) => {
-                    const sem1Units = getSemesterUnits(y.level, 1);
-                    const sem2Units = getSemesterUnits(y.level, 2);
-                    const sem1CP = sem1Units.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
-                    const sem2CP = sem2Units.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
-
-                    return (
-                      <div
-                        key={y.level}
-                        className={`flex border-b border-slate-900 ${yearIdx === years.length - 1 ? 'border-b-0' : ''}`}
-                      >
-                        {/* Leftmost Rotated Year Label Box */}
-                        <div className="w-12 bg-slate-100 border-r-2 border-slate-900 flex items-center justify-center p-1 shrink-0">
-                          <span className="font-extrabold text-xs text-slate-900 tracking-wider whitespace-nowrap -rotate-90 select-none font-heading">
-                            {y.yearLabel}
-                          </span>
-                        </div>
-
-                        {/* Semester 1 Column */}
-                        <div className="w-1/2 border-r-2 border-slate-900 flex flex-col justify-between">
-                          <div>
-                            {/* Sem 1 Header */}
-                            <div className="bg-slate-100 border-b border-slate-900 px-3 py-1 flex justify-between font-extrabold text-xs font-heading">
-                              <span>Semester 1 Units</span>
-                              <span className="font-mono">CP</span>
-                            </div>
-                            {/* Sem 1 Units List */}
-                            <div className="p-2.5 space-y-1.5 min-h-[90px]">
-                              {sem1Units.length === 0 ? (
-                                <p className="text-[11px] text-slate-400 italic text-center py-4">Empty Slot</p>
-                              ) : (
-                                sem1Units.map((u, i) => (
-                                  <div key={i} className="flex justify-between items-start text-[11px] leading-tight font-medium">
-                                    <span>
-                                      <strong className="font-mono text-slate-900 mr-1.5 font-bold">{u.code}</strong>
-                                      <span className="text-slate-700">{u.title}</span>
-                                    </span>
-                                    <span className="font-mono text-slate-900 font-bold ml-2 shrink-0">{u.credit_points || 3} CP</span>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Sem 1 Total Footer */}
-                          <div className="border-t border-slate-900 px-3 py-1 flex justify-between font-bold text-xs bg-slate-50">
-                            <span>Total</span>
-                            <span className="font-mono">{sem1CP} CP</span>
-                          </div>
-                        </div>
-
-                        {/* Semester 2 Column */}
-                        <div className="w-1/2 flex flex-col justify-between">
-                          <div>
-                            {/* Sem 2 Header */}
-                            <div className="bg-slate-100 border-b border-slate-900 px-3 py-1 flex justify-between font-extrabold text-xs font-heading">
-                              <span>Semester 2 Units</span>
-                              <span className="font-mono">CP</span>
-                            </div>
-                            {/* Sem 2 Units List */}
-                            <div className="p-2.5 space-y-1.5 min-h-[90px]">
-                              {sem2Units.length === 0 ? (
-                                <p className="text-[11px] text-slate-400 italic text-center py-4">Empty Slot</p>
-                              ) : (
-                                sem2Units.map((u, i) => (
-                                  <div key={i} className="flex justify-between items-start text-[11px] leading-tight font-medium">
-                                    <span>
-                                      <strong className="font-mono text-slate-900 mr-1.5 font-bold">{u.code}</strong>
-                                      <span className="text-slate-700">{u.title}</span>
-                                    </span>
-                                    <span className="font-mono text-slate-900 font-bold ml-2 shrink-0">{u.credit_points || 3} CP</span>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Sem 2 Total Footer */}
-                          <div className="border-t border-slate-900 px-3 py-1 flex justify-between font-bold text-xs bg-slate-50">
-                            <span>Total</span>
-                            <span className="font-mono">{sem2CP} CP</span>
-                          </div>
-                        </div>
+                  {years.map((y, yearIdx) => (
+                    <div
+                      key={y.level}
+                      className={`flex border-b border-slate-900 ${yearIdx === years.length - 1 ? 'border-b-0' : ''}`}
+                    >
+                      {/* Leftmost Rotated Year Label Box */}
+                      <div className="w-12 bg-slate-100 border-r-2 border-slate-900 flex items-center justify-center p-1 shrink-0">
+                        <span className="font-extrabold text-xs text-slate-900 tracking-wider whitespace-nowrap -rotate-90 select-none font-heading">
+                          {y.yearLabel}
+                        </span>
                       </div>
-                    );
-                  })}
+
+                      {/* Period Columns (2 for Semesters, 3 for Trimesters) */}
+                      {activePeriods.map((p, pIdx) => {
+                        const units = getPeriodUnits(y.level, p.period_id);
+                        const periodCP = units.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+                        const colWidth = activePeriods.length === 3 ? 'w-1/3' : 'w-1/2';
+                        const isLastCol = pIdx === activePeriods.length - 1;
+
+                        return (
+                          <div key={p.period_id} className={`${colWidth} ${!isLastCol ? 'border-r-2 border-slate-900' : ''} flex flex-col justify-between`}>
+                            <div>
+                              <div className="bg-slate-100 border-b border-slate-900 px-3 py-1 flex justify-between font-extrabold text-xs font-heading">
+                                <span>{p.label}</span>
+                                <span className="font-mono">CP</span>
+                              </div>
+                              <div className="p-2.5 space-y-1.5 min-h-[90px]">
+                                {units.length === 0 ? (
+                                  <p className="text-[11px] text-slate-400 italic text-center py-4">Empty Slot</p>
+                                ) : (
+                                  units.map((u, i) => (
+                                    <div key={i} className="flex justify-between items-start text-[11px] leading-tight font-medium">
+                                      <span>
+                                        <strong className="font-mono text-slate-900 mr-1.5 font-bold">{u.code || u.unit_code}</strong>
+                                        <span className="text-slate-700">{u.title || u.unit_title}</span>
+                                      </span>
+                                      <span className="font-mono text-slate-900 font-bold ml-2 shrink-0">{u.credit_points || 3} CP</span>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="border-t border-slate-900 px-3 py-1 flex justify-between font-bold text-xs bg-slate-50">
+                              <span>Total</span>
+                              <span className="font-mono">{periodCP} CP</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
 
                 {/* Bottom Right TOTAL CREDIT POINTS Box */}
@@ -543,53 +495,139 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
 
           {/* TAB 2: CSV SPREADSHEET DATA PREVIEW */}
           {activeTab === 'csv' && (
-            <div className="max-w-4xl mx-auto space-y-4 font-sans">
+            <div className="max-w-4xl mx-auto space-y-5 font-sans animate-in fade-in duration-200">
               
+              {/* Summary Stats Cards Bar */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shrink-0">
+                    <FileSpreadsheet className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-mono">
+                      Scheduled Units
+                    </div>
+                    <div className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
+                      {planUnits.length} {planUnits.length === 1 ? 'Record' : 'Records'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
+                  <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shadow-md shrink-0">
+                    <Award className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-400 font-mono">
+                      Credit Load Total
+                    </div>
+                    <div className="text-base font-extrabold text-slate-900 dark:text-white font-mono">
+                      {planUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl flex items-center gap-3.5 shadow-2xs">
+                  <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center font-bold shadow-md shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
+                      Format Encoding
+                    </div>
+                    <div className="text-xs font-black text-slate-900 dark:text-white font-mono">
+                      UTF-8 CSV (Excel Ready)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* CSV Data Table Grid */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                   <h4 className="text-xs font-black text-slate-900 dark:text-white font-heading flex items-center gap-2">
                     <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                    CSV Data Grid Table Preview:
+                    Real-time CSV Data Table Grid Preview
                   </h4>
-                  <span className="text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded">
-                    {planUnits.length} Study Plan Records
+                  <span className="text-[10px] font-mono font-extrabold bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
+                    {planUnits.length} Active Rows
                   </span>
                 </div>
 
-                <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden text-xs">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden text-xs">
                   <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[11px]">
+                    <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold text-[11px] uppercase tracking-wider font-mono">
                       <tr>
-                        <th className="p-2.5 border-b border-slate-200 dark:border-slate-700">Year Level</th>
-                        <th className="p-2.5 border-b border-slate-200 dark:border-slate-700">Teaching Period</th>
-                        <th className="p-2.5 border-b border-slate-200 dark:border-slate-700">Unit Code</th>
-                        <th className="p-2.5 border-b border-slate-200 dark:border-slate-700">Unit Title</th>
-                        <th className="p-2.5 border-b border-slate-200 dark:border-slate-700">Credit Points</th>
+                        <th className="p-3 border-b border-slate-200 dark:border-slate-800">Year Level</th>
+                        <th className="p-3 border-b border-slate-200 dark:border-slate-800">Teaching Period</th>
+                        <th className="p-3 border-b border-slate-200 dark:border-slate-800">Unit Code</th>
+                        <th className="p-3 border-b border-slate-200 dark:border-slate-800">Unit Title</th>
+                        <th className="p-3 border-b border-slate-200 dark:border-slate-800">Credit Points</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                      {planUnits.map((u, i) => (
-                        <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                          <td className="p-2.5 font-bold font-mono">Year {u.year_level}</td>
-                          <td className="p-2.5 text-slate-600 dark:text-slate-400">Period {u.period_id}</td>
-                          <td className="p-2.5 font-mono font-bold text-red-600 dark:text-red-400">{u.code}</td>
-                          <td className="p-2.5 font-semibold text-slate-900 dark:text-white">{u.title}</td>
-                          <td className="p-2.5 font-mono text-emerald-600 font-bold">{u.credit_points || 3} CP</td>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
+                      {planUnits.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="p-10 text-center text-slate-400 dark:text-slate-500 italic font-medium">
+                            Belum ada mata kuliah yang dipilih dalam rencana studi ini (0 Records)
+                          </td>
                         </tr>
-                      ))}
+                      ) : (
+                        planUnits.map((u, i) => (
+                          <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="p-3 font-bold font-mono text-slate-700 dark:text-slate-300">Year {u.year_level || 1}</td>
+                            <td className="p-3 text-slate-600 dark:text-slate-400 font-semibold">{getPeriodName(u)}</td>
+                            <td className="p-3 font-mono font-bold">
+                              <span className="bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800/80 px-3 py-0.5 rounded-full text-[11px]">
+                                {u.code || u.unit_code}
+                              </span>
+                            </td>
+                            <td className="p-3 font-semibold text-slate-900 dark:text-white">{u.title || u.unit_title}</td>
+                            <td className="p-3 font-mono">
+                              <span className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/80 px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                                {u.credit_points || 3} CP
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* Raw CSV Text Payload Box */}
-              <div className="bg-slate-900 text-slate-100 rounded-2xl p-4 space-y-2 border border-slate-800">
-                <div className="flex items-center justify-between text-xs font-mono font-bold text-slate-400">
-                  <span>Raw CSV File Payload:</span>
-                  <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-emerald-400">UTF-8 Encoded CSV</span>
+              {/* Mac-style Terminal Box for Raw CSV Payload */}
+              <div className="bg-slate-900 text-slate-100 rounded-2xl overflow-hidden border border-slate-800 shadow-xl">
+                {/* Mac Terminal Header Bar */}
+                <div className="bg-slate-800/90 px-4 py-3 border-b border-slate-700/80 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
+                      <span className="w-3 h-3 rounded-full bg-amber-500 inline-block" />
+                      <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
+                    </div>
+                    <span className="text-xs font-mono text-slate-300 font-bold ml-2">
+                      study_plan_export.csv
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyCSV}
+                      className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 border border-slate-600"
+                    >
+                      {copiedCSV ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedCSV ? 'Copied!' : 'Copy Raw CSV'}</span>
+                    </button>
+                    <span className="text-[10px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded-md font-bold">
+                      UTF-8 BOM
+                    </span>
+                  </div>
                 </div>
-                <pre className="p-3 bg-slate-950 rounded-xl text-[11px] font-mono overflow-x-auto text-emerald-300 leading-relaxed max-h-48">
+
+                {/* Raw CSV Content */}
+                <pre className="p-4 bg-slate-950 text-[11px] font-mono overflow-x-auto text-emerald-400 leading-relaxed max-h-56 scrollbar-thin">
                   {buildCSVLines().join('\n')}
                 </pre>
               </div>

@@ -126,12 +126,10 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
     { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300, prereqs: 'ICT283' },
     { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300, prereqs: 'ICT283' },
     { unit_id: 27, code: 'ICT393', title: 'Advanced Business Analysis', credit_points: 3, level: 300, prereqs: 'ICT284' },
-    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prereqs: 'ICT285' },
-    { unit_id: 29, code: 'MSP200', title: 'Building Employability Skills', credit_points: 3, level: 200, prereqs: 'None' },
-    { unit_id: 30, code: 'COM203', title: 'Consulting and Freelancing', credit_points: 3, level: 200, prereqs: 'None' }
+    { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prereqs: 'ICT285' }
   ];
 
-  const unitsList = catalogUnits && catalogUnits.length > 0
+  const rawUnits = catalogUnits && catalogUnits.length > 0
     ? catalogUnits.map(u => ({
         unit_id: u.unit_id,
         code: u.code,
@@ -143,6 +141,8 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
           : (u.prereq_code || u.prereqs || 'None')
       }))
     : defaultUnits;
+
+  const unitsList = rawUnits.filter(u => u && !['MSP200', 'COM203'].includes(u.code));
 
   const filteredUnits = unitsList.filter(u => {
     const matchesQuery = searchQuery === '' ||
@@ -668,14 +668,14 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="bg-red-700 text-white font-bold text-xs px-2.5 py-0.5 rounded-lg shadow-2xs">
+                        <span className="bg-red-700 text-white font-mono font-bold text-xs px-2.5 py-0.5 rounded-md shadow-2xs">
                           {unit.code}
                         </span>
                         <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 font-mono">
                           Level {unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : 100)}
                         </span>
                       </div>
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md font-mono">
                         {unit.credit_points || 3} CP
                       </span>
                     </div>
@@ -815,7 +815,7 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
                             <div>
                               <div className="flex items-center justify-between mb-2 flex-wrap gap-1.5">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="bg-red-700 text-white font-bold text-xs px-2.5 py-0.5 rounded-lg shadow-2xs">
+                                  <span className="bg-red-700 text-white font-mono font-bold text-xs px-2.5 py-0.5 rounded-md shadow-2xs">
                                     {unit.code}
                                   </span>
                                   <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-[10px] px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 font-mono">
@@ -823,16 +823,16 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
                                   </span>
                                   {unit.status && !unit.status.includes('Elective') && (
                                     <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border font-heading ${
-                                      unit.status.includes('Capstone') ? 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950 dark:text-purple-200 dark:border-purple-800' :
-                                      unit.status.includes('Major') ? 'bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800' :
-                                      unit.status.includes('Math') ? 'bg-teal-100 text-teal-900 border-teal-300 dark:bg-teal-950 dark:text-teal-200 dark:border-teal-800' :
-                                      'bg-indigo-100 text-indigo-900 border-indigo-300 dark:bg-indigo-950 dark:text-indigo-200 dark:border-indigo-800'
+                                      unit.status.includes('Capstone') ? 'bg-purple-700 text-white border-purple-800 shadow-2xs' :
+                                      unit.status.includes('Major') ? 'bg-blue-700 text-white border-blue-800 shadow-2xs' :
+                                      unit.status.includes('Math') ? 'bg-teal-700 text-white border-teal-800 shadow-2xs' :
+                                      'bg-indigo-700 text-white border-indigo-800 shadow-2xs'
                                     }`}>
                                       {unit.status}
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 font-mono">
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md font-mono">
                                   {unit.cp || 3} CP
                                 </span>
                               </div>

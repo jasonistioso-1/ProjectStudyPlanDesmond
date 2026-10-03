@@ -82,6 +82,7 @@ export default function PlanBuilder({
   const [unitFilter, setUnitFilter] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('ALL');
   const [layoutType, setLayoutType] = useState('trimester'); // Default to Singapore Trimester Focus
+  const [paletteLayoutMode, setPaletteLayoutMode] = useState('trimester'); // Independent Palette Layout Mode
   const [activeYearLevel, setActiveYearLevel] = useState(1); // 1: Year 1 (2026), 2: Year 2 (2027), 3: Year 3 (2028)
   const [viewMode, setViewMode] = useState('single'); // 'single' = Single Year Focus Slide, 'all' = All Years Grid
   const [agreedConfirmed, setAgreedConfirmed] = useState(false);
@@ -108,6 +109,13 @@ export default function PlanBuilder({
   const [scopeYear, setScopeYear] = useState('all');
   const [scopePeriods, setScopePeriods] = useState([3, 4, 5]);
   const [modalLayoutType, setModalLayoutType] = useState('trimester');
+
+  const stName = student ? `${student.first_name || 'Alex'} ${student.last_name || 'Mercer'}` : 'Alex Mercer';
+  const stNumber = student ? student.student_number : 'PT3-2026-001';
+  const stCourse = student ? (student.course_code || 'PT3-BSIT-01') : 'PT3-BSIT-01';
+  const stMajor = student?.major || (student?.course_name && student.course_name.includes('Major:')
+    ? student.course_name.split('Major:')[1].replace(')', '').trim()
+    : 'Software Engineering');
 
   // Calculate completed/passed years from student history
   const passedYears = useMemo(() => {
@@ -815,38 +823,58 @@ export default function PlanBuilder({
 
   const effectiveCatalog = useMemo(() => {
     if (!catalogUnits || catalogUnits.length === 0) return defaultFullCatalogUnits;
-    const existingCodes = new Set(catalogUnits.map(u => u.code));
+    const existingCodes = new Set(catalogUnits.map(u => u.code || u.unit_code));
     const missingUnits = defaultFullCatalogUnits.filter(u => !existingCodes.has(u.code));
     return [...catalogUnits, ...missingUnits];
   }, [catalogUnits, defaultFullCatalogUnits]);
 
-  // Filtered available offerings
+  // Filtered available offerings sorted by level and code (Master Data)
   const filteredOfferings = useMemo(() => {
-    return effectiveCatalog.filter(unit => {
-      const isAlreadyScheduled = scheduledCodesSet.has(unit.code);
+    if (!effectiveCatalog || !Array.isArray(effectiveCatalog)) return [];
+
+    const list = effectiveCatalog.filter(unit => {
+      if (!unit) return false;
+      const unitCode = unit.code || unit.unit_code || '';
+      const isAlreadyScheduled = scheduledCodesSet && scheduledCodesSet.has ? scheduledCodesSet.has(unitCode) : false;
       if (!showAllCatalogUnits && isAlreadyScheduled) return false;
 
       if (selectedLevel === 'ELECTIVE') {
-        if (!['MSP200', 'COM203'].includes(unit.code)) return false;
+        if (!['MSP200', 'COM203'].includes(unitCode)) return false;
       } else if (selectedLevel === 'CORE') {
-        if (['MSP200', 'COM203'].includes(unit.code)) return false;
-      } else if (selectedLevel !== 'ALL' && String(unit.level) !== selectedLevel) {
+        if (['MSP200', 'COM203'].includes(unitCode)) return false;
+      } else if (selectedLevel !== 'ALL' && String(unit.level) !== String(selectedLevel)) {
         return false;
       }
 
-      if (unitFilter.trim()) {
+      if (unitFilter && typeof unitFilter === 'string' && unitFilter.trim()) {
         const query = unitFilter.toLowerCase();
         return (
-          unit.code.toLowerCase().includes(query) ||
-          (unit.title && unit.title.toLowerCase().includes(query))
+          unitCode.toLowerCase().includes(query) ||
+          (unit.title && String(unit.title).toLowerCase().includes(query))
         );
       }
       return true;
-    }).sort((a, b) => {
-      if (selectedLevel === 'CORE') {
-        return (a.level || 100) - (b.level || 100);
+    });
+
+    const getUnitPriorityScore = (u) => {
+      if (!u) return 999;
+      const code = u.code || u.unit_code || '';
+      const level = Number(u.level) || 100;
+      const isElective = ['MSP200', 'COM203'].includes(code);
+
+      if (isElective) {
+        return 900 + level;
       }
-      return 0;
+      return level;
+    };
+
+    return [...list].sort((a, b) => {
+      const scoreA = getUnitPriorityScore(a);
+      const scoreB = getUnitPriorityScore(b);
+      if (scoreA !== scoreB) return scoreA - scoreB;
+      const codeA = a?.code || a?.unit_code || '';
+      const codeB = b?.code || b?.unit_code || '';
+      return codeA.localeCompare(codeB);
     });
   }, [effectiveCatalog, scheduledCodesSet, showAllCatalogUnits, selectedLevel, unitFilter]);
 
@@ -940,13 +968,6 @@ export default function PlanBuilder({
 
   // Total CP = Completed History CP + Planned Canvas CP (Cumulative across ALL 3 years)
   const totalCP = completedHistoryCP + plannedCanvasCP;
-
-  const stName = student ? `${student.first_name || 'Alex'} ${student.last_name || 'Mercer'}` : 'Alex Mercer';
-  const stNumber = student ? student.student_number : 'PT3-2026-001';
-  const stCourse = student ? (student.course_code || 'PT3-BSIT-01') : 'PT3-BSIT-01';
-  const stMajor = student?.major || (student?.course_name && student.course_name.includes('Major:')
-    ? student.course_name.split('Major:')[1].replace(')', '').trim()
-    : 'Artificial Intelligence');
 
   // Governance Workflow Stepper Steps
   const workflowSteps = [
@@ -1862,10 +1883,11 @@ export default function PlanBuilder({
                 scheduledCodesSet={scheduledCodesSet}
                 scheduledUnitsMap={scheduledUnitsMap}
                 historyMap={historyMap}
-                studentMajor={stMajor}
+                studentMajor={student?.major || 'Software Engineering'}
                 onAddUnit={handleAddUnitFromPalette}
                 onAddToSpecificSemester={handleAddToSpecificSemester}
-                layoutType={layoutType}
+                layoutType={paletteLayoutMode}
+                setLayoutType={setPaletteLayoutMode}
               />
 
               {/* Box 2: Rule Engine Validation Console */}

@@ -6,7 +6,7 @@ export default function AddUnitModal({ onAddUnit, onClose }) {
   const [unitTitle, setUnitTitle] = useState('');
   const [creditPoints, setCreditPoints] = useState(3);
   const [level, setLevel] = useState(100);
-  const [category, setCategory] = useState('Degree Core');
+  const [category, setCategory] = useState('Master Directory');
   const [prereqs, setPrereqs] = useState('');
   const [offerings, setOfferings] = useState(['T1', 'T2', 'T3']);
   const [error, setError] = useState('');
@@ -56,7 +56,7 @@ export default function AddUnitModal({ onAddUnit, onClose }) {
       title: unitTitle.trim(),
       credit_points: Number(creditPoints),
       level: Number(level),
-      category: category,
+      category: 'Master Directory',
       prerequisites: prereqs.trim() ? prereqs.split(/[,;&/]+/).map(p => p.trim().toUpperCase()) : [],
       offerings: offerings.length > 0 ? offerings : ['T1', 'T2', 'T3']
     };
@@ -147,39 +147,20 @@ export default function AddUnitModal({ onAddUnit, onClose }) {
             />
           </div>
 
-          {/* Academic Level & Category Classification */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-extrabold text-slate-800 dark:text-slate-200 block mb-1 font-heading uppercase text-[11px]">
-                Academic Level
-              </label>
-              <select
-                value={level}
-                onChange={(e) => setLevel(Number(e.target.value))}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-bold cursor-pointer font-mono"
-              >
-                <option value={100}>Lvl 100 (Year 1 Core)</option>
-                <option value={200}>Lvl 200 (Year 2 Core)</option>
-                <option value={300}>Lvl 300 (Year 3 Capstone)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="font-extrabold text-slate-800 dark:text-slate-200 block mb-1 font-heading uppercase text-[11px]">
-                Major / Core Classification
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-bold cursor-pointer"
-              >
-                <option value="Degree Core">Degree Core (All IT)</option>
-                <option value="Major Core (AI)">Major Core - AI</option>
-                <option value="Major Core (CS)">Major Core - CS</option>
-                <option value="Major Core (BIS)">Major Core - BIS</option>
-                <option value="General Elective">General Elective</option>
-              </select>
-            </div>
+          {/* Academic Level */}
+          <div>
+            <label className="font-extrabold text-slate-800 dark:text-slate-200 block mb-1 font-heading uppercase text-[11px]">
+              Academic Level
+            </label>
+            <select
+              value={level}
+              onChange={(e) => setLevel(Number(e.target.value))}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-bold cursor-pointer font-mono"
+            >
+              <option value={100}>Lvl 100 (Year 1)</option>
+              <option value={200}>Lvl 200 (Year 2)</option>
+              <option value={300}>Lvl 300 (Year 3)</option>
+            </select>
           </div>
 
           {/* Prerequisites */}

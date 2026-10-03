@@ -585,12 +585,30 @@ export default function App() {
           { year: 2, period_id: 1, cores: ['BSC203', 'ICT292', 'ICT285'] },
           { year: 2, period_id: 2, cores: ['ICT301', 'ICT393', 'ICT394', 'ICT302'] }
         ]
+      },
+      se: {
+        trimester: [
+          { year: 1, period_id: 3, cores: ['ICT100', 'ICT158'] },
+          { year: 1, period_id: 4, cores: ['ICT159', 'ICT167'] },
+          { year: 1, period_id: 5, cores: ['ICT169', 'ICT170'] },
+          { year: 2, period_id: 3, cores: ['ICT145', 'ICT283'] },
+          { year: 2, period_id: 4, cores: ['ICT284', 'ICT285'] },
+          { year: 2, period_id: 5, cores: ['BSC203', 'ICT373', 'ICT374', 'ICT302'] }
+        ],
+        semester: [
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'ICT167'] },
+          { year: 1, period_id: 2, cores: ['ICT169', 'ICT170', 'ICT145'] },
+          { year: 2, period_id: 1, cores: ['ICT283', 'ICT284', 'ICT285'] },
+          { year: 2, period_id: 2, cores: ['BSC203', 'ICT373', 'ICT374', 'ICT302'] }
+        ]
       }
     };
 
     const majorStr = ((targetStudent.major || targetStudent.course_name || '') + '').toLowerCase();
-    let majorKey = 'ai';
-    if (majorStr.includes('computer science') || majorStr.includes('cs')) {
+    let majorKey = 'se';
+    if (majorStr.includes('ai') || majorStr.includes('artificial')) {
+      majorKey = 'ai';
+    } else if (majorStr.includes('computer science') || majorStr.includes('cs')) {
       majorKey = 'cs';
     } else if (majorStr.includes('business') || majorStr.includes('bis')) {
       majorKey = 'bis';
