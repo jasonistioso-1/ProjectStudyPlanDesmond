@@ -2164,34 +2164,6 @@ export default function PlanBuilder({
                               Year Load: {yearDisplayCP} / 36 CP
                             </span>
 
-                            {/* Layout Mode Switcher: Trimester vs Semester */}
-                            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-0.5 text-xs font-sans">
-                              <button
-                                type="button"
-                                onClick={() => setLayoutType('trimester')}
-                                className={`px-3 py-1 rounded-lg text-xs font-extrabold shadow-2xs font-heading flex items-center gap-1.5 cursor-pointer transition-all ${
-                                  layoutType === 'trimester'
-                                    ? 'bg-red-700 text-white dark:bg-red-700 dark:text-white'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
-                                title="Switch to Trimester Layout (3 trimesters per year)"
-                              >
-                                <span>Trimester Layout</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setLayoutType('semester')}
-                                className={`px-3 py-1 rounded-lg text-xs font-extrabold shadow-2xs font-heading flex items-center gap-1.5 cursor-pointer transition-all ${
-                                  layoutType === 'semester'
-                                    ? 'bg-red-700 text-white dark:bg-red-700 dark:text-white'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
-                                title="Switch to Semester Layout (2 semesters per year)"
-                              >
-                                <span>Semester Layout</span>
-                              </button>
-                            </div>
                           </div>
 
                           <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-2.5 py-0.5 rounded-md font-mono self-start sm:self-center">
