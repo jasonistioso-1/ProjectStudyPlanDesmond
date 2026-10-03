@@ -19,11 +19,14 @@ The **Study Plan Repository (SPR)** is an executive web application designed for
 
 ## 🎓 Official Degree Majors & Course Codes
 
-According to the Section 8 curriculum specification, the system supports 3 official degree majors under the Bachelor of Information Technology degree program:
+According to the Section 8 curriculum specification, the system supports official degree majors under the Bachelor of Information Technology degree program:
 
 1. **`PT3-BSIT-AI01`**: Bachelor of Information Technology (Major: Artificial Intelligence)
 2. **`PT3-BSIT-CS02`**: Bachelor of Information Technology (Major: Computer Science)
 3. **`PT3-BSIT-BIS03`**: Bachelor of Information Technology (Major: Business Information Systems)
+4. **`PT3-BSIT-SE04`**: Bachelor of Information Technology (Major: Software & Systems / Software Engineering)
+
+Both **Trimester View (3 Terms)** and **Semester View (2 Semesters)** feature dedicated 72 Credit Point preset study plans for all majors.
 
 ---
 
@@ -180,10 +183,11 @@ The system comes pre-seeded with 5 accounts for testing and demonstration:
 | **2 x New Student** | `PT3-2026-003` | **Michael Chang** | PT3-BSIT-BIS03 (Business Info Systems) | New Student (Fresh Enrolment - 0 CP) | Singapore Campus |
 | **2 x New Student** | `PT3-2026-004` | **Emily Watson** | PT3-BSIT-AI04 (Artificial Intelligence) | New Student (Fresh Enrolment - 0 CP) | Singapore Campus |
 
-### 🇸🇬 Singapore Campus Scope & Trimester-Only Focus
-- **Trimester Focus**: Singapore enrolment operates strictly on **Trimesters (T1, T2, T3)**. Trimester layout is the default and fully active operational view.
-- **Semester Layout**: Preserved as an inactive layout option in the UI for future scalability (Perth Main Campus compatibility).
-- **Specializations**: Subjects and offerings are strictly mapped to 3 IT majors: **Artificial Intelligence**, **Computer Science**, and **Business Information Systems**.
+### 🇸🇬 Dual Layout Support & Independent View Modes
+- **Trimester View (3 Terms)**: Full operational view for Singapore campus enrolment (T1, T2, T3).
+- **Semester View (2 Semesters)**: Active layout option for semester-based study structures (S1, S2) with empty defaults and dedicated auto-fill presets.
+- **Independent Student View**: Student View features its own layout switcher (`Trimester View` vs `Semester View`) that operates independently of the Academic Chair's active layout.
+- **Refined UI Design**: Professional Soft Tint + 2px Solid Border badges and indicators across all cards and modals.
 
 ---
 
@@ -225,7 +229,7 @@ The system comes pre-seeded with 5 accounts for testing and demonstration:
    - Production Docker deployments persist data in MySQL container volumes (`spr_db_data`).
    - In-memory API fallback mode provides seed data if MySQL connection is offline.
 2. **Semester vs Trimester Operational Bounds**:
-   - Current Singapore campus deployment operates on Trimesters (T1, T2, T3). Semester view remains an inactive UI layout for future Perth campus integration.
+   - The system fully supports both Trimester (T1, T2, T3) and Semester (S1, S2) layouts with dedicated 72 CP presets for all 4 degree majors.
 3. **No Private Third-Party Modules**:
    - All modules use standard open-source npm dependencies specified in `package.json`.
 
