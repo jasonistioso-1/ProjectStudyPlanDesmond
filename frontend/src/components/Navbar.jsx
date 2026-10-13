@@ -18,12 +18,15 @@ import {
   MessageSquare,
   Send,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  LogOut,
+  User
 } from 'lucide-react';
 
 export default function Navbar({
+  currentUser,
+  onLogout,
   activeRole,
-  onRoleChange,
   activeTab,
   onTabChange,
   selectedStudent,
@@ -41,6 +44,64 @@ export default function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notifRef = useRef(null);
+
+  // Live Singapore Campus Clock (Asia/Singapore - SGT / UTC+8)
+  const [singaporeTime, setSingaporeTime] = useState(() => {
+    try {
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Singapore',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(new Date());
+    } catch (e) {
+      return '';
+    }
+  });
+
+  const [singaporeDate, setSingaporeDate] = useState(() => {
+    try {
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Singapore',
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }).format(new Date());
+    } catch (e) {
+      return '';
+    }
+  });
+
+  useEffect(() => {
+    const updateSingaporeClock = () => {
+      const now = new Date();
+      try {
+        setSingaporeTime(new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Asia/Singapore',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).format(now));
+
+        setSingaporeDate(new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Asia/Singapore',
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        }).format(now));
+      } catch (err) {
+        console.error('Clock error:', err);
+      }
+    };
+
+    updateSingaporeClock();
+    const interval = setInterval(updateSingaporeClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!notificationsOpen) return;
@@ -101,7 +162,7 @@ export default function Navbar({
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 shrink-0 ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
                   isActive
                     ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white font-bold shadow-2xs'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800'
@@ -116,11 +177,12 @@ export default function Navbar({
 
         {/* Right: Desktop Tools & Controls (Hidden on small mobile) */}
         <div className="hidden lg:flex items-center gap-2.5 shrink-0 relative">
+          
           {/* Notifications Bell Icon Button & Dropdown Drawer */}
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setNotificationsOpen(prev => !prev)}
-              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center relative shrink-0"
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center relative shrink-0 cursor-pointer"
               title={`Notifications (${unreadCount} unread)`}
               aria-label="View Notifications"
             >
@@ -216,22 +278,59 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Active Student Selector Trigger */}
-          <button
-            onClick={onOpenStudentSelectModal}
-            className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-2xs flex items-center gap-2 transition-colors shrink-0"
-            title="Click to select active student profile"
+          {/* Target Student Selector Trigger (For Academic Chair only) */}
+          {isChair && onOpenStudentSelectModal && (
+            <button
+              onClick={onOpenStudentSelectModal}
+              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-2xs flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer"
+              title="Click to select target student profile for plan building"
+            >
+              <UserCheck className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+              <span className="font-bold text-xs truncate max-w-[130px]">
+                {selectedStudent && selectedStudent.student_id !== 0
+                  ? `${selectedStudent.first_name} ${selectedStudent.last_name}`
+                  : 'Select Student'}
+              </span>
+            </button>
+          )}
+
+          {/* Live Singapore Campus Clock */}
+          <div 
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-xs font-mono text-slate-800 dark:text-slate-200 shadow-2xs shrink-0 select-none"
+            title={`Singapore Standard Time (SGT / UTC+8)\n${singaporeDate}`}
           >
-            <UserCheck className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-            <span className="font-bold">
-              {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Select Student'}
+            <Clock className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+            <span className="font-extrabold text-xs tracking-tight">{singaporeTime || '--:--:--'}</span>
+            <span className="text-[9px] font-extrabold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/80 px-1 py-0.5 rounded border border-red-200/60 dark:border-red-900/60">
+              SGT
             </span>
-          </button>
+          </div>
+
+          {/* Current Logged-in User Profile Chip */}
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg px-2.5 py-1 text-xs shrink-0 shadow-2xs">
+            <div className={`w-6 h-6 rounded-md flex items-center justify-center font-extrabold text-[10px] text-white shrink-0 ${
+              isChair ? 'bg-red-600' : 'bg-sky-600'
+            }`}>
+              {currentUser?.avatar || (isChair ? 'AT' : (selectedStudent?.first_name ? `${selectedStudent.first_name[0]}${selectedStudent.last_name ? selectedStudent.last_name[0] : ''}` : 'ST'))}
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="font-extrabold text-slate-900 dark:text-white text-xs leading-tight truncate max-w-[140px]">
+                {currentUser?.first_name
+                  ? `${currentUser.first_name} ${currentUser.last_name || ''}`
+                  : (isChair ? 'Dr. Aris Thorne' : (selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student'))}
+              </span>
+              <span className={`text-[9px] font-mono font-bold leading-none mt-0.5 ${
+                isChair ? 'text-red-600 dark:text-red-400' : 'text-sky-600 dark:text-sky-400'
+              }`}>
+                {isChair ? 'Academic Chair' : (currentUser?.student_number || selectedStudent?.student_number || 'Student')}
+              </span>
+            </div>
+          </div>
 
           {/* Theme Switcher Toggle */}
           <button
             onClick={onToggleTheme}
-            className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center shrink-0"
+            className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             aria-label="Toggle Dark/Light Mode"
           >
@@ -242,37 +341,13 @@ export default function Navbar({
             )}
           </button>
 
-          {/* Role Switcher Pill */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 text-xs shrink-0">
-            <button
-              onClick={() => onRoleChange('chair')}
-              className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all shrink-0 ${
-                isChair
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs border border-slate-200 dark:border-slate-700 font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Academic Chair
-            </button>
-            <button
-              onClick={() => onRoleChange('student')}
-              className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all shrink-0 ${
-                !isChair
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs border border-slate-200 dark:border-slate-700 font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Student View
-            </button>
-          </div>
-
           {/* Utility Action Buttons */}
           <div className="flex items-center gap-1.5 border-l border-slate-200 dark:border-slate-700 pl-2.5 shrink-0">
             {isChair && (
               <button
                 onClick={onOpenImport}
                 title="Import Unit Offerings & Prerequisites CSV/Seed"
-                className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-colors shrink-0"
+                className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span className="font-bold">Import CSV</span>
@@ -282,16 +357,38 @@ export default function Navbar({
             <button
               onClick={onOpenAudit}
               title="View System Change Log & Audit Trail"
-              className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer"
+              className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer"
             >
               <Clock className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
               <span className="font-bold">Change Log</span>
             </button>
+
+            {/* Logout Button */}
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                title="Sign out of current account"
+                className="px-3 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/80 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg text-[11px] font-extrabold flex items-center gap-1.5 transition-all shadow-2xs hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+              >
+                <LogOut className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Mobile Compact Bar Controls (Visible on mobile / tablet) */}
-        <div className="flex lg:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-1.5">
+          {/* Mobile Live Singapore Clock */}
+          <div 
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-mono font-bold text-slate-800 dark:text-slate-200 shrink-0 select-none"
+            title={`Singapore Standard Time: ${singaporeTime} SGT`}
+          >
+            <Clock className="w-3 h-3 text-red-600 shrink-0" />
+            <span>{singaporeTime || '--:--'}</span>
+            <span className="text-[8px] text-red-600 font-extrabold">SGT</span>
+          </div>
+
           {/* Notifications Mobile Button */}
           <button
             onClick={() => setNotificationsOpen(prev => !prev)}
@@ -306,14 +403,27 @@ export default function Navbar({
             )}
           </button>
 
-          {/* Active Student Selector Mobile */}
-          <button
-            onClick={onOpenStudentSelectModal}
-            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 max-w-[140px] truncate"
-          >
-            <UserCheck className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-            <span className="truncate">{selectedStudent ? selectedStudent.first_name : 'Student'}</span>
-          </button>
+          {/* Active Student Selector Mobile (Chair only) */}
+          {isChair && onOpenStudentSelectModal && (
+            <button
+              onClick={onOpenStudentSelectModal}
+              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1 border border-slate-200 dark:border-slate-700 max-w-[120px] truncate"
+            >
+              <UserCheck className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+              <span className="truncate">{selectedStudent ? selectedStudent.first_name : 'Student'}</span>
+            </button>
+          )}
+
+          {/* Mobile Logout Button */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4 text-red-600" />
+            </button>
+          )}
 
           {/* Theme Toggle Mobile */}
           <button
@@ -340,28 +450,32 @@ export default function Navbar({
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4 font-sans animate-in slide-in-from-top-2 duration-200 shadow-xl">
           
-          {/* Mobile Role Switcher Pill */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-            <button
-              onClick={() => { onRoleChange('chair'); setMobileMenuOpen(false); }}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-                isChair
-                  ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400'
-              }`}
-            >
-              Academic Chair
-            </button>
-            <button
-              onClick={() => { onRoleChange('student'); setMobileMenuOpen(false); }}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-                !isChair
-                  ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400'
-              }`}
-            >
-              Student View
-            </button>
+          {/* User Profile Header in Mobile Drawer */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs text-white ${
+                isChair ? 'bg-red-600' : 'bg-sky-600'
+              }`}>
+                {currentUser?.avatar || (isChair ? 'AT' : 'ST')}
+              </div>
+              <div>
+                <div className="font-extrabold text-sm text-slate-900 dark:text-white">
+                  {currentUser?.first_name ? `${currentUser.first_name} ${currentUser.last_name || ''}` : (isChair ? 'Dr. Aris Thorne' : 'Student Profile')}
+                </div>
+                <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                  {isChair ? 'Academic Chair' : (currentUser?.student_number || selectedStudent?.student_number)}
+                </div>
+              </div>
+            </div>
+            {onLogout && (
+              <button
+                onClick={() => { onLogout(); setMobileMenuOpen(false); }}
+                className="px-2.5 py-1 rounded-lg bg-red-600 text-white text-xs font-bold flex items-center gap-1 shadow-xs"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
 
           {/* Mobile Nav Items */}
@@ -375,7 +489,7 @@ export default function Navbar({
                 <button
                   key={tab.id}
                   onClick={() => { onTabChange(tab.id); setMobileMenuOpen(false); }}
-                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between ${
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
                     isActive
                       ? 'bg-slate-900 text-white dark:bg-red-700 dark:text-white shadow-2xs'
                       : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -393,30 +507,32 @@ export default function Navbar({
 
           {/* Mobile Actions */}
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            <button
-              onClick={() => { onOpenStudentSelectModal(); setMobileMenuOpen(false); }}
-              className="w-full px-3.5 py-2.5 bg-red-50 dark:bg-red-950/60 hover:bg-red-100 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900 rounded-xl text-xs font-bold flex items-center justify-between"
-            >
-              <span className="flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-red-600" /> Switch Student Profile
-              </span>
-              <span className="font-mono text-[11px] font-semibold bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-red-200 dark:border-red-800">
-                {selectedStudent ? selectedStudent.first_name : 'Select'}
-              </span>
-            </button>
+            {isChair && onOpenStudentSelectModal && (
+              <button
+                onClick={() => { onOpenStudentSelectModal(); setMobileMenuOpen(false); }}
+                className="w-full px-3.5 py-2.5 bg-red-50 dark:bg-red-950/60 hover:bg-red-100 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900 rounded-xl text-xs font-bold flex items-center justify-between cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-red-600" /> Switch Target Student
+                </span>
+                <span className="font-mono text-[11px] font-semibold bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-red-200 dark:border-red-800">
+                  {selectedStudent ? selectedStudent.first_name : 'Select'}
+                </span>
+              </button>
+            )}
 
             {isChair && (
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={() => { onOpenImport(); setMobileMenuOpen(false); }}
-                  className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700"
+                  className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 cursor-pointer"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Import CSV
                 </button>
 
                 <button
                   onClick={() => { onOpenAudit(); setMobileMenuOpen(false); }}
-                  className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700"
+                  className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 cursor-pointer"
                 >
                   <Clock className="w-3.5 h-3.5 text-red-600" /> Change Log
                 </button>

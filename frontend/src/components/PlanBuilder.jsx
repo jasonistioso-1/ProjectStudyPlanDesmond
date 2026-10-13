@@ -1005,7 +1005,7 @@ export default function PlanBuilder({
               Major: <strong className="text-slate-900 dark:text-white font-bold">{stMajor}</strong>
             </span>
 
-            {onOpenStudentSelectModal && (
+            {isChair && onOpenStudentSelectModal && (
               <button
                 onClick={onOpenStudentSelectModal}
                 className="bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-xl shadow-2xs flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white transition-all cursor-pointer active:scale-95"

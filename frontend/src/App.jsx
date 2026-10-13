@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import StudentSelectModal from './components/StudentSelectModal';
 import AcademicHistoryView from './components/AcademicHistoryView';
@@ -12,6 +12,8 @@ import GuideModal from './components/GuideModal';
 import AddUnitModal from './components/AddUnitModal';
 import AddStudentModal from './components/AddStudentModal';
 import Footer from './components/Footer';
+import LoginPage from './components/LoginPage';
+import { AUTH_ACCOUNTS } from './data/authAccounts';
 
 import {
   fetchStudents,
@@ -122,9 +124,65 @@ const initialSampleStudents = [
 ];
 
 export default function App() {
-  const [activeRole, setActiveRole] = useState('chair'); // 'chair' | 'student'
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('spr_logged_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [activeRole, setActiveRole] = useState(() => {
+    try {
+      const saved = localStorage.getItem('spr_logged_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        return u.role === 'chair' ? 'chair' : 'student';
+      }
+    } catch (e) {}
+    return 'chair';
+  });
   const [studentsList, setStudentsList] = useState(initialSampleStudents);
   const [selectedStudent, setSelectedStudent] = useState(initialSampleStudents[0]);
+
+
+
+  const handleLoginSuccess = useCallback((user) => {
+    setCurrentUser(user);
+    localStorage.setItem('spr_logged_user', JSON.stringify(user));
+    if (user.role === 'chair') {
+      setActiveRole('chair');
+      const target = studentsList.find(s => s.student_id === 1) || studentsList[1] || studentsList[0];
+      if (target) handleSelectStudent(target, 'chair');
+    } else {
+      setActiveRole('student');
+      const target = studentsList.find(s => s.student_id === user.student_id || s.student_number === user.student_number) || {
+        student_id: user.student_id,
+        student_number: user.student_number,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        course_id: user.id || 1,
+        course_code: user.course_code,
+        course_name: user.course_name,
+        location_id: 2,
+        location_name: user.location_name || 'PT3 Solutions Singapore Campus',
+        commencement_year: 2026,
+        study_status: 'active',
+        account_category: user.account_category
+      };
+      handleSelectStudent(target, 'student');
+    }
+    setActiveTab('STUDY_PLAN');
+    showToast(`Welcome back, ${user.first_name} ${user.last_name}! (${user.roleLabel})`);
+  }, [studentsList]);
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('spr_logged_user');
+    showToast('You have signed out of PT3 Solutions SPR.');
+  };
   const [showStudentSelectModal, setShowStudentSelectModal] = useState(false);
   const [history, setHistory] = useState([]);
   const [catalogUnits, setCatalogUnits] = useState([]);
@@ -328,7 +386,7 @@ export default function App() {
         <div class="header">
           <div>
             <div class="title">Official Study Plan Change Log & Data Audit Trail</div>
-            <div class="subtitle">Murdoch University Academic Governance System & Historical Audit Log</div>
+            <div class="subtitle">PT03 Solutions Academic Governance System & Historical Audit Log</div>
           </div>
           <div style="text-align: right; font-size: 11px; font-family: monospace;">
             <div>Export Date: ${new Date().toLocaleString()}</div>
@@ -372,14 +430,16 @@ export default function App() {
     setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
 
     let targetStudentObj = null;
-    if (notif.studentId) {
+    if (notif.studentId && currentUser?.role !== 'student') {
       targetStudentObj = studentsList.find(s => s.student_id === notif.studentId);
       if (targetStudentObj) {
         handleSelectStudent(targetStudentObj);
       }
     }
 
-    if (notif.role === 'chair') {
+    if (currentUser?.role === 'student') {
+      setActiveRole('student');
+    } else if (currentUser?.role === 'chair') {
       setActiveRole('chair');
       const stName = targetStudentObj ? `${targetStudentObj.first_name} ${targetStudentObj.last_name}` : 'Student';
       const stNum = targetStudentObj?.student_number ? ` (${targetStudentObj.student_number})` : '';
@@ -389,7 +449,7 @@ export default function App() {
         'Academic Chair'
       );
     } else {
-      setActiveRole('student');
+      setActiveRole(notif.role === 'chair' ? 'chair' : 'student');
     }
 
     setActiveTab('STUDY_PLAN');
@@ -871,9 +931,16 @@ export default function App() {
       const loadedStudents = (studentsData && studentsData.length > 0) ? studentsData : initialSampleStudents;
       setStudentsList(loadedStudents);
 
-      // Select first student if available
+      // Select appropriate student based on current logged in user
       if (loadedStudents && loadedStudents.length > 0) {
-        handleSelectStudent(loadedStudents[0]);
+        const savedUser = currentUser;
+        if (savedUser && savedUser.role === 'student') {
+          const target = loadedStudents.find(s => s.student_id === savedUser.student_id || s.student_number === savedUser.student_number) || loadedStudents[1] || loadedStudents[0];
+          handleSelectStudent(target, 'student');
+        } else {
+          const target = loadedStudents.find(s => s.student_id === 1) || loadedStudents[1] || loadedStudents[0];
+          handleSelectStudent(target, 'chair');
+        }
       }
     } catch (err) {
       console.error('Failed to load initial catalog/students data:', err);
@@ -1239,6 +1306,16 @@ export default function App() {
     setTimeout(() => setNotificationMsg(null), 4000);
   };
 
+  if (!currentUser) {
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased flex flex-col justify-between transition-colors duration-200">
       <div>
@@ -1252,22 +1329,9 @@ export default function App() {
 
         {/* Header Bar */}
         <Navbar
+          currentUser={currentUser}
+          onLogout={handleLogout}
           activeRole={activeRole}
-          onRoleChange={(newRole) => {
-            setActiveRole(newRole);
-            if (newRole === 'chair') {
-              const adminAcc = studentsList.find(s => s.account_category === 'admin' || s.student_id === 0);
-              if (adminAcc) handleSelectStudent(adminAcc);
-            } else {
-              if (activeTab === 'STORED' || activeTab === 'CATALOG') {
-                setActiveTab('STUDY_PLAN');
-              }
-              if (selectedStudent && (selectedStudent.account_category === 'admin' || selectedStudent.student_id === 0)) {
-                const firstStudent = studentsList.find(s => s.account_category !== 'admin' && s.student_id !== 0);
-                if (firstStudent) handleSelectStudent(firstStudent);
-              }
-            }
-          }}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           selectedStudent={selectedStudent}
@@ -1286,8 +1350,8 @@ export default function App() {
         {/* Main Content Area */}
         <main className="max-w-[1440px] mx-auto px-4 md:px-6 pt-6 space-y-5">
           
-          {/* Student Selection Modal */}
-          {showStudentSelectModal && (
+          {/* Student Selection Modal (Academic Chair only) */}
+          {showStudentSelectModal && activeRole === 'chair' && (
             <StudentSelectModal
               students={studentsList}
               onSelectStudent={handleSelectStudent}
