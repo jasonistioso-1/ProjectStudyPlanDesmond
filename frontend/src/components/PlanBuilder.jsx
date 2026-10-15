@@ -973,15 +973,28 @@ export default function PlanBuilder({
     return new Set((history || []).filter(h => h.status === 'completed').map(h => h.unit_code || h.code));
   }, [history]);
 
+  const isNewStudent = 
+    student?.account_category === 'new_student' || 
+    Number(student?.student_id) === 3 || 
+    Number(student?.student_id) === 4 ||
+    student?.student_number === '31234563' ||
+    student?.student_number === '31234564' ||
+    student?.alias_code === 'BIS1' ||
+    student?.alias_code === 'AI2';
+
+  const isPlanOfficiallyGranted = planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved';
+  const isNewStudentInitial = isNewStudent && !isPlanOfficiallyGranted;
+
   // Planned Canvas CP (units on canvas not already in completed history)
   const plannedCanvasCP = useMemo(() => {
+    if (isNewStudentInitial) return 0;
     return (planUnits || [])
       .filter(u => !completedCodesSet.has(u.code))
       .reduce((sum, u) => sum + (u.credit_points || 3), 0);
-  }, [planUnits, completedCodesSet]);
+  }, [planUnits, completedCodesSet, isNewStudentInitial]);
 
   // Total CP = Completed History CP + Planned Canvas CP (Cumulative across ALL 3 years)
-  const totalCP = completedHistoryCP + plannedCanvasCP;
+  const totalCP = isNewStudentInitial ? 0 : (completedHistoryCP + plannedCanvasCP);
 
   // Governance Workflow Stepper Steps
   const workflowSteps = [
@@ -996,15 +1009,6 @@ export default function PlanBuilder({
   // =========================================================================
   if (!isChair) {
     const isAlreadyAgreed = planStatus === 'agreed' || planStatus === 'approved' || planStatus === 'stored';
-    const isNewStudent = 
-      student?.account_category === 'new_student' || 
-      Number(student?.student_id) === 3 || 
-      Number(student?.student_id) === 4 ||
-      student?.student_number === '31234563' ||
-      student?.student_number === '31234564' ||
-      student?.alias_code === 'BIS1' ||
-      student?.alias_code === 'AI2';
-    const isNewStudentInitial = isNewStudent && (!planUnits || planUnits.length === 0);
 
     return (
       <div className="font-sans max-w-[1440px] mx-auto space-y-5 transition-colors">
@@ -1224,71 +1228,168 @@ export default function PlanBuilder({
 
                     {studentPeriods.map(p => {
                       const sUnits = getSemesterUnits(y.level, p.period_id, studentLayoutMode);
-                    const semCP = sUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0);
-                    const isOptimalLoad = semCP === 12;
-                    const periodKey = `Y${y.level}-P${p.period_id}`;
-                    const hasRequest = semesterRequests[periodKey];
+                      const semCP = sUnits.reduce((sum, u) => sum + (u.credit_points || 3), 0);
+                      const isOptimalLoad = semCP === 12;
+                      const periodKey = `Y${y.level}-P${p.period_id}`;
+                      const hasRequest = semesterRequests[periodKey];
 
-                    return (
-                      <div key={p.period_id} className={`bg-slate-50/90 dark:bg-slate-800/60 border rounded-2xl p-3.5 shadow-2xs space-y-2.5 ${hasRequest ? 'border-amber-400 dark:border-amber-700 ring-2 ring-amber-400/30' : 'border-slate-200/80 dark:border-slate-700/80'}`}>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-extrabold text-slate-800 dark:text-slate-200 font-heading">{p.name}</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`font-mono text-xs tabular-nums font-bold px-2.5 py-0.5 rounded-full border ${
-                              isOptimalLoad ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' :
-                              semCP > 0 ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800' :
-                              'bg-slate-100 text-slate-500 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                            }`}>
-                              {semCP} / 12 CP
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveRequestModal({
-                                  key: periodKey,
-                                  yearLevel: y.level,
-                                  periodId: p.period_id,
-                                  periodName: `Year ${y.level} - ${p.name}`
-                                });
-                                setRequestCommentInput(semesterRequests[periodKey] || '');
-                              }}
-                              className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950 dark:hover:bg-amber-900 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 rounded-lg text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95"
-                              title="Request change specifically for this semester"
-                            >
-                              <MessageSquare className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
-                              <span>{hasRequest ? 'Edit Request' : 'Request Change'}</span>
-                            </button>
-                          </div>
-                        </div>
+                      const academicYear = (student?.commencement_year || 2026) + y.level - 1;
 
-                        {hasRequest && (
-                          <div className="p-2.5 bg-amber-100/90 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800 rounded-xl space-y-1 text-xs">
-                            <div className="flex items-center justify-between text-[10px] font-black text-amber-900 dark:text-amber-200 uppercase tracking-wider font-heading">
-                              <span className="flex items-center gap-1">
-                                <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                                Your Request to Chair
+                      // Check if this period has already been undertaken (completed/attempted/enrolled in student history)
+                      const isHistoryPeriod = (history || []).some(h => 
+                        (Number(h.year_taken) === academicYear || (!h.year_taken && y.level === 1)) &&
+                        Number(h.period_id) === Number(p.period_id) &&
+                        (h.status === 'completed' || h.status === 'enrolled' || h.status === 'current' || h.status === 'attempted')
+                      );
+
+                      const hasHistoryUnits = sUnits.some(u => 
+                        completedUnitCodes.has(u.code) || 
+                        attemptedUnitCodes.has(u.code) || 
+                        (historyMap[u.code] && (historyMap[u.code].status === 'enrolled' || historyMap[u.code].status === 'current'))
+                      );
+
+                      const isUndertakenPeriod = isHistoryPeriod || hasHistoryUnits;
+
+                      // Check if a request has been made for this period
+                      const hasSubmittedPeriodRequest = Boolean(
+                        hasRequest ||
+                        (currentPlan?.status === 'request_submitted' && 
+                          (Number(currentPlan?.targetYearLevel) === y.level || Number(currentPlan?.requestYear) === academicYear) &&
+                          (!currentPlan?.requestPeriods || currentPlan?.requestPeriods.includes(p.period_id)))
+                      );
+
+                      // If plan is officially approved or recommended, all periods in plan are unlocked
+                      const isPlanApprovedOrRecommended = planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved';
+
+                      // Period is unlocked if already undertaken, OR a request has been submitted, OR plan is recommended/approved
+                      const isPeriodUnlocked = isUndertakenPeriod || hasSubmittedPeriodRequest || isPlanApprovedOrRecommended;
+
+                      if (!isPeriodUnlocked) {
+                        return (
+                          <div 
+                            key={p.period_id} 
+                            className="bg-slate-50/70 dark:bg-slate-900/40 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-2xs space-y-3 transition-all"
+                          >
+                            <div className="flex justify-between items-center text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-slate-500 dark:text-slate-400 font-heading">{p.name}</span>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 font-mono">
+                                  <Lock className="w-2.5 h-2.5 shrink-0" />
+                                  <span>LOCKED</span>
+                                </span>
+                              </div>
+                              <span className="font-mono text-xs tabular-nums font-bold px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700">
+                                0 / 12 CP
                               </span>
-                              {onRemoveSemesterRequest && (
-                                <button
-                                  type="button"
-                                  onClick={() => onRemoveSemesterRequest(periodKey)}
-                                  className="text-rose-600 dark:text-rose-400 hover:underline font-bold text-[10px] cursor-pointer"
-                                >
-                                  Cancel
-                                </button>
-                              )}
                             </div>
-                            <p className="text-xs text-amber-950 dark:text-amber-100 font-semibold italic">
-                              "{hasRequest}"
-                            </p>
-                          </div>
-                        )}
 
-                        {sUnits.length === 0 ? (
-                          <div className="py-4 text-center border-2 border-dashed border-slate-200 dark:border-slate-700/60 rounded-xl bg-white/50 dark:bg-slate-900/50">
-                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono italic">No units scheduled for this trimester</span>
+                            <div className="py-4 px-3 bg-white/70 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800/80 rounded-xl text-center space-y-2.5 backdrop-blur-2xs">
+                              <div className="w-9 h-9 mx-auto rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-2xs">
+                                <Lock className="w-4.5 h-4.5 shrink-0" />
+                              </div>
+                              <div className="space-y-1">
+                                <h4 className="text-xs font-black text-slate-900 dark:text-white font-heading">
+                                  Semester Locked • Request Required
+                                </h4>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed font-sans">
+                                  Semester ini belum diajukan. Submit plan request ke Academic Chair untuk membuka dan melihat pemetaan unit.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReqYear(academicYear);
+                                  if (p.period_id === 1 || p.period_id === 2) {
+                                    setReqLayout('semester');
+                                    setReqPeriodIds([p.period_id]);
+                                  } else {
+                                    setReqLayout('trimester');
+                                    setReqPeriodIds([p.period_id]);
+                                  }
+                                  setShowSubmitPlanRequestModal(true);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-95 font-heading"
+                              >
+                                <Send className="w-3.5 h-3.5" />
+                                <span>Submit Request to Unlock</span>
+                              </button>
+                            </div>
                           </div>
-                        ) : (
+                        );
+                      }
+
+                      return (
+                        <div key={p.period_id} className={`bg-slate-50/90 dark:bg-slate-800/60 border rounded-2xl p-3.5 shadow-2xs space-y-2.5 ${hasRequest ? 'border-amber-400 dark:border-amber-700 ring-2 ring-amber-400/30' : 'border-slate-200/80 dark:border-slate-700/80'}`}>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-extrabold text-slate-800 dark:text-slate-200 font-heading">{p.name}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`font-mono text-xs tabular-nums font-bold px-2.5 py-0.5 rounded-full border ${
+                                isOptimalLoad ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' :
+                                semCP > 0 ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800' :
+                                'bg-slate-100 text-slate-500 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                              }`}>
+                                {semCP} / 12 CP
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveRequestModal({
+                                    key: periodKey,
+                                    yearLevel: y.level,
+                                    periodId: p.period_id,
+                                    periodName: `Year ${y.level} - ${p.name}`
+                                  });
+                                  setRequestCommentInput(semesterRequests[periodKey] || '');
+                                }}
+                                className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950 dark:hover:bg-amber-900 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 rounded-lg text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                title="Request change specifically for this semester"
+                              >
+                                <MessageSquare className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                                <span>{hasRequest ? 'Edit Request' : 'Request Change'}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {hasRequest && (
+                            <div className="p-2.5 bg-amber-100/90 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800 rounded-xl space-y-1 text-xs">
+                              <div className="flex items-center justify-between text-[10px] font-black text-amber-900 dark:text-amber-200 uppercase tracking-wider font-heading">
+                                <span className="flex items-center gap-1">
+                                  <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                                  Your Request to Chair
+                                </span>
+                                {onRemoveSemesterRequest && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onRemoveSemesterRequest(periodKey)}
+                                    className="text-rose-600 dark:text-rose-400 hover:underline font-bold text-[10px] cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                )}
+                              </div>
+                              <p className="text-xs text-amber-950 dark:text-amber-100 font-semibold italic">
+                                "{hasRequest}"
+                              </p>
+                            </div>
+                          )}
+
+                          {sUnits.length === 0 ? (
+                            hasSubmittedPeriodRequest ? (
+                              <div className="py-4 px-3 text-center border-2 border-dashed border-sky-300 dark:border-sky-800 rounded-xl bg-sky-50/60 dark:bg-sky-950/40 space-y-1">
+                                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-800 dark:text-sky-200 font-heading">
+                                  <Clock className="w-3.5 h-3.5 animate-spin text-sky-600 dark:text-sky-400" />
+                                  <span>Plan Request Submitted</span>
+                                </div>
+                                <p className="text-[11px] text-sky-600 dark:text-sky-300 font-sans">
+                                  Awaiting Academic Chair Dr. Aris Thorne to map and allocate units for this term.
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="py-4 text-center border-2 border-dashed border-slate-200 dark:border-slate-700/60 rounded-xl bg-white/50 dark:bg-slate-900/50">
+                                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono italic">No units scheduled for this trimester</span>
+                              </div>
+                            )
+                          ) : (
                           (() => {
                             const isExpanded = expandedTrimesters[periodKey];
                             const displayUnits = isExpanded ? sUnits : sUnits.slice(0, 3);

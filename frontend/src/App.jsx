@@ -149,7 +149,19 @@ export default function App() {
     return 'chair';
   });
   const [studentsList, setStudentsList] = useState(initialSampleStudents);
-  const [selectedStudent, setSelectedStudent] = useState(initialSampleStudents[0]);
+  const [selectedStudent, setSelectedStudent] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('spr_logged_user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        if (u.role === 'student') {
+          const target = initialSampleStudents.find(s => s.student_id === u.student_id || s.student_number === u.student_number);
+          if (target) return target;
+        }
+      }
+    } catch (e) {}
+    return initialSampleStudents[0];
+  });
 
 
 
@@ -192,8 +204,33 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [catalogUnits, setCatalogUnits] = useState([]);
   const [periods, setPeriods] = useState([]);
-  const [currentPlan, setCurrentPlan] = useState(() => mockClientStudentPlans[1].plan);
-  const [planUnits, setPlanUnits] = useState(() => mockClientStudentPlans[1].units);
+  const [currentPlan, setCurrentPlan] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('spr_logged_user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        const sId = Number(u.student_id);
+        if (sId && mockClientStudentPlans[sId]) {
+          return mockClientStudentPlans[sId].plan;
+        }
+      }
+    } catch (e) {}
+    return mockClientStudentPlans[1].plan;
+  });
+  const [planUnits, setPlanUnits] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('spr_logged_user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        const sId = Number(u.student_id);
+        if (sId === 4) return []; // Emily Watson starts clean (0 CP)
+        if (sId && mockClientStudentPlans[sId]) {
+          return mockClientStudentPlans[sId].units;
+        }
+      }
+    } catch (e) {}
+    return mockClientStudentPlans[1].units;
+  });
   const [allStudentPlansMap, setAllStudentPlansMap] = useState(() => {
     try {
       const saved = localStorage.getItem('spr_student_plans_cache');
@@ -202,6 +239,12 @@ export default function App() {
         // Ensure Emily Watson (student 4) starts fresh from the beginning (unsubmitted draft, 0 units)
         if (parsed[4] && !parsed[4].plan?.manuallySubmittedInSession) {
           parsed[4] = {
+            plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
+            units: []
+          };
+        }
+        if (parsed['4'] && !parsed['4'].plan?.manuallySubmittedInSession) {
+          parsed['4'] = {
             plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
             units: []
           };
