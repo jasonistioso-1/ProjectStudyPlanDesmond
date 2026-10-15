@@ -1012,46 +1012,94 @@ export default function PlanBuilder({
 
     return (
       <div className="font-sans max-w-[1440px] mx-auto space-y-5 transition-colors">
-        {/* Student View Action & Status Toolbar (Sleek 1-line bar below main Page Header) */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-2xs flex flex-col md:flex-row justify-between items-start md:items-center gap-3 font-sans transition-all">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Major: <strong className="text-slate-900 dark:text-white font-bold">{stMajor}</strong>
-            </span>
+        {/* ========================================================================= */}
+        {/* UNIFIED EXECUTIVE STUDENT HEADER (Replaces fragmented 3 boxes)            */}
+        {/* ========================================================================= */}
+        <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 rounded-2xl shadow-xl font-sans text-slate-900 dark:text-white transition-all relative overflow-hidden backdrop-blur-md">
+          {/* Subtle executive background accents */}
+          <div className="absolute -right-16 -top-16 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-slate-500/5 rounded-full blur-3xl pointer-events-none" />
 
-            {isChair && onOpenStudentSelectModal && (
+          <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5">
+            {/* Left: Soft Red Icon & Welcome Greeting + Degree / Major / Campus */}
+            <div className="flex items-center gap-4 max-w-full">
+              <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 flex items-center justify-center shadow-xs shrink-0 border border-red-200/60 dark:border-red-900/60">
+                <GraduationCap className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="space-y-1">
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
+                  {isNewStudentInitial ? `Welcome, ${stName}!` : `Welcome back, ${stName}!`}
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    Bachelor of Information Technology ({stMajor})
+                  </span>
+                  <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+                  <span className="font-mono text-xs">{stCourse}</span>
+                  <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+                  <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold text-xs">
+                    <Building2 className="w-3.5 h-3.5 shrink-0" />
+                    {student?.location_name || 'Singapore Campus'}
+                  </span>
+                </p>
+                {isNewStudentInitial && planStatus !== 'request_submitted' && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 pt-0.5">
+                    Please submit your study plan request to begin mapping your units.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Plan Status Badge, CP Meter & Action Buttons */}
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 self-stretch lg:self-auto justify-start lg:justify-end shrink-0">
+              <span className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide border shadow-2xs ${
+                planStatus === 'approved' ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' :
+                planStatus === 'agreed' ? 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800' :
+                planStatus === 'recommended' ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' :
+                planStatus === 'request_submitted' ? 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-800' :
+                planStatus === 'rejected' ? 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800' :
+                'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+              }`}>
+                {planStatus === 'request_submitted' ? 'Request Submitted' : planStatus === 'rejected' ? 'Change Requested' : `Status: ${planStatus}`}
+              </span>
+
+              <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl shadow-2xs">
+                {totalCP} / 72 CP
+              </span>
+
+              {/* Submit / Update Plan Request Button */}
               <button
-                onClick={onOpenStudentSelectModal}
-                className="bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-xl shadow-2xs flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white transition-all cursor-pointer active:scale-95"
-                title="Click to switch active student profile"
+                type="button"
+                onClick={() => setShowSubmitPlanRequestModal(true)}
+                className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-xl text-xs font-black transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 font-heading tracking-tight"
+                title="Submit or update study plan request for Academic Chair review"
               >
-                <User className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-                <span>Change Student</span>
+                <Send className="w-3.5 h-3.5 text-white" />
+                <span>{planStatus === 'request_submitted' ? 'Update Plan Request' : 'Submit Plan Request'}</span>
+                <ArrowRight className="w-4 h-4 opacity-80" />
               </button>
-            )}
 
-            <span className="text-slate-300 dark:text-slate-700">•</span>
+              {/* Export Document Button (Existing students) */}
+              {onOpenOfficialDocument && !isNewStudentInitial && (
+                <button
+                  type="button"
+                  onClick={onOpenOfficialDocument}
+                  className="bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 font-sans"
+                  title="Preview Official Study Plan document and select export format (PDF, CSV)"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-white" />
+                  <span>Export Document</span>
+                </button>
+              )}
+            </div>
+          </div>
 
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Plan Status:
-            </span>
-            <span className={`px-2.5 py-0.5 rounded-xl text-xs font-bold uppercase tracking-wide border ${
-              planStatus === 'approved' ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' :
-              planStatus === 'agreed' ? 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800' :
-              planStatus === 'recommended' ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' :
-              planStatus === 'request_submitted' ? 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-800' :
-              planStatus === 'rejected' ? 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800' :
-              'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-            }`}>
-              {planStatus === 'request_submitted' ? 'Request Submitted' : planStatus === 'rejected' ? 'Change Requested' : planStatus}
-            </span>
-
-            <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-xl shadow-2xs">
-              {totalCP} / 72 CP
-            </span>
-
-            {/* Layout switchers only shown if not in new student initial welcome mode */}
-            {!isNewStudentInitial && (
+          {/* Curriculum Layout Switcher Toolbar (Existing students only) */}
+          {!isNewStudentInitial && (
+            <div className="relative z-10 mt-4 pt-3.5 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3 text-xs">
+              <span className="text-slate-500 dark:text-slate-400 font-medium">
+                Academic Curriculum View:
+              </span>
               <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-0.5 text-xs font-sans shadow-2xs">
                 <button
                   type="button"
@@ -1080,128 +1128,34 @@ export default function PlanBuilder({
                   <span>Semester View (2 Semesters)</span>
                 </button>
               </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2.5 shrink-0 self-stretch md:self-auto justify-end">
-            {!isNewStudentInitial && (
-              <button
-                onClick={() => setShowSubmitPlanRequestModal(true)}
-                className="bg-red-700 hover:bg-red-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-black transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 font-heading tracking-tight"
-                title="Submit a study plan request for Academic Chair review"
-              >
-                <Send className="w-3.5 h-3.5 text-white" />
-                <span>Submit Plan Request</span>
-              </button>
-            )}
-
-            {onOpenOfficialDocument && !isNewStudentInitial && (
-              <button
-                onClick={onOpenOfficialDocument}
-                className="bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 font-sans"
-                title="Preview Official Study Plan document and select export format (PDF, CSV)"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-white" />
-                <span>Export Document</span>
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* ========================================================================= */}
-        {/* CONDITIONAL RENDER: NEW STUDENT WELCOME PAGE vs FULL STUDY PLAN GRID     */}
+        {/* CONDITIONAL RENDER: NEW STUDENT STATUS BANNER vs FULL STUDY PLAN GRID    */}
         {/* ========================================================================= */}
         {isNewStudentInitial ? (
           <div className="space-y-6 animate-in fade-in duration-300">
-            {/* 1. HERO ONBOARDING HUB */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-white via-slate-50 to-red-50/40 dark:from-[#0f172a] dark:via-[#090d18] dark:to-red-950/25 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-md">
-              {/* Executive Crimson Top Line Accent */}
-              <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />
-              {/* Ambient radial glows */}
-              <div className="absolute -right-24 -top-24 w-80 h-80 bg-red-600/10 dark:bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-blue-600/5 dark:bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="max-w-3xl space-y-3.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 dark:bg-red-950/80 border border-red-200 dark:border-red-900/60 text-xs font-extrabold text-red-700 dark:text-red-300 font-mono">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Freshman Enrolment • Class of 2029</span>
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300">
-                      <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Singapore Campus</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300">
-                      <GraduationCap className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                      <span>AQF Level 7 Degree</span>
-                    </span>
-                  </div>
-
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
-                    Welcome to PT03 Solutions, {stName}!
-                  </h2>
-
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-sans max-w-2xl">
-                    You are officially enrolled in the <strong className="text-slate-900 dark:text-white font-semibold">Bachelor of Information Technology ({stMajor})</strong> at PT03 Solutions Singapore Campus. Submit your study preferences below to initiate your degree curriculum mapping with Academic Chair Dr. Aris Thorne.
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500 dark:text-slate-400 font-mono">
-                    <span className="px-2.5 py-1 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700">
-                      ID: <strong className="text-slate-900 dark:text-white font-bold">{stNumber}</strong>
-                    </span>
-                    <span className="px-2.5 py-1 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700">
-                      Alias: <strong className="text-slate-900 dark:text-white font-bold">{student?.alias_code || 'BIS1'}</strong>
-                    </span>
-                    <span className="px-2.5 py-1 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700">
-                      Commencing: <strong className="text-slate-900 dark:text-white font-bold">Academic Year 2026</strong>
-                    </span>
-                    <span className="px-2.5 py-1 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700">
-                      Course: <strong className="text-slate-900 dark:text-white font-bold">{stCourse}</strong>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Single Primary Red Submit Button */}
-                <div className="shrink-0 self-start lg:self-center">
-                  <button
-                    type="button"
-                    onClick={() => setShowSubmitPlanRequestModal(true)}
-                    className="group relative px-6 sm:px-7 py-3.5 sm:py-4 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white rounded-2xl text-xs sm:text-sm font-black shadow-xl shadow-red-700/30 hover:shadow-red-600/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer font-heading tracking-tight"
-                  >
-                    <Send className="w-4.5 h-4.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    <span>{planStatus === 'request_submitted' ? 'Update Plan Request' : 'Submit Plan Request'}</span>
-                    <ArrowRight className="w-4 h-4 opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. SUBMITTED STATUS BANNER (if request is submitted) */}
+            {/* SUBMITTED STATUS BANNER (shown when request is submitted) */}
             {planStatus === 'request_submitted' && (
-              <div className="bg-emerald-50/90 dark:bg-emerald-950/40 border-2 border-emerald-500/80 dark:border-emerald-600/80 rounded-3xl p-5 sm:p-6 shadow-md backdrop-blur-md">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20">
-                      <CheckCircle2 className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200 text-[11px] font-black uppercase font-mono">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
-                        <span>Live Status: Study Plan Request in Chair Queue</span>
-                      </div>
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-heading">
-                        Study Plan Request Sent to Dr. Aris Thorne (Academic Chair)
-                      </h3>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-sans leading-relaxed">
-                        Your study plan preferences for <strong>Year {currentPlan?.requestYear || 2026} ({currentPlan?.layoutType === 'semester' ? 'Semester System' : 'Trimester System'})</strong> have been registered. The Academic Chair will review prerequisite pathways and schedule your units.
-                      </p>
-                    </div>
+              <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
-                  <div className="text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300 bg-white/70 dark:bg-emerald-900/40 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 self-start sm:self-center shrink-0">
-                    Awaiting Chair Action
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white font-heading">
+                      Study Plan Request Submitted
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-sans">
+                      Awaiting Academic Chair review and unit allocation.
+                    </p>
                   </div>
                 </div>
+                <span className="text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-3 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800 shrink-0 self-start sm:self-center">
+                  Awaiting Chair Action
+                </span>
               </div>
             )}
           </div>
@@ -1289,10 +1243,10 @@ export default function PlanBuilder({
                               </div>
                               <div className="space-y-1">
                                 <h4 className="text-xs font-black text-slate-900 dark:text-white font-heading">
-                                  Semester Locked • Request Required
+                                  Teaching Period Locked
                                 </h4>
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed font-sans">
-                                  Semester ini belum diajukan. Submit plan request ke Academic Chair untuk membuka dan melihat pemetaan unit.
+                                  Submit a study plan request to the Academic Chair to unlock and view unit mapping.
                                 </p>
                               </div>
                               <button
@@ -1381,7 +1335,7 @@ export default function PlanBuilder({
                                   <span>Plan Request Submitted</span>
                                 </div>
                                 <p className="text-[11px] text-sky-600 dark:text-sky-300 font-sans">
-                                  Awaiting Academic Chair Dr. Aris Thorne to map and allocate units for this term.
+                                  Awaiting Academic Chair review and unit allocation.
                                 </p>
                               </div>
                             ) : (

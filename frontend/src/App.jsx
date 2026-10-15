@@ -1657,8 +1657,8 @@ export default function App() {
             />
           )}
 
-          {/* Executive Student Course Info Header (Shown only when a real target student profile is selected on STUDY_PLAN & ACADEMIC_HISTORY tabs) */}
-          {(activeTab === 'STUDY_PLAN' || activeTab === 'ACADEMIC_HISTORY') &&
+          {/* Executive Student Course Info Header (Shown for Chair on STUDY_PLAN & for all students on ACADEMIC_HISTORY) */}
+          {((activeTab === 'STUDY_PLAN' && activeRole === 'chair') || activeTab === 'ACADEMIC_HISTORY') &&
             selectedStudent && selectedStudent.account_category !== 'admin' && selectedStudent.student_id !== 0 && (
             <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 p-4 sm:p-6 rounded-2xl shadow-xl font-sans text-slate-900 dark:text-white transition-all relative overflow-hidden backdrop-blur-md">
               {/* Subtle executive background accents */}
@@ -1676,24 +1676,26 @@ export default function App() {
                       Bachelor of Information Technology
                     </h1>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                      Official Degree Enrolment Record & Multi-Year Study Sequence
+                      Degree Enrolment & Study Sequence
                     </p>
                   </div>
                 </div>
 
                 {/* Right Side: Clean Student Metadata Strip */}
                 <div className="flex flex-wrap items-center justify-start lg:justify-end gap-2.5 sm:gap-3.5 text-xs text-slate-600 dark:text-slate-300 font-medium shrink-0">
-                  <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 bg-slate-100/80 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
-                    <User className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-                    <span className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">
-                      {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
-                    </span>
-                    <span className="text-slate-500 dark:text-slate-400 text-[11px] font-mono font-bold">
-                      ({selectedStudent ? selectedStudent.student_number : '31234561'})
-                    </span>
-                  </div>
+                  {activeRole === 'chair' && (
+                    <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 bg-slate-100/80 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                      <User className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                      <span className="font-extrabold text-slate-900 dark:text-white text-xs font-heading">
+                        {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
+                      </span>
+                      <span className="text-slate-500 dark:text-slate-400 text-[11px] font-mono font-bold">
+                        ({selectedStudent ? selectedStudent.student_number : '31234561'})
+                      </span>
+                    </div>
+                  )}
 
-                  <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+                  {activeRole === 'chair' && <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>}
 
                   <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
                     <GraduationCap className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
