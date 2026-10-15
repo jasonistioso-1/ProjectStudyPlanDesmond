@@ -625,9 +625,9 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
               <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1 rounded-xl text-xs shrink-0 font-sans">
                 {[
                   { id: 'ALL', label: 'All Levels' },
-                  { id: '100', label: 'Lvl 100' },
-                  { id: '200', label: 'Lvl 200' },
-                  { id: '300', label: 'Lvl 300' }
+                  { id: '100', label: 'Year 1' },
+                  { id: '200', label: 'Year 2' },
+                  { id: '300', label: 'Year 3' }
                 ].map((filterItem) => (
                   <button
                     key={filterItem.id}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Study Plan Recommender (SPR) - System Diagrams Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 30px;
+      background: #0b0f19;
+      color: #f1f5f9;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 24px;
+      color: #f8fafc;
+      border-bottom: 2px solid #dc2626;
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+    }
+    h2 {
+      font-size: 18px;
+      color: #e2e8f0;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      padding-left: 10px;
+      border-left: 4px solid #dc2626;
+    }
+    .diagram-card {
+      background: #111726;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 30px;
+      overflow-x: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Study Plan Recommender (SPR) - System Diagrams Portfolio</h1>
+    <div id="content">Loading diagrams...</div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        background: '#111726',
+        primaryColor: '#b91c1c',
+        primaryTextColor: '#fff',
+        lineColor: '#64748b'
+      }
+    });
+
+    fetch('SYSTEM_DIAGRAMS_PORTFOLIO.md')
+      .then(res => res.text())
+      .then(md => {
+        const sections = md.split(/^## /m).slice(1);
+        const container = document.getElementById('content');
+        container.innerHTML = '';
+
+        sections.forEach(sec => {
+          const lines = sec.trim().split('\n');
+          const title = lines[0];
+          const mMatch = sec.match(/```mermaid([\s\S]*?)```/);
+          if (mMatch) {
+            const card = document.createElement('div');
+            card.className = 'diagram-card';
+            card.innerHTML = `<h2>${title}</h2><div class="mermaid">${mMatch[1].trim()}</div>`;
+            container.appendChild(card);
+          }
+        });
+
+        mermaid.run();
+      })
+      .catch(err => {
+        document.getElementById('content').innerHTML = '<p style="color:#ef4444;">Error loading markdown file.</p>';
+      });
+  </script>
+</body>
+</html>

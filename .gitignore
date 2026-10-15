@@ -10,5 +10,4 @@ backend/public/assets/
 *.xlsx
 *.pdf
 scratch/
-docs/
-SYSTEM_DIAGRAMS_*
+!docs/diagrams/

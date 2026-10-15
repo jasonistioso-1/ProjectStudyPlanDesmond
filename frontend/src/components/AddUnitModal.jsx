@@ -157,9 +157,9 @@ export default function AddUnitModal({ onAddUnit, onClose }) {
               onChange={(e) => setLevel(Number(e.target.value))}
               className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-bold cursor-pointer font-mono"
             >
-              <option value={100}>Lvl 100 (Year 1)</option>
-              <option value={200}>Lvl 200 (Year 2)</option>
-              <option value={300}>Lvl 300 (Year 3)</option>
+              <option value={100}>Year 1</option>
+              <option value={200}>Year 2</option>
+              <option value={300}>Year 3</option>
             </select>
           </div>
 

@@ -78,9 +78,9 @@ export default function DroppablePaletteContainer({
             {[
               { id: 'CORE', label: 'Recommended Cores' },
               { id: 'ALL', label: 'All Units' },
-              { id: '100', label: 'Lvl 100' },
-              { id: '200', label: 'Lvl 200' },
-              { id: '300', label: 'Lvl 300' },
+              { id: '100', label: 'Year 1' },
+              { id: '200', label: 'Year 2' },
+              { id: '300', label: 'Year 3' },
               { id: 'ELECTIVE', label: 'General Electives' }
             ].map(lvl => (
               <button
