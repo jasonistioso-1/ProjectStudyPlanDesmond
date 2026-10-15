@@ -39,7 +39,7 @@ export default function GuideModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const databaseEntities = [
-    { count: '1', name: 'Student', desc: 'Student profile details, student number (PT3-2026-001), degree major, and campus location.', schema: 'student_id (PK), student_number, first_name, last_name, email, course_id (FK), location_id (FK)' },
+    { count: '1', name: 'Student', desc: 'Student profile details, student number (e.g. 31234561 / AI1), degree major, and campus location.', schema: 'student_id (PK), student_number, first_name, last_name, email, course_id (FK), location_id (FK)' },
     { count: '2', name: 'Course', desc: 'Official degree programs and majors (AI, Computer Science, BIS) with 72 credit point target.', schema: 'course_id (PK), code, name, degree_level, total_credit_points' },
     { count: '3', name: 'Unit', desc: 'Course catalog of subjects (e.g. ICT159), titles, credit points (3 CP), and level details.', schema: 'unit_id (PK), code, title, credit_points, level' },
     { count: '4', name: 'UnitOffering', desc: 'Availability of units per campus, year, and teaching period (Semester vs Trimester).', schema: 'offering_id (PK), unit_id (FK), location_id (FK), period_id (FK), year_version' },

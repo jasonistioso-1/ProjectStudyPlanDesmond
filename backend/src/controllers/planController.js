@@ -140,10 +140,14 @@ export async function savePlan(req, res) {
         await connection.query(`DELETE FROM StudyPlanUnit WHERE plan_id = ?`, [plan_id]);
 
         if (units && units.length > 0) {
+            const [allDbUnits] = await connection.query(`SELECT unit_id, code FROM Unit`);
+            const unitCodeMap = {};
+            (allDbUnits || []).forEach(u => { unitCodeMap[u.code] = u.unit_id; });
+
             const insertValues = units.map(u => [
                 plan_id,
-                u.unit_id,
-                u.period_id,
+                u.unit_id || unitCodeMap[u.code] || 1,
+                u.period_id || 3,
                 u.year_level || 1,
                 u.sequence_order || 1,
                 u.credit_points || 3
@@ -174,6 +178,21 @@ export async function savePlan(req, res) {
         );
 
         await connection.commit();
+
+        // Update in-memory fallback cache as well
+        mockStudentPlans[Number(student_id)] = {
+            plan: {
+                plan_id,
+                student_id: Number(student_id),
+                title: title || 'Standard Study Plan',
+                status: status || 'draft',
+                total_credit_points
+            },
+            units: units.map(u => ({
+                ...u,
+                credit_points: Number(u.credit_points || 3)
+            }))
+        };
 
         // Run validation on saved plan
         const validationResult = await validateStudyPlan({ studentId: student_id, locationId: location_id, planUnits: units });

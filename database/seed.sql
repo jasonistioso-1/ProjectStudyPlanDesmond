@@ -112,10 +112,10 @@ INSERT INTO Prerequisite (unit_id, prereq_unit_id, min_grade, is_concurrent_allo
 -- 7. Seed Students (5 Premade Demo Accounts: 1 Admin, 2 Existing Students, 2 New Students)
 INSERT INTO Student (student_id, student_number, first_name, last_name, email, course_id, location_id, commencement_year, study_status, account_category) VALUES
 (0, 'ADMIN-CHAIR-01', 'Dr. Aris', 'Thorne (Academic Chair)', 'academic.chair@pt3solutions.edu.sg', 1, 2, 2026, 'active', 'admin'),
-(1, 'PT3-2026-001', 'Alex', 'Mercer', 'alex.mercer@student.pt3solutions.edu.sg', 1, 2, 2026, 'active', 'existing_student'),
-(2, 'PT3-2026-002', 'Sarah', 'Jenkins', 'sarah.jenkins@student.pt3solutions.edu.sg', 2, 2, 2026, 'active', 'existing_student'),
-(3, 'PT3-2026-003', 'Michael', 'Chang', 'm.chang@student.pt3solutions.edu.sg', 3, 2, 2026, 'active', 'new_student'),
-(4, 'PT3-2026-004', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.sg', 1, 2, 2026, 'part-time', 'new_student');
+(1, '31234561', 'Alex', 'Mercer', 'alex.mercer@student.pt3solutions.edu.sg', 1, 2, 2026, 'active', 'existing_student'),
+(2, '31234562', 'Sarah', 'Jenkins', 'sarah.jenkins@student.pt3solutions.edu.sg', 2, 2, 2026, 'active', 'existing_student'),
+(3, '31234563', 'Michael', 'Chang', 'm.chang@student.pt3solutions.edu.sg', 3, 2, 2026, 'active', 'new_student'),
+(4, '31234564', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.sg', 1, 2, 2026, 'part-time', 'new_student');
 
 -- 8. Seed Student Unit History
 INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period_id, year_taken) VALUES
@@ -174,8 +174,8 @@ INSERT INTO StudyPlanUnit (plan_id, unit_id, period_id, year_level, sequence_ord
 
 -- 11. Seed Version History
 INSERT INTO StudyPlanVersion (plan_id, version_number, amendment_reason, snapshot_json, created_by) VALUES
-(1, 2, 'Study Plan officially APPROVED & finalized by Academic Chair', '{"plan_id": 1, "student_number": "PT3-2026-001", "total_cp": 36, "status": "approved"}', 'Academic Chair'),
-(2, 2, 'Student agreed and digitally signed proposed study plan (72 CP)', '{"plan_id": 2, "student_number": "PT3-2026-002", "total_cp": 72, "status": "agreed"}', 'Student: Sarah Jenkins'),
-(3, 1, 'Initial study plan draft', '{"plan_id": 3, "student_number": "PT3-2026-003", "total_cp": 0, "status": "draft"}', 'Academic Chair'),
-(4, 1, 'Initial study plan draft', '{"plan_id": 4, "student_number": "PT3-2026-004", "total_cp": 0, "status": "draft"}', 'Academic Chair');
+(1, 2, 'Study Plan officially APPROVED & finalized by Academic Chair', '{"plan_id": 1, "student_number": "31234561", "total_cp": 36, "status": "approved"}', 'Academic Chair'),
+(2, 2, 'Student agreed and digitally signed proposed study plan (72 CP)', '{"plan_id": 2, "student_number": "31234562", "total_cp": 72, "status": "agreed"}', 'Student: Sarah Jenkins'),
+(3, 1, 'Initial study plan draft', '{"plan_id": 3, "student_number": "31234563", "total_cp": 0, "status": "draft"}', 'Academic Chair'),
+(4, 1, 'Initial study plan draft', '{"plan_id": 4, "student_number": "31234564", "total_cp": 0, "status": "draft"}', 'Academic Chair');
 

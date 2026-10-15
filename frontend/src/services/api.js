@@ -25,7 +25,7 @@ export async function fetchStudents(search = '') {
             },
             {
                 student_id: 1,
-                student_number: 'PT3-2026-001',
+                student_number: '31234561',
                 first_name: 'Alex',
                 last_name: 'Mercer',
                 email: 'alex.mercer@student.pt3solutions.edu.sg',
@@ -36,11 +36,12 @@ export async function fetchStudents(search = '') {
                 location_name: 'PT3 Solutions Singapore Campus',
                 commencement_year: 2026,
                 study_status: 'active',
-                account_category: 'existing_student'
+                account_category: 'existing_student',
+                alias_code: 'AI1'
             },
             {
                 student_id: 2,
-                student_number: 'PT3-2026-002',
+                student_number: '31234562',
                 first_name: 'Sarah',
                 last_name: 'Jenkins',
                 email: 'sarah.jenkins@student.pt3solutions.edu.sg',
@@ -51,11 +52,12 @@ export async function fetchStudents(search = '') {
                 location_name: 'PT3 Solutions Singapore Campus',
                 commencement_year: 2026,
                 study_status: 'active',
-                account_category: 'existing_student'
+                account_category: 'existing_student',
+                alias_code: 'CS1'
             },
             {
                 student_id: 3,
-                student_number: 'PT3-2026-003',
+                student_number: '31234563',
                 first_name: 'Michael',
                 last_name: 'Chang',
                 email: 'm.chang@student.pt3solutions.edu.sg',
@@ -66,11 +68,12 @@ export async function fetchStudents(search = '') {
                 location_name: 'PT3 Solutions Singapore Campus',
                 commencement_year: 2026,
                 study_status: 'active',
-                account_category: 'new_student'
+                account_category: 'new_student',
+                alias_code: 'BIS1'
             },
             {
                 student_id: 4,
-                student_number: 'PT3-2026-004',
+                student_number: '31234564',
                 first_name: 'Emily',
                 last_name: 'Watson',
                 email: 'e.watson@student.pt3solutions.edu.sg',
@@ -81,7 +84,8 @@ export async function fetchStudents(search = '') {
                 location_name: 'PT3 Solutions Singapore Campus',
                 commencement_year: 2026,
                 study_status: 'part-time',
-                account_category: 'new_student'
+                account_category: 'new_student',
+                alias_code: 'AI2'
             }
         ];
     }
@@ -96,7 +100,7 @@ export async function fetchStudentById(id) {
         console.warn('API fetchStudentById fallback activated:', err.message);
         return {
             student_id: Number(id || 1),
-            student_number: 'PT3-2026-001',
+            student_number: '31234561',
             first_name: 'Alex',
             last_name: 'Mercer',
             email: 'alex.mercer@student.pt3solutions.edu.au',
@@ -517,7 +521,7 @@ export async function fetchAuditLog() {
                 version_id: 106,
                 plan_id: 2,
                 version_number: 'LOG',
-                student_number: 'PT3-2026-002',
+                student_number: '31234562',
                 first_name: 'Sarah',
                 last_name: 'Jenkins',
                 plan_title: 'PT3-BSIT-CS02 Account Session',
@@ -530,7 +534,7 @@ export async function fetchAuditLog() {
                 version_id: 105,
                 plan_id: 1,
                 version_number: 5,
-                student_number: 'PT3-2026-001',
+                student_number: '31234561',
                 first_name: 'Alex',
                 last_name: 'Mercer',
                 plan_title: 'PT3-BSIT-AI01 Study Plan',
@@ -543,7 +547,7 @@ export async function fetchAuditLog() {
                 version_id: 104,
                 plan_id: 1,
                 version_number: 4,
-                student_number: 'PT3-2026-001',
+                student_number: '31234561',
                 first_name: 'Alex',
                 last_name: 'Mercer',
                 plan_title: 'PT3-BSIT-AI01 Study Plan',
@@ -556,7 +560,7 @@ export async function fetchAuditLog() {
                 version_id: 103,
                 plan_id: 1,
                 version_number: 3,
-                student_number: 'PT3-2026-001',
+                student_number: '31234561',
                 first_name: 'Alex',
                 last_name: 'Mercer',
                 plan_title: 'PT3-BSIT-AI01 Study Plan',
@@ -569,7 +573,7 @@ export async function fetchAuditLog() {
                 version_id: 102,
                 plan_id: 2,
                 version_number: 2,
-                student_number: 'PT3-2026-002',
+                student_number: '31234562',
                 first_name: 'Sarah',
                 last_name: 'Jenkins',
                 plan_title: 'PT3-BSIT-CS02 Study Plan',
@@ -582,7 +586,7 @@ export async function fetchAuditLog() {
                 version_id: 101,
                 plan_id: 1,
                 version_number: 1,
-                student_number: 'PT3-2026-001',
+                student_number: '31234561',
                 first_name: 'Alex',
                 last_name: 'Mercer',
                 plan_title: 'PT3-BSIT-AI01 Study Plan',

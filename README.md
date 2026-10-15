@@ -178,10 +178,10 @@ The system comes pre-seeded with 5 accounts for testing and demonstration:
 | Account Type | Account ID | User / Student Name | Course & Major | Category / Scope | Location |
 |---|---|---|---|---|---|
 | **1 x Administrator** | `ADMIN-CHAIR-01` | **Dr. Aris Thorne** | Academic Chair & Administrator | System Admin & Governance | Singapore Campus |
-| **2 x Existing Student** | `PT3-2026-001` | **Alex Mercer** | PT3-BSIT-AI01 (Artificial Intelligence) | Existing Student (Active Plan & History) | Singapore Campus |
-| **2 x Existing Student** | `PT3-2026-002` | **Sarah Jenkins** | PT3-BSIT-CS02 (Computer Science) | Existing Student (Completed Y1 T1 - 9 CP) | Singapore Campus |
-| **2 x New Student** | `PT3-2026-003` | **Michael Chang** | PT3-BSIT-BIS03 (Business Info Systems) | New Student (Fresh Enrolment - 0 CP) | Singapore Campus |
-| **2 x New Student** | `PT3-2026-004` | **Emily Watson** | PT3-BSIT-AI04 (Artificial Intelligence) | New Student (Fresh Enrolment - 0 CP) | Singapore Campus |
+| **2 x Existing Student** | `31234561` (`AI1`) | **Alex Mercer** | PT3-BSIT-AI01 (Artificial Intelligence) | Existing Student (Active Plan & History) | Singapore Campus |
+| **2 x Existing Student** | `31234562` (`CS1`) | **Sarah Jenkins** | PT3-BSIT-CS02 (Computer Science) | Existing Student (Completed Y1 T1 - 9 CP) | Singapore Campus |
+| **2 x New Student** | `31234563` (`BIS1`) | **Michael Chang** | PT3-BSIT-BIS03 (Business Info Systems) | New Student (Fresh Enrolment - 0 CP) | Singapore Campus |
+| **2 x New Student** | `31234564` (`AI2`) | **Emily Watson** | PT3-BSIT-AI04 (Artificial Intelligence) | New Student (Fresh Enrolment - 0 CP) | Singapore Campus |
 
 ### 🇸🇬 Dual Layout Support & Independent View Modes
 - **Trimester View (3 Terms)**: Full operational view for Singapore campus enrolment (T1, T2, T3).

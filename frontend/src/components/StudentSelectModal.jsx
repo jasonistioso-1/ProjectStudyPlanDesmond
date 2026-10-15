@@ -27,11 +27,15 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
         if (cat !== categoryFilter) return false;
       }
       if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
+      const normQ = q.replace(/[\s\-_.]/g, '');
       const fullName = `${s.first_name || ''} ${s.last_name || ''}`.toLowerCase();
       const num = (s.student_number || '').toLowerCase();
+      const normNum = num.replace(/[\s\-_.]/g, '');
       const course = (s.course_code || s.course_name || '').toLowerCase();
-      return fullName.includes(q) || num.includes(q) || course.includes(q);
+      const alias = (s.alias_code || s.aliasCode || '').toLowerCase();
+      const normAlias = alias.replace(/[\s\-_.]/g, '');
+      return fullName.includes(q) || num.includes(q) || normNum.includes(normQ) || course.includes(q) || alias.includes(q) || normAlias.includes(normQ);
     })
     .sort((a, b) => {
       let comp = 0;
@@ -102,7 +106,7 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
           <input
             id="student-select-search-input"
             type="text"
-            placeholder="Search by student name, ID (e.g. PT3-2026-001), or major..."
+            placeholder="Search by student name, ID (e.g. 31234561, AI1), or major..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-10 pr-9 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all placeholder:text-slate-400"
@@ -211,8 +215,13 @@ export default function StudentSelectModal({ students = [], onSelectStudent, onA
                           <div className="font-bold text-slate-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors text-sm">
                             {student.first_name} {student.last_name}
                           </div>
-                          <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
+                          <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
                             <span>ID: <strong className="text-slate-700 dark:text-slate-300 font-semibold">{student.student_number}</strong></span>
+                            {(student.alias_code || student.aliasCode) && (
+                              <span className="px-1.5 py-0.2 rounded bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 text-[10px] font-bold">
+                                {student.alias_code || student.aliasCode}
+                              </span>
+                            )}
                             <span className="text-slate-300 dark:text-slate-600">|</span>
                             <span className="text-slate-500 font-semibold">{student.course_code || 'PT3-BSIT'}</span>
                           </div>

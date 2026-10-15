@@ -99,9 +99,9 @@ PT3-SYD,PT3 Solutions Sydney Campus
 PT3-ONL,PT3 Solutions Online Portal`,
 
     students: `Student Number,First Name,Last Name,Email,Course Code,Location Code,Status
-PT3-2026-005,David,Miller,d.miller@student.pt3solutions.edu.sg,PT3-BSIT-AI01,SINGAPORE,active
-PT3-2026-006,Jessica,Tan,j.tan@student.pt3solutions.edu.sg,PT3-BSIT-CS02,SINGAPORE,active
-PT3-2026-007,Kevin,Wong,k.wong@student.pt3solutions.edu.sg,PT3-BSIT-BIS03,SINGAPORE,part-time`,
+31234565,David,Miller,d.miller@student.pt3solutions.edu.sg,PT3-BSIT-AI01,SINGAPORE,active
+31234566,Jessica,Tan,j.tan@student.pt3solutions.edu.sg,PT3-BSIT-CS02,SINGAPORE,active
+31234567,Kevin,Wong,k.wong@student.pt3solutions.edu.sg,PT3-BSIT-BIS03,SINGAPORE,part-time`,
 
     offerings: `Unit Code,Location Code,Period Code,Year Version,Delivery Mode
 ICT100,SINGAPORE,T1,2026,internal
@@ -123,10 +123,10 @@ PT3-BSIT-CS02,Bachelor of Information Technology (Major: Computer Science),Bache
 PT3-BSIT-BIS03,Bachelor of Information Technology (Major: Business Information Systems),Bachelor,72`,
 
     history: `Student Number,Unit Code,Status,Grade,Period Code,Year Taken
-PT3-2026-001,ICT100,completed,HD,T1,2025
-PT3-2026-001,ICT158,completed,D,T2,2025
-PT3-2026-001,ICT159,completed,C,T3,2025
-PT3-2026-001,ICT167,current,N/A,T1,2026`,
+31234561,ICT100,completed,HD,T1,2025
+31234561,ICT158,completed,D,T2,2025
+31234561,ICT159,completed,C,T3,2025
+31234561,ICT167,current,N/A,T1,2026`,
 
     periods: `Period Code,Period Name,Period Type,Sequence Order
 T1,Trimester 1,trimester,1

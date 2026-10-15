@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, UserPlus, UserCheck, CheckCircle2 } from 'lucide-react';
 
 export default function AddStudentModal({ onSaveStudent, editStudent = null, onClose }) {
-  const [studentNumber, setStudentNumber] = useState(editStudent ? editStudent.student_number : `PT3-2026-00${Math.floor(Math.random() * 90) + 10}`);
+  const [studentNumber, setStudentNumber] = useState(editStudent ? editStudent.student_number : `3123456${Math.floor(Math.random() * 90) + 10}`);
   const [firstName, setFirstName] = useState(editStudent ? editStudent.first_name : '');
   const [lastName, setLastName] = useState(editStudent ? editStudent.last_name : '');
   const [email, setEmail] = useState(editStudent ? editStudent.email : '');
@@ -130,7 +130,7 @@ export default function AddStudentModal({ onSaveStudent, editStudent = null, onC
               </label>
               <input
                 type="text"
-                placeholder="e.g. PT3-2026-001"
+                placeholder="e.g. 31234565"
                 value={studentNumber}
                 onChange={(e) => setStudentNumber(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 font-mono text-slate-900 dark:text-white focus:outline-none focus:border-red-600 font-bold uppercase"

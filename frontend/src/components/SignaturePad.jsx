@@ -239,7 +239,7 @@ export default function SignaturePad({
           <div>
             <span className="text-[10px] text-slate-400 font-bold uppercase block tracking-wider font-mono">Signee Account</span>
             <span className="text-xs font-bold text-slate-900 dark:text-white font-sans">
-              {student ? `${student.first_name} ${student.last_name}` : 'Student'} ({student?.student_number || 'PT3-2026-001'})
+              {student ? `${student.first_name} ${student.last_name}` : 'Student'} ({student?.student_number || '31234561'})
             </span>
             <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono font-medium mt-0.5">
               Signed: {savedSignatureData.timestamp || 'Official Record'}

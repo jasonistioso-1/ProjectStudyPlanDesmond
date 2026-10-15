@@ -59,11 +59,12 @@ const initialSampleStudents = [
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
     study_status: 'active',
-    account_category: 'admin'
+    account_category: 'admin',
+    alias_code: 'ADMIN'
   },
   {
     student_id: 1,
-    student_number: 'PT3-2026-001',
+    student_number: '31234561',
     first_name: 'Alex',
     last_name: 'Mercer',
     email: 'alex.mercer@student.pt3solutions.edu.sg',
@@ -74,11 +75,12 @@ const initialSampleStudents = [
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
     study_status: 'active',
-    account_category: 'existing_student'
+    account_category: 'existing_student',
+    alias_code: 'AI1'
   },
   {
     student_id: 2,
-    student_number: 'PT3-2026-002',
+    student_number: '31234562',
     first_name: 'Sarah',
     last_name: 'Jenkins',
     email: 'sarah.jenkins@student.pt3solutions.edu.sg',
@@ -89,11 +91,12 @@ const initialSampleStudents = [
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
     study_status: 'active',
-    account_category: 'existing_student'
+    account_category: 'existing_student',
+    alias_code: 'CS1'
   },
   {
     student_id: 3,
-    student_number: 'PT3-2026-003',
+    student_number: '31234563',
     first_name: 'Michael',
     last_name: 'Chang',
     email: 'm.chang@student.pt3solutions.edu.sg',
@@ -104,11 +107,12 @@ const initialSampleStudents = [
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
     study_status: 'active',
-    account_category: 'new_student'
+    account_category: 'new_student',
+    alias_code: 'BIS1'
   },
   {
     student_id: 4,
-    student_number: 'PT3-2026-004',
+    student_number: '31234564',
     first_name: 'Emily',
     last_name: 'Watson',
     email: 'e.watson@student.pt3solutions.edu.sg',
@@ -119,7 +123,8 @@ const initialSampleStudents = [
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
     study_status: 'part-time',
-    account_category: 'new_student'
+    account_category: 'new_student',
+    alias_code: 'AI2'
   }
 ];
 
@@ -189,12 +194,31 @@ export default function App() {
   const [periods, setPeriods] = useState([]);
   const [currentPlan, setCurrentPlan] = useState(() => mockClientStudentPlans[1].plan);
   const [planUnits, setPlanUnits] = useState(() => mockClientStudentPlans[1].units);
-  const [allStudentPlansMap, setAllStudentPlansMap] = useState(() => ({
-    1: { plan: mockClientStudentPlans[1].plan, units: mockClientStudentPlans[1].units },
-    2: { plan: mockClientStudentPlans[2].plan, units: mockClientStudentPlans[2].units },
-    3: { plan: mockClientStudentPlans[3].plan, units: mockClientStudentPlans[3].units },
-    4: { plan: mockClientStudentPlans[4].plan, units: mockClientStudentPlans[4].units }
-  }));
+  const [allStudentPlansMap, setAllStudentPlansMap] = useState(() => {
+    try {
+      const saved = localStorage.getItem('spr_student_plans_cache');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      1: { plan: mockClientStudentPlans[1].plan, units: mockClientStudentPlans[1].units },
+      2: { plan: mockClientStudentPlans[2].plan, units: mockClientStudentPlans[2].units },
+      3: { plan: mockClientStudentPlans[3].plan, units: mockClientStudentPlans[3].units },
+      4: { plan: mockClientStudentPlans[4].plan, units: mockClientStudentPlans[4].units }
+    };
+  });
+
+  // Sync allStudentPlansMap to localStorage and in-memory mock cache whenever it updates
+  useEffect(() => {
+    try {
+      localStorage.setItem('spr_student_plans_cache', JSON.stringify(allStudentPlansMap));
+      Object.entries(allStudentPlansMap).forEach(([sId, data]) => {
+        if (mockClientStudentPlans[Number(sId)]) {
+          mockClientStudentPlans[Number(sId)].plan = data.plan;
+          mockClientStudentPlans[Number(sId)].units = data.units;
+        }
+      });
+    } catch (e) {}
+  }, [allStudentPlansMap]);
   const [validationResult, setValidationResult] = useState(null);
   const [activeTab, setActiveTab] = useState('STUDY_PLAN');
   
@@ -204,7 +228,8 @@ export default function App() {
       plan_id: 101,
       student_id: 1,
       student_name: 'Alex Mercer',
-      student_number: 'PT3-2026-001',
+      student_number: '31234561',
+      alias_code: 'AI1',
       course_code: 'PT3-BSIT-AI01',
       title: 'PT3-BSIT Artificial Intelligence Plan',
       status: 'approved',
@@ -218,7 +243,8 @@ export default function App() {
       plan_id: 102,
       student_id: 2,
       student_name: 'Sarah Jenkins',
-      student_number: 'PT3-2026-002',
+      student_number: '31234562',
+      alias_code: 'CS1',
       course_code: 'PT3-BSIT-CS02',
       title: 'PT3-BSIT Computer Science Plan',
       status: 'agreed',
@@ -232,7 +258,8 @@ export default function App() {
       plan_id: 103,
       student_id: 3,
       student_name: 'Michael Chang',
-      student_number: 'PT3-2026-003',
+      student_number: '31234563',
+      alias_code: 'BIS1',
       course_code: 'PT3-BSIT-BIS03',
       title: 'PT3-BSIT Business Info Systems Plan',
       status: 'draft',
@@ -246,7 +273,8 @@ export default function App() {
       plan_id: 104,
       student_id: 4,
       student_name: 'Emily Watson',
-      student_number: 'PT3-2026-004',
+      student_number: '31234564',
+      alias_code: 'AI2',
       course_code: 'PT3-BSIT-AI04',
       title: 'PT3-BSIT Artificial Intelligence Plan',
       status: 'draft',
@@ -342,7 +370,7 @@ export default function App() {
   const handleDownloadAuditPDF = () => {
     const logRows = auditLogsList.map((log) => {
       const studentName = log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : (selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student Profile'));
-      const studentNum = log.student_number || selectedStudent?.student_number || 'PT3-2026-001';
+      const studentNum = log.student_number || selectedStudent?.student_number || '31234561';
       const statusLabel = log.plan_status === 'logged_in' ? 'LOGIN / ACCOUNT SWITCH' :
         log.plan_status === 'request_submitted' ? 'STUDENT REQUEST' :
         log.plan_status === 'approved' ? 'APPROVED & FINALIZED' :
@@ -557,20 +585,21 @@ export default function App() {
     if (yr2Count >= 6) passedYears.add(2);
 
     const reqYear = options.requestYear || currentPlan?.requestYear || 2026;
-    let targetYearLvl = options.targetYearLevel !== undefined ? options.targetYearLevel : (currentPlan?.targetYearLevel || (reqYear === 2027 ? 2 : reqYear === 2028 ? 3 : 1));
+    let targetYearLvl = options.targetYearLevel !== undefined ? options.targetYearLevel : (currentPlan?.targetYearLevel || 'all');
 
     const layoutType = options.layoutType || currentPlan?.layoutType || (options.requestPeriods && options.requestPeriods.some(p => p === 1 || p === 2) ? 'semester' : 'trimester');
     const defaultPeriods = layoutType === 'semester' ? [1, 2] : [3, 4, 5];
     const requestedPeriods = (options.requestPeriods && options.requestPeriods.length > 0) ? options.requestPeriods : (currentPlan?.requestPeriods || defaultPeriods);
 
-    // Determine numerical target year level if specific year (1, 2, 3) selected
+    // Determine numerical target year level if specific year (1, 2, 3) selected, or 'all'
     const targetLvlNum = typeof targetYearLvl === 'number'
       ? targetYearLvl
       : (targetYearLvl !== 'all' && !isNaN(Number(targetYearLvl)) ? Number(targetYearLvl) : null);
 
-    const yearsToFill = targetLvlNum && !passedYears.has(targetLvlNum)
+    const isAllYears = !targetLvlNum;
+    const yearsToFill = targetLvlNum
       ? [targetLvlNum]
-      : [1, 2, 3].filter(y => !passedYears.has(y));
+      : [1, 2, 3];
 
     // Determine exact target slots (year_level, period_id) being auto-filled
     const isTargetSlot = (yearLevel, periodId) => {
@@ -578,9 +607,6 @@ export default function App() {
       const matchesPeriod = requestedPeriods.includes(periodId);
       return matchesYear && matchesPeriod;
     };
-
-    // Units that are failed, enrolled, or not yet taken ARE available!
-    const availableCatalog = (catalogUnits || []).filter(u => !completedCodes.has(u.code));
 
     const scheduledUnits = [];
     const scheduledCodes = new Set();
@@ -597,84 +623,131 @@ export default function App() {
       }
     }
 
+    // Complete 72 CP Presets (24 units × 3 CP = 72 CP total: 8 units in Y1, 8 units in Y2, 8 units in Y3)
     const MAJOR_PRESETS = {
       ai: {
         trimester: [
-          { year: 1, period_id: 3, cores: ['ICT100', 'ICT159'] },
-          { year: 1, period_id: 4, cores: ['ICT167', 'ICT145'] },
-          { year: 1, period_id: 5, cores: ['ICT169', 'MAS183'] },
-          { year: 2, period_id: 3, cores: ['ICT283', 'ICT203'] },
-          { year: 2, period_id: 4, cores: ['ICT202', 'ICT206'] },
-          { year: 2, period_id: 5, cores: ['ICT303', 'ICT304', 'ICT305', 'ICT302'] }
+          // Year 1 (8 units = 24 CP)
+          { year: 1, period_id: 3, cores: ['ICT100', 'ICT158', 'ICT159'] },
+          { year: 1, period_id: 4, cores: ['ICT167', 'ICT145', 'MAS162'] },
+          { year: 1, period_id: 5, cores: ['ICT169', 'ICT170'] },
+          // Year 2 (8 units = 24 CP)
+          { year: 2, period_id: 3, cores: ['ICT201', 'ICT202', 'ICT283'] },
+          { year: 2, period_id: 4, cores: ['ICT203', 'ICT206', 'ICT285'] },
+          { year: 2, period_id: 5, cores: ['BSC203', 'ICT292'] },
+          // Year 3 (8 units = 24 CP)
+          { year: 3, period_id: 3, cores: ['ICT302', 'ICT303', 'ICT304'] },
+          { year: 3, period_id: 4, cores: ['ICT305', 'ICT373', 'ICT374'] },
+          { year: 3, period_id: 5, cores: ['ICT301', 'MAS183'] }
         ],
         semester: [
-          { year: 1, period_id: 1, cores: ['ICT100', 'ICT159', 'ICT167', 'ICT145'] },
-          { year: 1, period_id: 2, cores: ['ICT169', 'MAS183', 'ICT283'] },
-          { year: 2, period_id: 1, cores: ['ICT203', 'ICT202', 'ICT206'] },
-          { year: 2, period_id: 2, cores: ['ICT303', 'ICT304', 'ICT305', 'ICT302'] }
+          // Year 1 (8 units = 24 CP)
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'MAS162'] },
+          { year: 1, period_id: 2, cores: ['ICT167', 'ICT145', 'ICT169', 'ICT170'] },
+          // Year 2 (8 units = 24 CP)
+          { year: 2, period_id: 1, cores: ['ICT201', 'ICT202', 'ICT283', 'ICT285'] },
+          { year: 2, period_id: 2, cores: ['ICT203', 'ICT206', 'BSC203', 'ICT292'] },
+          // Year 3 (8 units = 24 CP)
+          { year: 3, period_id: 1, cores: ['ICT302', 'ICT303', 'ICT304', 'ICT305'] },
+          { year: 3, period_id: 2, cores: ['ICT373', 'ICT374', 'ICT301', 'MAS183'] }
         ]
       },
       cs: {
         trimester: [
-          { year: 1, period_id: 3, cores: ['ICT100', 'ICT159'] },
-          { year: 1, period_id: 4, cores: ['ICT167', 'ICT145'] },
+          // Year 1 (8 units = 24 CP)
+          { year: 1, period_id: 3, cores: ['ICT100', 'ICT158', 'ICT159'] },
+          { year: 1, period_id: 4, cores: ['ICT167', 'MAS162', 'MAS164'] },
           { year: 1, period_id: 5, cores: ['ICT169', 'ICT170'] },
-          { year: 2, period_id: 3, cores: ['ICT283', 'MAS162'] },
-          { year: 2, period_id: 4, cores: ['ICT285', 'MAS164'] },
-          { year: 2, period_id: 5, cores: ['ICT373', 'ICT374', 'ICT302'] }
+          // Year 2 (8 units = 24 CP)
+          { year: 2, period_id: 3, cores: ['ICT283', 'ICT284', 'ICT285'] },
+          { year: 2, period_id: 4, cores: ['ICT201', 'ICT202', 'ICT292'] },
+          { year: 2, period_id: 5, cores: ['ICT206', 'BSC203'] },
+          // Year 3 (8 units = 24 CP)
+          { year: 3, period_id: 3, cores: ['ICT302', 'ICT373', 'ICT374'] },
+          { year: 3, period_id: 4, cores: ['ICT305', 'ICT203', 'ICT301'] },
+          { year: 3, period_id: 5, cores: ['MAS183', 'ICT145'] }
         ],
         semester: [
-          { year: 1, period_id: 1, cores: ['ICT100', 'ICT159', 'ICT167', 'ICT145'] },
-          { year: 1, period_id: 2, cores: ['ICT169', 'ICT170', 'MAS162'] },
-          { year: 2, period_id: 1, cores: ['MAS164', 'ICT283', 'ICT285'] },
-          { year: 2, period_id: 2, cores: ['ICT373', 'ICT374', 'ICT302'] }
+          // Year 1 (8 units = 24 CP)
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'MAS162'] },
+          { year: 1, period_id: 2, cores: ['ICT167', 'MAS164', 'ICT169', 'ICT170'] },
+          // Year 2 (8 units = 24 CP)
+          { year: 2, period_id: 1, cores: ['ICT283', 'ICT284', 'ICT285', 'ICT201'] },
+          { year: 2, period_id: 2, cores: ['ICT202', 'ICT292', 'ICT206', 'BSC203'] },
+          // Year 3 (8 units = 24 CP)
+          { year: 3, period_id: 1, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT305'] },
+          { year: 3, period_id: 2, cores: ['ICT203', 'ICT301', 'MAS183', 'ICT145'] }
         ]
       },
       bis: {
         trimester: [
-          { year: 1, period_id: 3, cores: ['ICT100', 'ICT158'] },
-          { year: 1, period_id: 4, cores: ['ICT159', 'ICT169'] },
-          { year: 1, period_id: 5, cores: ['ICT167', 'ICT201'] },
-          { year: 2, period_id: 3, cores: ['ICT284', 'ICT292'] },
-          { year: 2, period_id: 4, cores: ['ICT285', 'BSC203'] },
-          { year: 2, period_id: 5, cores: ['ICT301', 'ICT393', 'ICT394', 'ICT302'] }
+          // Year 1 (8 units = 24 CP)
+          { year: 1, period_id: 3, cores: ['ICT100', 'ICT158', 'ICT159'] },
+          { year: 1, period_id: 4, cores: ['ICT167', 'ICT169', 'MAS162'] },
+          { year: 1, period_id: 5, cores: ['ICT170', 'MAS183'] },
+          // Year 2 (8 units = 24 CP)
+          { year: 2, period_id: 3, cores: ['ICT201', 'ICT284', 'ICT285'] },
+          { year: 2, period_id: 4, cores: ['ICT292', 'BSC203', 'ICT145'] },
+          { year: 2, period_id: 5, cores: ['ICT283', 'ICT202'] },
+          // Year 3 (8 units = 24 CP)
+          { year: 3, period_id: 3, cores: ['ICT302', 'ICT393', 'ICT394'] },
+          { year: 3, period_id: 4, cores: ['ICT301', 'ICT305', 'MAS164'] },
+          { year: 3, period_id: 5, cores: ['ICT373', 'ICT206'] }
         ],
         semester: [
-          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'ICT169'] },
-          { year: 1, period_id: 2, cores: ['ICT167', 'ICT201', 'ICT284'] },
-          { year: 2, period_id: 1, cores: ['BSC203', 'ICT292', 'ICT285'] },
-          { year: 2, period_id: 2, cores: ['ICT301', 'ICT393', 'ICT394', 'ICT302'] }
+          // Year 1 (8 units = 24 CP)
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'MAS162'] },
+          { year: 1, period_id: 2, cores: ['ICT167', 'ICT169', 'ICT170', 'MAS183'] },
+          // Year 2 (8 units = 24 CP)
+          { year: 2, period_id: 1, cores: ['ICT201', 'ICT284', 'ICT285', 'ICT292'] },
+          { year: 2, period_id: 2, cores: ['BSC203', 'ICT145', 'ICT283', 'ICT202'] },
+          // Year 3 (8 units = 24 CP)
+          { year: 3, period_id: 1, cores: ['ICT302', 'ICT393', 'ICT394', 'ICT301'] },
+          { year: 3, period_id: 2, cores: ['ICT305', 'MAS164', 'ICT373', 'ICT206'] }
         ]
       },
       se: {
         trimester: [
-          { year: 1, period_id: 3, cores: ['ICT100', 'ICT158'] },
-          { year: 1, period_id: 4, cores: ['ICT159', 'ICT167'] },
+          // Year 1 (8 units = 24 CP)
+          { year: 1, period_id: 3, cores: ['ICT100', 'ICT158', 'ICT159'] },
+          { year: 1, period_id: 4, cores: ['ICT167', 'ICT145', 'MAS162'] },
           { year: 1, period_id: 5, cores: ['ICT169', 'ICT170'] },
-          { year: 2, period_id: 3, cores: ['ICT145', 'ICT283'] },
-          { year: 2, period_id: 4, cores: ['ICT284', 'ICT285'] },
-          { year: 2, period_id: 5, cores: ['BSC203', 'ICT373', 'ICT374', 'ICT302'] }
+          // Year 2 (8 units = 24 CP)
+          { year: 2, period_id: 3, cores: ['ICT201', 'ICT283', 'ICT284'] },
+          { year: 2, period_id: 4, cores: ['ICT285', 'BSC203', 'ICT292'] },
+          { year: 2, period_id: 5, cores: ['ICT203', 'MAS183'] },
+          // Year 3 (8 units = 24 CP)
+          { year: 3, period_id: 3, cores: ['ICT302', 'ICT373', 'ICT374'] },
+          { year: 3, period_id: 4, cores: ['ICT301', 'ICT304', 'ICT305'] },
+          { year: 3, period_id: 5, cores: ['MAS164', 'ICT202'] }
         ],
         semester: [
-          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'ICT167'] },
-          { year: 1, period_id: 2, cores: ['ICT169', 'ICT170', 'ICT145'] },
-          { year: 2, period_id: 1, cores: ['ICT283', 'ICT284', 'ICT285'] },
-          { year: 2, period_id: 2, cores: ['BSC203', 'ICT373', 'ICT374', 'ICT302'] }
+          // Year 1 (8 units = 24 CP)
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'MAS162'] },
+          { year: 1, period_id: 2, cores: ['ICT167', 'ICT145', 'ICT169', 'ICT170'] },
+          // Year 2 (8 units = 24 CP)
+          { year: 2, period_id: 1, cores: ['ICT201', 'ICT283', 'ICT284', 'ICT285'] },
+          { year: 2, period_id: 2, cores: ['BSC203', 'ICT292', 'ICT203', 'MAS183'] },
+          // Year 3 (8 units = 24 CP)
+          { year: 3, period_id: 1, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT301'] },
+          { year: 3, period_id: 2, cores: ['ICT304', 'ICT305', 'MAS164', 'ICT202'] }
         ]
       }
     };
 
-    const majorStr = ((targetStudent.major || targetStudent.course_name || '') + '').toLowerCase();
-    let majorKey = 'se';
-    if (majorStr.includes('ai') || majorStr.includes('artificial')) {
+    const majorStr = ((targetStudent.major || targetStudent.course_name || targetStudent.course_code || targetStudent.alias_code || '') + '').toLowerCase();
+    let majorKey = 'ai';
+    if (majorStr.includes('artificial') || majorStr.includes('ai')) {
       majorKey = 'ai';
     } else if (majorStr.includes('computer science') || majorStr.includes('cs')) {
       majorKey = 'cs';
     } else if (majorStr.includes('business') || majorStr.includes('bis')) {
       majorKey = 'bis';
+    } else if (majorStr.includes('software') || majorStr.includes('se')) {
+      majorKey = 'se';
     }
 
-    const presetsList = MAJOR_PRESETS[majorKey][layoutType] || MAJOR_PRESETS.ai.trimester;
+    const presetsList = (MAJOR_PRESETS[majorKey] && MAJOR_PRESETS[majorKey][layoutType]) || MAJOR_PRESETS.ai.trimester;
 
     const getUnitPrereqCode = (unit) => {
       const staticMap = {
@@ -706,7 +779,13 @@ export default function App() {
       });
     };
 
-    // STEP 1: Core Units First from Major Preset ONLY for target slots
+    const getTargetPeriodCP = (periodId) => {
+      if (layoutType === 'semester') return 12; // 4 units × 3 CP = 12 CP
+      if (periodId === 5) return 6; // Trimester 3: 2 units × 3 CP = 6 CP
+      return 9; // Trimesters 1 & 2: 3 units × 3 CP = 9 CP
+    };
+
+    // STEP 1: Prescribed Core Units Placement from Major Preset
     for (const year of yearsToFill) {
       for (const periodId of requestedPeriods) {
         const pKey = `y${year}_p${periodId}`;
@@ -715,79 +794,120 @@ export default function App() {
         const presetBlock = presetsList.find(b => b.year === year && b.period_id === periodId);
         if (presetBlock && presetBlock.cores) {
           for (const coreCode of presetBlock.cores) {
-            if (scheduledCodes.has(coreCode) || completedCodes.has(coreCode)) continue;
+            if (scheduledCodes.has(coreCode)) continue;
+            if (completedCodes.has(coreCode) && !isAllYears) continue;
 
-            const unit = catalogUnits.find(u => u.code === coreCode) || { code: coreCode, title: coreCode, credit_points: 3, level: 100 };
+            const unit = (catalogUnits || []).find(u => u.code === coreCode) || {
+              code: coreCode,
+              title: coreCode,
+              credit_points: 3,
+              level: year === 1 ? 100 : year === 2 ? 200 : 300
+            };
             if (!isPrereqSatisfied(unit, year, periodId, scheduledUnits)) continue;
 
-            if ((periodLoads[pKey] || 0) + Number(unit.credit_points || 3) <= 12) {
+            const unitCP = Number(unit.credit_points || 3);
+            if ((periodLoads[pKey] || 0) + unitCP <= 12) {
               scheduledUnits.push({
                 ...unit,
                 unit_id: unit.unit_id || Math.floor(Math.random() * 100000),
                 year_level: year,
                 period_id: periodId,
-                credit_points: Number(unit.credit_points || 3),
+                credit_points: unitCP,
                 sequence_order: scheduledUnits.length + 1
               });
               scheduledCodes.add(unit.code);
-              periodLoads[pKey] += Number(unit.credit_points || 3);
+              periodLoads[pKey] += unitCP;
             }
           }
         }
       }
     }
 
-    // STEP 2: Optional step to fill remaining open terms with electives (runs only if explicitly requested)
-    if (options.fillCoreOnly === false) {
-      for (const year of yearOrder) {
-        for (const periodId of periodOrder) {
-          const pKey = `y${year}_p${periodId}`;
-          const targetLvl = year === 1 ? 100 : year === 2 ? 200 : 300;
+    // STEP 2: Safety fill to guarantee exact target load (8 units / 24 CP per year = 72 CP total)
+    const masterFallbackUnits = [
+      { code: 'ICT100', title: 'Transition to IT', credit_points: 3, level: 100 },
+      { code: 'ICT158', title: 'Introduction to Computer Systems', credit_points: 3, level: 100 },
+      { code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, level: 100 },
+      { code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, level: 100 },
+      { code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, level: 100 },
+      { code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, level: 100 },
+      { code: 'ICT145', title: 'Python Programming', credit_points: 3, level: 100 },
+      { code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, level: 100 },
+      { code: 'MAS164', title: 'Fundamentals of Mathematics', credit_points: 3, level: 100 },
+      { code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, level: 100 },
+      { code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200 },
+      { code: 'ICT202', title: 'Machine Learning', credit_points: 3, level: 200 },
+      { code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, level: 200 },
+      { code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, level: 200 },
+      { code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, level: 200 },
+      { code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200 },
+      { code: 'ICT285', title: 'Databases', credit_points: 3, level: 200 },
+      { code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, level: 200 },
+      { code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, level: 200 },
+      { code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, level: 300 },
+      { code: 'ICT302', title: 'IT Professional Practice', credit_points: 3, level: 300 },
+      { code: 'ICT303', title: 'Advanced Machine Learning', credit_points: 3, level: 300 },
+      { code: 'ICT304', title: 'AI System Design', credit_points: 3, level: 300 },
+      { code: 'ICT305', title: 'Data Visualisation', credit_points: 3, level: 300 },
+      { code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300 },
+      { code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300 },
+      { code: 'ICT393', title: 'Advanced Business Analysis', credit_points: 3, level: 300 },
+      { code: 'ICT394', title: 'Business Intelligence', credit_points: 3, level: 300 }
+    ];
 
-          const sortedCandidates = [...availableCatalog].sort((a, b) => {
-            const aLvl = Number(a.level || 100);
-            const bLvl = Number(b.level || 100);
-            const aMatch = Math.abs(aLvl - targetLvl);
-            const bMatch = Math.abs(bLvl - targetLvl);
-            if (aMatch !== bMatch) return aMatch - bMatch;
-            return (a.code || '').localeCompare(b.code || '');
+    const poolCatalog = (catalogUnits && catalogUnits.length > 0) ? catalogUnits : masterFallbackUnits;
+
+    for (const year of yearsToFill) {
+      for (const periodId of requestedPeriods) {
+        const pKey = `y${year}_p${periodId}`;
+        const targetCapacity = getTargetPeriodCP(periodId);
+
+        while ((periodLoads[pKey] || 0) < targetCapacity) {
+          const candidate = poolCatalog.find(u => {
+            if (scheduledCodes.has(u.code)) return false;
+            if (completedCodes.has(u.code) && !isAllYears) return false;
+            const uLvl = Number(u.level || 100);
+            if (year === 1 && uLvl > 199) return false;
+            if (year === 2 && (uLvl < 200 || uLvl > 299)) return false;
+            if (year === 3 && uLvl < 300) return false;
+            return isPrereqSatisfied(u, year, periodId, scheduledUnits);
           });
 
-          for (const candidate of sortedCandidates) {
-            if ((periodLoads[pKey] || 0) >= 12) break;
-            if (scheduledCodes.has(candidate.code)) continue;
+          if (!candidate) break;
 
-            if (candidate.code === 'MSP200' || candidate.code === 'COM203') continue; // Keep General Electives in palette for Chair selection
-            if (periodId === 5 && (candidate.code === 'ICT302' || candidate.code === 'ICT374')) continue;
-            if (!isPrereqSatisfied(candidate, year, periodId, scheduledUnits)) continue;
-
-            if ((periodLoads[pKey] || 0) + Number(candidate.credit_points || 3) <= 12) {
-              scheduledUnits.push({
-                ...candidate,
-                unit_id: candidate.unit_id || Math.floor(Math.random() * 100000),
-                year_level: year,
-                period_id: periodId,
-                credit_points: Number(candidate.credit_points || 3),
-                sequence_order: scheduledUnits.length + 1
-              });
-              scheduledCodes.add(candidate.code);
-              periodLoads[pKey] += Number(candidate.credit_points || 3);
-            }
+          const unitCP = Number(candidate.credit_points || 3);
+          if ((periodLoads[pKey] || 0) + unitCP <= 12) {
+            scheduledUnits.push({
+              ...candidate,
+              unit_id: candidate.unit_id || Math.floor(Math.random() * 100000),
+              year_level: year,
+              period_id: periodId,
+              credit_points: unitCP,
+              sequence_order: scheduledUnits.length + 1
+            });
+            scheduledCodes.add(candidate.code);
+            periodLoads[pKey] = (periodLoads[pKey] || 0) + unitCP;
+          } else {
+            break;
           }
         }
       }
     }
+
+    const totalGeneratedCP = scheduledUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
 
     handleSetPlanUnits(scheduledUnits);
     runValidation(targetStudent.student_id, targetStudent.location_id, scheduledUnits);
 
-    // Revert status to 'draft' (or 'request_submitted') if plan was previously approved/agreed
+    // Revert status to 'draft' if plan was previously approved/agreed
     const wasApproved = currentPlan?.status === 'approved' || currentPlan?.status === 'agreed' || currentPlan?.status === 'stored';
     const newStatus = 'draft';
 
     const updatedPlan = {
       ...currentPlan,
       status: newStatus,
+      total_credit_points: totalGeneratedCP,
+      layoutType: layoutType,
       studentSignature: wasApproved ? null : currentPlan?.studentSignature,
       signature: wasApproved ? null : currentPlan?.signature,
       updated_at: formatCurrentDateTime(),
@@ -795,13 +915,59 @@ export default function App() {
     };
     setCurrentPlan(updatedPlan);
 
+    // Update storedPlansList total_cp & status immediately
+    setStoredPlansList(prevList =>
+      prevList.map(p =>
+        String(p.student_id) === String(targetStudent.student_id)
+          ? {
+              ...p,
+              total_cp: totalGeneratedCP,
+              status: newStatus,
+              updated_at: formatCurrentDateTime(),
+              version_number: updatedPlan.version_number
+            }
+          : p
+      )
+    );
+
+    // Synchronize allStudentPlansMap for targetStudent with updatedPlan and scheduledUnits
+    setAllStudentPlansMap(prev => {
+      const nextMap = {
+        ...prev,
+        [targetStudent.student_id]: {
+          plan: updatedPlan,
+          units: scheduledUnits
+        }
+      };
+      try {
+        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+      } catch (e) {}
+      return nextMap;
+    });
+
+    // In-memory mock cache synchronization
+    if (mockClientStudentPlans[Number(targetStudent.student_id)]) {
+      mockClientStudentPlans[Number(targetStudent.student_id)].plan = updatedPlan;
+      mockClientStudentPlans[Number(targetStudent.student_id)].units = scheduledUnits;
+    }
+
+    // Persist to backend DB in background
+    saveStudyPlan({
+      student_id: targetStudent.student_id,
+      title: `${targetStudent.course_code || 'PT3-BSIT'} Study Plan`,
+      status: newStatus,
+      units: scheduledUnits,
+      created_by: 'Academic Chair'
+    }).catch(err => console.warn('Background savePlan error:', err));
+
     updatePlanRecordAndLogAudit(
       newStatus,
       wasApproved
-        ? `Approved plan re-opened and reset to DRAFT via Auto System Generation for requested year ${reqYear}`
-        : `Auto System Generation applied for requested year ${reqYear}`,
+        ? `Approved plan re-opened and reset to DRAFT via Auto System Generation for requested year ${reqYear} (${totalGeneratedCP} CP)`
+        : `Auto System Generation applied for requested year ${reqYear} (${totalGeneratedCP} CP)`,
       'Academic Chair',
-      targetStudent
+      targetStudent,
+      scheduledUnits
     );
 
     const notif = {
@@ -811,8 +977,8 @@ export default function App() {
       targetYear: targetYearLvl,
       title: wasApproved ? 'Approved Plan Re-opened for Replan' : 'Study Plan Auto-Generated',
       message: wasApproved
-        ? `Academic Chair generated a new study plan structure for ${reqYear}. Status reset to Draft for review.`
-        : `Academic Chair generated a recommended 72 CP Study Plan for Year ${targetYearLvl} (${reqYear}).`,
+        ? `Academic Chair generated a new study plan structure for ${reqYear}. Status reset to Draft for review (${totalGeneratedCP} CP).`
+        : `Academic Chair generated a recommended ${totalGeneratedCP} CP Study Plan tailored to your degree requirements.`,
       timestamp: 'Just now',
       read: false,
       actionType: 'REVIEW',
@@ -822,8 +988,8 @@ export default function App() {
 
     showToast(
       wasApproved
-        ? `Approved plan re-opened! Auto-generated new 72 CP plan for ${targetStudent.first_name} (Status reset to Draft).`
-        : `Auto-generated 72 CP plan for ${targetStudent.first_name} tailored to requested Year ${targetYearLvl} (${reqYear})!`
+        ? `Approved plan re-opened! Auto-generated new ${totalGeneratedCP} CP plan for ${targetStudent.first_name} (Status reset to Draft).`
+        : `Auto-generated ${totalGeneratedCP} CP plan for ${targetStudent.first_name} (${targetStudent.course_code || 'PT3-BSIT'})!`
     );
   };
 
@@ -968,28 +1134,41 @@ export default function App() {
     setPlanUnits(prevUnits => {
       const updatedUnits = typeof newUnitsOrUpdater === 'function' ? newUnitsOrUpdater(prevUnits) : newUnitsOrUpdater;
       if (selectedStudent) {
-        setAllStudentPlansMap(prevMap => ({
-          ...prevMap,
-          [selectedStudent.student_id]: {
-            plan: currentPlan,
-            units: updatedUnits
-          }
-        }));
+        setAllStudentPlansMap(prevMap => {
+          const currentEntry = prevMap[selectedStudent.student_id] || {};
+          const nextMap = {
+            ...prevMap,
+            [selectedStudent.student_id]: {
+              plan: currentPlan || currentEntry.plan,
+              units: updatedUnits
+            }
+          };
+          try {
+            localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+          } catch (e) {}
+          return nextMap;
+        });
       }
       return updatedUnits;
     });
   };
 
   const handleSelectStudent = async (student, roleOverride = null) => {
-    // 1. Preserve current student's working draft in cache map before switching
-    if (selectedStudent && currentPlan) {
-      setAllStudentPlansMap(prev => ({
-        ...prev,
-        [selectedStudent.student_id]: {
-          plan: currentPlan,
-          units: planUnits
-        }
-      }));
+    // 1. Preserve previous student's working draft in cache map before switching
+    if (selectedStudent && currentPlan && Number(selectedStudent.student_id) !== Number(student.student_id)) {
+      setAllStudentPlansMap(prev => {
+        const nextMap = {
+          ...prev,
+          [selectedStudent.student_id]: {
+            plan: currentPlan,
+            units: planUnits
+          }
+        };
+        try {
+          localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+        } catch (e) {}
+        return nextMap;
+      });
     }
 
     setSelectedStudent(student);
@@ -1005,7 +1184,7 @@ export default function App() {
       {
         version_id: `evt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
         version_number: 'LOG',
-        student_number: student.student_number || 'PT3-2026-000',
+        student_number: student.student_number || '31234561',
         first_name: student.first_name,
         last_name: student.last_name,
         student_name: `${student.first_name} ${student.last_name}`,
@@ -1027,12 +1206,22 @@ export default function App() {
     const categoryTag = student.account_category === 'admin' || student.student_id === 0 ? '' : ` (${student.account_category === 'new_student' ? 'New Student' : 'Existing Student'})`;
     showToast(`Loaded profile for ${student.first_name} ${student.last_name}${categoryTag}`);
 
-    // 2. If student ALREADY has a working draft in memory, load it directly to prevent wiping data!
-    if (allStudentPlansMap[student.student_id]) {
-      const cached = allStudentPlansMap[student.student_id];
+    // 2. If student ALREADY has a working draft in memory or localStorage, load it directly to prevent wiping data!
+    let cached = allStudentPlansMap[student.student_id];
+    if (!cached) {
+      try {
+        const saved = localStorage.getItem('spr_student_plans_cache');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          cached = parsed[student.student_id];
+        }
+      } catch (e) {}
+    }
+
+    if (cached) {
       setCurrentPlan(cached.plan);
-      setPlanUnits(cached.units);
-      runValidation(student.student_id, student.location_id, cached.units);
+      setPlanUnits(cached.units || []);
+      runValidation(student.student_id, student.location_id, cached.units || []);
       fetchStudentHistory(student.student_id).then(h => setHistory(h || [])).catch(console.error);
       return;
     }
@@ -1099,11 +1288,13 @@ export default function App() {
     return `${year}-${month}-${day} ${hours}:${mins}`;
   };
 
-  const updatePlanRecordAndLogAudit = (newStatus, reason, authorName, overrideStudent = null) => {
+  const updatePlanRecordAndLogAudit = (newStatus, reason, authorName, overrideStudent = null, overrideUnits = null) => {
     const targetStudent = overrideStudent || selectedStudent;
     if (!targetStudent) return;
     const nowFormatted = formatCurrentDateTime();
     const nowIso = new Date().toISOString();
+    const effectiveUnits = overrideUnits || planUnits || [];
+    const calculatedCP = effectiveUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
 
     setStoredPlansList(prev => {
       const existingIdx = prev.findIndex(p => String(p.student_id) === String(targetStudent.student_id));
@@ -1115,7 +1306,7 @@ export default function App() {
           status: newStatus,
           version_number: nextVer,
           updated_at: nowFormatted,
-          total_cp: (planUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0)
+          total_cp: calculatedCP
         };
         const newList = [...prev];
         newList[existingIdx] = updatedItem;
@@ -1130,7 +1321,7 @@ export default function App() {
           title: `${targetStudent.course_code || 'PT3-BSIT'} Study Plan`,
           status: newStatus,
           version_number: 1,
-          total_cp: (planUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0),
+          total_cp: calculatedCP,
           created_by: authorName,
           updated_at: nowFormatted,
           location: targetStudent.location_name || 'Singapore Campus'
@@ -1170,13 +1361,19 @@ export default function App() {
 
     const updatedPlan = { ...currentPlan, status: 'recommended', updated_at: formatCurrentDateTime(), version_number: (currentPlan?.version_number || 1) + 1 };
     setCurrentPlan(updatedPlan);
-    setAllStudentPlansMap(prev => ({
-      ...prev,
-      [selectedStudent.student_id]: {
-        plan: updatedPlan,
-        units: planUnits
-      }
-    }));
+    setAllStudentPlansMap(prev => {
+      const nextMap = {
+        ...prev,
+        [selectedStudent.student_id]: {
+          plan: updatedPlan,
+          units: planUnits
+        }
+      };
+      try {
+        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+      } catch (e) {}
+      return nextMap;
+    });
     const totalCP = (planUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
     updatePlanRecordAndLogAudit(
       'recommended',
@@ -1184,6 +1381,15 @@ export default function App() {
       'Academic Chair'
     );
     showToast(`Plan successfully recommended to ${selectedStudent.first_name} ${selectedStudent.last_name} (${selectedStudent.student_number})!`);
+
+    // Persist recommended plan & units to backend database
+    saveStudyPlan({
+      student_id: selectedStudent.student_id,
+      title: `${selectedStudent.course_code || 'PT3-BSIT'} Study Plan`,
+      status: 'recommended',
+      units: planUnits,
+      created_by: 'Academic Chair'
+    }).catch(err => console.warn('Save on recommend error:', err));
     try {
       const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
       await recommendPlan(planId, 'Academic Chair');
@@ -1400,7 +1606,7 @@ export default function App() {
                       {selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Alex Mercer'}
                     </span>
                     <span className="text-slate-500 dark:text-slate-400 text-[11px] font-mono font-bold">
-                      ({selectedStudent ? selectedStudent.student_number : 'PT3-2026-001'})
+                      ({selectedStudent ? selectedStudent.student_number : '31234561'})
                     </span>
                   </div>
 
@@ -1587,7 +1793,7 @@ export default function App() {
 
                 return filtered.map((log, idx) => {
                   const studentName = log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : (selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student Profile'));
-                  const studentNum = log.student_number || selectedStudent?.student_number || 'PT3-2026-001';
+                  const studentNum = log.student_number || selectedStudent?.student_number || '31234561';
 
                   const logAuthorDisplay = activeRole === 'student'
                     ? (log.created_by && log.created_by.toLowerCase().includes('student')

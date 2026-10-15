@@ -53,39 +53,4 @@
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
-/* Luxury Holographic & Shimmer Keyframes */
-@keyframes shimmerSweep {
-  0% { transform: translateX(-150%); }
-  50%, 100% { transform: translateX(200%); }
-}
 
-.animate-shimmer {
-  animation: shimmerSweep 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes slowOrbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes reverseOrbit {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
-}
-
-.animate-orbit-slow {
-  animation: slowOrbit 7s infinite linear;
-}
-
-.animate-orbit-reverse {
-  animation: reverseOrbit 11s infinite linear;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.35; transform: scale(1); }
-  50% { opacity: 0.75; transform: scale(1.1); }
-}
-
-.animate-pulse-glow {
-  animation: pulseGlow 3.5s infinite ease-in-out;
-}
