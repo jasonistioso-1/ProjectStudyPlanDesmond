@@ -301,11 +301,30 @@ export const mockClientStudentPlans = {
         ]
     },
     3: {
-        plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0 },
+        plan: {
+            plan_id: 3,
+            student_id: 3,
+            title: 'PT3-BSIT Business Info Systems Plan 2026',
+            status: 'request_submitted',
+            requestYear: 2026,
+            requestPeriods: [3, 4, 5],
+            requestComment: 'New student enrolment - requesting Year 1 Trimester schedule for Business Information Systems.',
+            total_credit_points: 0,
+            updated_at: '2026-09-14 11:20',
+            version_number: 1
+        },
         units: []
     },
     4: {
-        plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
+        plan: {
+            plan_id: 4,
+            student_id: 4,
+            title: 'PT3-BSIT Artificial Intelligence Plan 2026',
+            status: 'draft',
+            total_credit_points: 0,
+            updated_at: '2026-09-13 14:10',
+            version_number: 1
+        },
         units: []
     }
 };

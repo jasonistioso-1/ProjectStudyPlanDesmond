@@ -231,7 +231,10 @@ export const mockStudentPlans = {
             plan_id: 3,
             student_id: 3,
             title: 'PT3-BSIT Business Info Systems Plan 2026',
-            status: 'draft',
+            status: 'request_submitted',
+            requestYear: 2026,
+            requestPeriods: [3, 4, 5],
+            requestComment: 'New student enrolment - requesting standard Year 1 Trimester schedule for BIS major.',
             total_credit_points: 0
         },
         units: []

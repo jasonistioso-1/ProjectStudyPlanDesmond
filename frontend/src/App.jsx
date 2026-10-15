@@ -197,7 +197,17 @@ export default function App() {
   const [allStudentPlansMap, setAllStudentPlansMap] = useState(() => {
     try {
       const saved = localStorage.getItem('spr_student_plans_cache');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Ensure Emily Watson (student 4) starts fresh from the beginning (unsubmitted draft, 0 units)
+        if (parsed[4] && !parsed[4].plan?.manuallySubmittedInSession) {
+          parsed[4] = {
+            plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
+            units: []
+          };
+        }
+        return parsed;
+      }
     } catch (e) {}
     return {
       1: { plan: mockClientStudentPlans[1].plan, units: mockClientStudentPlans[1].units },
@@ -262,10 +272,10 @@ export default function App() {
       alias_code: 'BIS1',
       course_code: 'PT3-BSIT-BIS03',
       title: 'PT3-BSIT Business Info Systems Plan',
-      status: 'draft',
+      status: 'request_submitted',
       version_number: 1,
       total_cp: 0,
-      created_by: 'Academic Chair',
+      created_by: 'Student: Michael Chang',
       updated_at: '2026-09-14 11:20',
       location: 'Singapore Campus'
     },
@@ -329,10 +339,10 @@ export default function App() {
     {
       id: 'n-1',
       role: 'chair',
-      studentId: 1,
-      title: 'Study Plan Request',
-      message: 'Alex Mercer submitted a study plan request for Trimesters 1, 2, 3 (2026).',
-      timestamp: '09:30 AM',
+      studentId: 3,
+      title: 'New Student Plan Request',
+      message: 'Michael Chang (BIS1) submitted an initial study plan request for Year 1 Trimesters 1, 2, 3 (2026).',
+      timestamp: '10:15 AM',
       createdTimeMs: Date.now(),
       read: false,
       actionType: 'AUTO_GENERATE',
@@ -340,12 +350,24 @@ export default function App() {
     },
     {
       id: 'n-2',
+      role: 'chair',
+      studentId: 1,
+      title: 'Study Plan Request',
+      message: 'Alex Mercer submitted a study plan request for Trimesters 1, 2, 3 (2026).',
+      timestamp: '09:30 AM',
+      createdTimeMs: Date.now() - 3600000,
+      read: false,
+      actionType: 'AUTO_GENERATE',
+      actionLabel: 'Review & Auto-Generate'
+    },
+    {
+      id: 'n-3',
       role: 'student',
       studentId: 1,
       title: 'Study Plan Recommended',
       message: 'Academic Chair Dr. Aris Thorne recommended your 72 CP Study Plan.',
       timestamp: 'Yesterday',
-      createdTimeMs: Date.now(),
+      createdTimeMs: Date.now() - 86400000,
       read: true,
       actionType: 'REVIEW',
       actionLabel: 'Review Recommended Plan'
@@ -549,7 +571,8 @@ export default function App() {
         requestPeriods: periodIds,
         requestComment: comment,
         updated_at: formatCurrentDateTime(),
-        version_number: (currentPlan?.version_number || 1) + 1
+        version_number: (currentPlan?.version_number || 1) + 1,
+        manuallySubmittedInSession: true
       };
       setCurrentPlan(updatedPlan);
 
@@ -1216,6 +1239,23 @@ export default function App() {
           cached = parsed[student.student_id];
         }
       } catch (e) {}
+    }
+
+    // Special rule for Emily Watson (student_id: 4 / 31234564): starts from the beginning (unsubmitted clean slate)
+    const isEmily = Number(student.student_id) === 4 || student.student_number === '31234564';
+    if (isEmily && !cached?.plan?.manuallySubmittedInSession) {
+      cached = {
+        plan: {
+          plan_id: 4,
+          student_id: 4,
+          title: 'PT3-BSIT Artificial Intelligence Plan 2026',
+          status: 'draft',
+          total_credit_points: 0,
+          updated_at: '2026-09-13 14:10',
+          version_number: 1
+        },
+        units: []
+      };
     }
 
     if (cached) {

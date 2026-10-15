@@ -154,7 +154,7 @@ INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period
 INSERT INTO StudyPlan (plan_id, student_id, title, status, total_credit_points, created_by, recommended_at, agreed_at, approved_at) VALUES
 (1, 1, 'PT3-BSIT Artificial Intelligence Plan 2026', 'approved', 36, 'Academic Chair', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 1 DAY, NOW()),
 (2, 2, 'PT3-BSIT Computer Science Plan 2026', 'agreed', 72, 'Academic Chair', NOW() - INTERVAL 1 DAY, NOW(), NULL),
-(3, 3, 'PT3-BSIT Business Info Systems Plan 2026', 'draft', 0, 'Academic Chair', NULL, NULL, NULL),
+(3, 3, 'PT3-BSIT Business Info Systems Plan 2026', 'request_submitted', 0, 'Academic Chair', NULL, NULL, NULL),
 (4, 4, 'PT3-BSIT Artificial Intelligence Plan 2026', 'draft', 0, 'Academic Chair', NULL, NULL, NULL);
 
 -- 10. Seed Study Plan Units (Plan 1 - Alex Mercer - AI Major Y1 T1-T3 - 36 CP)
@@ -176,6 +176,6 @@ INSERT INTO StudyPlanUnit (plan_id, unit_id, period_id, year_level, sequence_ord
 INSERT INTO StudyPlanVersion (plan_id, version_number, amendment_reason, snapshot_json, created_by) VALUES
 (1, 2, 'Study Plan officially APPROVED & finalized by Academic Chair', '{"plan_id": 1, "student_number": "31234561", "total_cp": 36, "status": "approved"}', 'Academic Chair'),
 (2, 2, 'Student agreed and digitally signed proposed study plan (72 CP)', '{"plan_id": 2, "student_number": "31234562", "total_cp": 72, "status": "agreed"}', 'Student: Sarah Jenkins'),
-(3, 1, 'Initial study plan draft', '{"plan_id": 3, "student_number": "31234563", "total_cp": 0, "status": "draft"}', 'Academic Chair'),
-(4, 1, 'Initial study plan draft', '{"plan_id": 4, "student_number": "31234564", "total_cp": 0, "status": "draft"}', 'Academic Chair');
+(3, 1, 'Student submitted initial study plan request for Year 1 (2026)', '{"plan_id": 3, "student_number": "31234563", "total_cp": 0, "status": "request_submitted"}', 'Student: Michael Chang'),
+(4, 1, 'Initial study plan draft (Awaiting student initial request)', '{"plan_id": 4, "student_number": "31234564", "total_cp": 0, "status": "draft"}', 'Academic Chair');
 

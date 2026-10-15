@@ -45,10 +45,10 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
       alias_code: 'BIS1',
       course_code: 'PT3-BSIT-BIS03',
       title: 'PT3-BSIT Business Info Systems Plan',
-      status: 'recommended',
-      version_number: 2,
-      total_cp: 69,
-      created_by: 'Academic Chair',
+      status: 'request_submitted',
+      version_number: 1,
+      total_cp: 0,
+      created_by: 'Student: Michael Chang',
       updated_at: '2026-09-14 11:20',
       location: 'Singapore Campus'
     },
@@ -61,8 +61,8 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
       course_code: 'PT3-BSIT-AI04',
       title: 'PT3-BSIT Artificial Intelligence Plan',
       status: 'draft',
-      version_number: 2,
-      total_cp: 72,
+      version_number: 1,
+      total_cp: 0,
       created_by: 'Academic Chair',
       updated_at: '2026-09-13 14:10',
       location: 'Singapore Campus'
@@ -98,6 +98,12 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-700 text-white border border-sky-800 shadow-2xs">
             Student Agreed
+          </span>
+        );
+      case 'request_submitted':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-600 text-white border border-sky-700 shadow-2xs">
+            Request Submitted
           </span>
         );
       case 'recommended':
