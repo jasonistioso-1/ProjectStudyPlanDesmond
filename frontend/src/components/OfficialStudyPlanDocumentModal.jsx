@@ -124,6 +124,10 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
 
   // Trigger CSV Spreadsheet Download with UTF-8 BOM
   const handleExportCSV = () => {
+    if (!isApproved) {
+      alert('Official Document Outputs Restricted: Study plan must be officially Approved by Academic Chair before exporting (Rule OUT-03).');
+      return;
+    }
     const lines = buildCSVLines();
     const csvContent = '\uFEFF' + lines.join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

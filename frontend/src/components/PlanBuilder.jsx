@@ -1359,23 +1359,25 @@ export default function PlanBuilder({
                               }`}>
                                 {semCP} / 12 CP
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveRequestModal({
-                                    key: periodKey,
-                                    yearLevel: y.level,
-                                    periodId: p.period_id,
-                                    periodName: `Year ${y.level} - ${p.name}`
-                                  });
-                                  setRequestCommentInput(semesterRequests[periodKey] || '');
-                                }}
-                                className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950 dark:hover:bg-amber-900 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 rounded-lg text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95"
-                                title="Request change specifically for this semester"
-                              >
-                                <MessageSquare className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
-                                <span>{hasRequest ? 'Edit Request' : 'Request Change'}</span>
-                              </button>
+                              {!isAlreadyAgreed && planStatus !== 'agreed' && planStatus !== 'approved' && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveRequestModal({
+                                      key: periodKey,
+                                      yearLevel: y.level,
+                                      periodId: p.period_id,
+                                      periodName: `Year ${y.level} - ${p.name}`
+                                    });
+                                    setRequestCommentInput(semesterRequests[periodKey] || '');
+                                  }}
+                                  className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950 dark:hover:bg-amber-900 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 rounded-lg text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                  title="Request change specifically for this semester"
+                                >
+                                  <MessageSquare className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                                  <span>{hasRequest ? 'Edit Request' : 'Request Change'}</span>
+                                </button>
+                              )}
                             </div>
                           </div>
 
@@ -2542,7 +2544,7 @@ export default function PlanBuilder({
                                 isChair={isChair}
                                 changeRequest={changeReq}
                                 onResolveChangeRequest={onRemoveSemesterRequest ? () => onRemoveSemesterRequest(periodKey) : undefined}
-                                onRequestChange={(!isChair && !isYearPassed) ? (key, periodName) => {
+                                onRequestChange={(!isChair && !isYearPassed && !isAlreadyAgreed && planStatus !== 'agreed' && planStatus !== 'approved') ? (key, periodName) => {
                                   setActiveRequestModal({
                                     key,
                                     periodName
