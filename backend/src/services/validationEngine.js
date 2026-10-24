@@ -87,7 +87,7 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
             'MAS162': ['T1', 'T2', 'T3'],
             'MAS164': ['T1', 'T2', 'T3'],
             'MAS183': ['T1', 'T2', 'T3'],
-            'ICT301': ['T1', 'T2', 'T3'],
+            'ICT301': ['T1', 'T2'],
             'ICT302': ['T1', 'T2', 'T3'],
             'ICT303': ['T1', 'T2', 'T3'],
             'ICT304': ['T1', 'T2', 'T3'],

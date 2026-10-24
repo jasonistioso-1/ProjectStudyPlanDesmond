@@ -114,7 +114,7 @@ INSERT INTO Student (student_id, student_number, first_name, last_name, email, c
 (0, 'ADMIN-CHAIR-01', 'Dr. Aris', 'Thorne (Academic Chair)', 'academic.chair@pt3solutions.edu.sg', 1, 2, 2026, 'active', 'admin'),
 (1, '31234561', 'Alex', 'Mercer', 'alex.mercer@student.pt3solutions.edu.sg', 1, 2, 2026, 'active', 'existing_student'),
 (2, '31234562', 'Sarah', 'Jenkins', 'sarah.jenkins@student.pt3solutions.edu.sg', 2, 2, 2026, 'active', 'existing_student'),
-(3, '31234563', 'Michael', 'Chang', 'm.chang@student.pt3solutions.edu.sg', 3, 2, 2026, 'active', 'new_student'),
+(3, '31234563', 'Michael', 'Chang', 'm.chang@student.pt3solutions.edu.sg', 3, 2, 2026, 'active', 'existing_student'),
 (4, '31234564', 'Emily', 'Watson', 'e.watson@student.pt3solutions.edu.sg', 1, 2, 2026, 'part-time', 'new_student');
 
 -- 8. Seed Student Unit History
@@ -154,7 +154,7 @@ INSERT INTO StudentUnitHistory (student_id, unit_id, status, grade, mark, period
 INSERT INTO StudyPlan (plan_id, student_id, title, status, total_credit_points, created_by, recommended_at, agreed_at, approved_at) VALUES
 (1, 1, 'PT3-BSIT Artificial Intelligence Plan 2026', 'approved', 36, 'Academic Chair', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 1 DAY, NOW()),
 (2, 2, 'PT3-BSIT Computer Science Plan 2026', 'agreed', 72, 'Academic Chair', NOW() - INTERVAL 1 DAY, NOW(), NULL),
-(3, 3, 'PT3-BSIT Business Info Systems Plan 2026', 'request_submitted', 0, 'Academic Chair', NULL, NULL, NULL),
+(3, 3, 'PT3-BSIT Business Info Systems Plan 2026', 'recommended', 72, 'Academic Chair', NOW() - INTERVAL 1 HOUR, NULL, NULL),
 (4, 4, 'PT3-BSIT Artificial Intelligence Plan 2026', 'draft', 0, 'Academic Chair', NULL, NULL, NULL);
 
 -- 10. Seed Study Plan Units (Plan 1 - Alex Mercer - AI Major Y1 T1-T3 - 36 CP)
@@ -172,10 +172,19 @@ INSERT INTO StudyPlanUnit (plan_id, unit_id, period_id, year_level, sequence_ord
 (2, 11, 4, 2, 1, 3), (2, 19, 4, 2, 2, 3), (2, 26, 4, 2, 3, 3), (2, 20, 4, 2, 4, 3),
 (2, 10, 5, 2, 1, 3), (2, 24, 5, 2, 2, 3), (2, 25, 5, 2, 3, 3), (2, 21, 5, 2, 4, 3);
 
+-- Plan 3 - Michael Chang - BIS Major - 72 CP (Recommended)
+INSERT INTO StudyPlanUnit (plan_id, unit_id, period_id, year_level, sequence_order, credit_points) VALUES
+(3, 1, 3, 1, 1, 3), (3, 2, 3, 1, 2, 3), (3, 3, 3, 1, 3, 3), (3, 17, 3, 1, 4, 3),
+(3, 4, 4, 1, 1, 3), (3, 5, 4, 1, 2, 3), (3, 7, 4, 1, 3, 3), (3, 18, 4, 1, 4, 3),
+(3, 6, 5, 1, 1, 3), (3, 13, 5, 1, 2, 3), (3, 14, 5, 1, 3, 3), (3, 8, 5, 1, 4, 3),
+(3, 15, 3, 2, 1, 3), (3, 16, 3, 2, 2, 3), (3, 19, 3, 2, 3, 3), (3, 9, 3, 2, 4, 3),
+(3, 20, 4, 2, 1, 3), (3, 12, 4, 2, 2, 3), (3, 24, 4, 2, 3, 3), (3, 27, 4, 2, 4, 3),
+(3, 21, 5, 2, 1, 3), (3, 25, 5, 2, 2, 3), (3, 26, 5, 2, 3, 3), (3, 28, 5, 2, 4, 3);
+
 -- 11. Seed Version History
 INSERT INTO StudyPlanVersion (plan_id, version_number, amendment_reason, snapshot_json, created_by) VALUES
 (1, 2, 'Study Plan officially APPROVED & finalized by Academic Chair', '{"plan_id": 1, "student_number": "31234561", "total_cp": 36, "status": "approved"}', 'Academic Chair'),
 (2, 2, 'Student agreed and digitally signed proposed study plan (72 CP)', '{"plan_id": 2, "student_number": "31234562", "total_cp": 72, "status": "agreed"}', 'Student: Sarah Jenkins'),
-(3, 1, 'Student submitted initial study plan request for Year 1 (2026)', '{"plan_id": 3, "student_number": "31234563", "total_cp": 0, "status": "request_submitted"}', 'Student: Michael Chang'),
+(3, 1, 'Academic Chair recommended 72 CP Study Plan for Business Information Systems', '{"plan_id": 3, "student_number": "31234563", "total_cp": 72, "status": "recommended"}', 'Academic Chair'),
 (4, 1, 'Initial study plan draft (Awaiting student initial request)', '{"plan_id": 4, "student_number": "31234564", "total_cp": 0, "status": "draft"}', 'Academic Chair');
 

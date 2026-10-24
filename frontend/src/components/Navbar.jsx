@@ -120,6 +120,31 @@ export default function Navbar({
   const filteredNotifications = notifications.filter(n => n.role === roleTarget);
   const unreadCount = filteredNotifications.filter(n => !n.read).length;
 
+  const formatNotificationDate = (n) => {
+    if (n.createdTimeMs) {
+      const d = new Date(n.createdTimeMs);
+      return d.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    if (n.timestamp && /\b20\d\d\b/.test(n.timestamp)) {
+      return n.timestamp;
+    }
+    const now = new Date();
+    if (n.timestamp === '30 mins ago') {
+      const d = new Date(now.getTime() - 30 * 60 * 1000);
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    if (n.timestamp === 'Just now') {
+      return now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    return `${now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, ${n.timestamp || now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
   const chairNavItems = [
     { id: 'STUDY_PLAN', label: 'Plan Builder', icon: Layers },
     { id: 'STORED', label: `Stored Plans (${storedPlansCount})`, icon: Database },
@@ -256,7 +281,10 @@ export default function Navbar({
                               </span>
                             )}
                           </div>
-                          <span className="text-xs text-slate-400 dark:text-slate-500 font-mono shrink-0 font-bold">{n.timestamp}</span>
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono shrink-0 font-semibold flex items-center gap-1.5" title={n.timestamp}>
+                            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{formatNotificationDate(n)}</span>
+                          </span>
                         </div>
                         <p className="text-xs text-slate-700 dark:text-slate-200 mt-2 leading-relaxed font-sans font-medium">
                           {n.message}

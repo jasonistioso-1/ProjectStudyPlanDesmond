@@ -45,11 +45,11 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
       alias_code: 'BIS1',
       course_code: 'PT3-BSIT-BIS03',
       title: 'PT3-BSIT Business Info Systems Plan',
-      status: 'request_submitted',
+      status: 'recommended',
       version_number: 1,
-      total_cp: 0,
-      created_by: 'Student: Michael Chang',
-      updated_at: '2026-09-14 11:20',
+      total_cp: 72,
+      created_by: 'Academic Chair',
+      updated_at: '2026-10-24 11:02',
       location: 'Singapore Campus'
     },
     {
@@ -192,7 +192,7 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
             {filteredPlans.map(plan => {
               const matchedStudent = students.find(s => String(s.student_id) === String(plan.student_id));
-              const isNewStudent = plan.student_id === 3 || plan.student_id === 4 || matchedStudent?.account_category === 'new_student';
+              const isNewStudent = Number(plan.student_id) === 4 || matchedStudent?.account_category === 'new_student';
 
               return (
                 <tr key={plan.plan_id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors">

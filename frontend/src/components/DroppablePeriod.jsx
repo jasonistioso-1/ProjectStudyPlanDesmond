@@ -18,11 +18,13 @@ export default function DroppablePeriod({
   isChair = false,
   changeRequest,
   onResolveChangeRequest,
-  onRequestChange
+  onRequestChange,
+  waivedUnits,
+  onToggleWaiver
 }) {
   const { setNodeRef, isOver } = useDroppable({ id, disabled: isReadOnly || isPassedYear });
 
-  const totalCP = isPassedYear ? 12 : units.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+  const totalCP = units.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
   const targetCP = 12; // Standard full-time load benchmark
   const cpPercentage = Math.min(100, Math.round((totalCP / targetCP) * 100));
 
@@ -172,6 +174,9 @@ export default function DroppablePeriod({
                 isCompleted={completedUnitCodes.has(unit.code)}
                 historyRecord={historyMap ? historyMap[unit.code] : undefined}
                 isReadOnly={isReadOnly}
+                isWaived={waivedUnits ? waivedUnits.has(unit.code) : false}
+                isChair={isChair}
+                onToggleWaiver={onToggleWaiver}
               />
             ))
           )}

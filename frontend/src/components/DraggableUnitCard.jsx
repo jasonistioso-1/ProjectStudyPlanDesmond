@@ -1,9 +1,9 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, CheckCircle2, AlertTriangle, RotateCcw, Clock } from 'lucide-react';
+import { GripVertical, CheckCircle2, AlertTriangle, RotateCcw, Clock, ShieldCheck } from 'lucide-react';
 
-export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompleted: isCompletedProp, historyRecord, isReadOnly = false }) {
+export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompleted: isCompletedProp, historyRecord, isReadOnly = false, isWaived = false, isChair = false, onToggleWaiver }) {
   const isCompleted = isCompletedProp || (historyRecord && historyRecord.status === 'completed');
   const isEnrolled = historyRecord && (historyRecord.status === 'enrolled' || historyRecord.status === 'current');
   const isAttempted = historyRecord && historyRecord.status === 'attempted';
@@ -26,7 +26,7 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
   const unitLevel = Number(unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : 100));
 
   const isLoadWarning = warning && (warning.includes('EXCEEDS') || warning.includes('exceeds') || warning.includes('CP limit'));
-  const effectiveWarning = (isCompleted || isLoadWarning) ? null : warning;
+  const effectiveWarning = (isCompleted || isLoadWarning || isWaived) ? null : warning;
 
   let cardBorder = 'border-slate-200 dark:border-slate-800';
 
@@ -36,6 +36,8 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
     cardBorder = 'border-sky-300 dark:border-sky-800/80 bg-sky-50/20 dark:bg-sky-950/20';
   } else if (isAttempted) {
     cardBorder = 'border-rose-300 dark:border-rose-800/80 bg-rose-50/20 dark:bg-rose-950/20';
+  } else if (isWaived) {
+    cardBorder = 'border-2 border-purple-400 dark:border-purple-600 bg-purple-50/30 dark:bg-purple-950/20 shadow-md ring-2 ring-purple-500/20';
   } else if (effectiveWarning) {
     cardBorder = 'border-2 border-rose-500 dark:border-rose-600 bg-rose-50/30 dark:bg-rose-950/30 shadow-md ring-2 ring-rose-500/20';
   }
@@ -70,6 +72,32 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
     unit.code === 'ICT393' ? 'ICT284' :
     unit.code === 'ICT394' ? 'ICT285' : 'None'
   );
+
+  const hasOffIssue = effectiveWarning && (
+    effectiveWarning.includes('NOT offered') || 
+    effectiveWarning.includes('offered ONLY') || 
+    effectiveWarning.includes('Offering') || 
+    effectiveWarning.includes('offering')
+  );
+  const hasPreIssue = effectiveWarning && (
+    effectiveWarning.includes('FAILED') || 
+    effectiveWarning.includes('Failed') || 
+    effectiveWarning.includes('requires prerequisite') || 
+    effectiveWarning.includes('prerequisite') || 
+    effectiveWarning.includes('Prerequisite')
+  );
+
+  const warningBadgeLabel = effectiveWarning ? (
+    (hasOffIssue && hasPreIssue)
+      ? 'Offering & Prereq Issue'
+      : hasOffIssue
+      ? 'Offering Mismatch'
+      : (effectiveWarning.includes('FAILED') || effectiveWarning.includes('Failed'))
+      ? 'Prerequisite Failed'
+      : hasPreIssue
+      ? 'Prerequisite Unmet'
+      : 'Rule Violation'
+  ) : null;
 
   return (
     <div
@@ -117,6 +145,13 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
               <RotateCcw className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" /> Failed ({historyRecord?.grade || 'F'})
             </span>
           )}
+
+          {isWaived && (
+            <span className="bg-purple-50 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 font-extrabold text-[10px] px-2.5 py-0.5 rounded-md border-2 border-purple-500 dark:border-purple-600 flex items-center gap-1.5 font-sans shrink-0 shadow-2xs" title="Prerequisite waived by Academic Chair override">
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+              <span>Chair Waiver: Approved</span>
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
@@ -153,16 +188,62 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
         </span>
       </div>
 
-      {/* Rule Violation Warning Notice Box */}
+      {/* Chair Waiver Override Approved Notice Box */}
+      {isWaived && (
+        <div className="text-[11px] leading-relaxed bg-purple-50 dark:bg-purple-950/80 border border-purple-300 dark:border-purple-700 text-purple-950 dark:text-purple-100 p-2.5 rounded-xl space-y-1.5 font-medium shadow-xs">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-extrabold text-[10px] uppercase tracking-wider font-heading">
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+              <span>Chair Waiver Approved</span>
+            </div>
+            {isChair && onToggleWaiver && (
+              <button
+                type="button"
+                onClick={() => onToggleWaiver(unit.code)}
+                className="text-[10px] bg-purple-200 dark:bg-purple-900/80 text-purple-900 dark:text-purple-200 hover:bg-purple-300 dark:hover:bg-purple-800 font-bold px-2 py-0.5 rounded cursor-pointer transition-colors shadow-2xs"
+                title="Revoke Chair Waiver"
+              >
+                Revoke Waiver
+              </button>
+            )}
+          </div>
+          <div className="font-semibold text-purple-950 dark:text-purple-100 text-xs leading-snug">
+            Academic Chair has granted an official prerequisite waiver for this unit.
+          </div>
+        </div>
+      )}
+
+      {/* Compact Rule Violation Badge Indicator & Chair Waiver Action */}
       {effectiveWarning && (
-        <div className="text-[11px] leading-relaxed bg-rose-100 dark:bg-rose-950/90 border border-rose-300 dark:border-rose-700 text-rose-950 dark:text-rose-100 p-2.5 rounded-xl space-y-1 font-medium shadow-sm">
-          <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-300 font-extrabold text-[10px] uppercase tracking-wider font-heading">
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
-            <span>Rule Violation Detected</span>
+        <div className="space-y-1.5">
+          <div 
+            className="flex items-center justify-between gap-1.5 text-[10px] px-2.5 py-1.5 rounded-xl bg-rose-100 dark:bg-rose-950/90 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200 shadow-2xs font-sans transition-all"
+            title={effectiveWarning}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+              <span className="font-extrabold uppercase tracking-wider font-heading truncate">
+                {warningBadgeLabel}
+              </span>
+            </div>
+            <span 
+              className="text-[9px] font-mono font-bold text-rose-600 dark:text-rose-300 shrink-0 bg-white/80 dark:bg-slate-900/80 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-900"
+              title={effectiveWarning}
+            >
+              See Validation
+            </span>
           </div>
-          <div className="font-semibold text-rose-950 dark:text-rose-100 text-xs leading-snug">
-            {effectiveWarning}
-          </div>
+          {isChair && onToggleWaiver && hasPreIssue && (
+            <button
+              type="button"
+              onClick={() => onToggleWaiver(unit.code)}
+              className="w-full py-1.5 px-2 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-[10px] font-bold tracking-tight transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 border border-purple-800"
+              title={`Grant official Academic Chair waiver for ${unit.code}`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-200" />
+              <span>Grant Chair Prereq Waiver</span>
+            </button>
+          )}
         </div>
       )}
     </div>

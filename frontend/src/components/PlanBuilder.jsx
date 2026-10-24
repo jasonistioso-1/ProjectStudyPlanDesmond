@@ -77,7 +77,8 @@ export default function PlanBuilder({
   onSaveSemesterRequest,
   onRemoveSemesterRequest,
   onStudentSubmitPlanRequest,
-  onAutoGeneratePlan
+  onAutoGeneratePlan,
+  onWaiverChange
 }) {
   const isChair = activeRole === 'chair';
   const [unitFilter, setUnitFilter] = useState('');
@@ -105,6 +106,34 @@ export default function PlanBuilder({
   // Active Plan Status and Lock Check
   const planStatus = currentPlan ? currentPlan.status : 'draft';
   const isPlanLocked = planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved';
+
+  // Academic Chair Waiver State (VAL-04 / M05:R422)
+  const [waivedUnits, setWaivedUnits] = useState(() => new Set(currentPlan?.waivedUnits || []));
+
+  useEffect(() => {
+    if (currentPlan?.waivedUnits) {
+      setWaivedUnits(new Set(currentPlan.waivedUnits));
+    }
+  }, [currentPlan?.waivedUnits]);
+
+  const handleToggleWaiver = (unitCode) => {
+    setWaivedUnits(prev => {
+      const next = new Set(prev);
+      const isNowWaived = !next.has(unitCode);
+      if (isNowWaived) {
+        next.add(unitCode);
+        setDragWarningToast(`Academic Chair Waiver Approved: Prerequisite for ${unitCode} officially waived.`);
+      } else {
+        next.delete(unitCode);
+        setDragWarningToast(`Academic Chair Waiver revoked for unit ${unitCode}.`);
+      }
+      setTimeout(() => setDragWarningToast(null), 5000);
+      if (onWaiverChange) {
+        onWaiverChange(unitCode, isNowWaived);
+      }
+      return next;
+    });
+  };
 
   // Auto System Generation Scope Selection Modal State
   const [showAutoGenModal, setShowAutoGenModal] = useState(false);
@@ -256,7 +285,7 @@ export default function PlanBuilder({
     return map;
   }, [catalogUnits]);
 
-  const t3RestrictedUnits = useMemo(() => new Set(), []);
+  const t3RestrictedUnits = useMemo(() => new Set(['ICT301']), []);
   const s1OnlyUnits = useMemo(() => new Set(), []);
   const s2OnlyUnits = useMemo(() => new Set(), []);
 
@@ -264,13 +293,35 @@ export default function PlanBuilder({
   const warningsByUnit = {};
   const warningsList = [];
 
+  const appendUnitWarning = (code, msg) => {
+    if (!code || !msg) return;
+    if (warningsByUnit[code]) {
+      if (!warningsByUnit[code].includes(msg)) {
+        warningsByUnit[code] = `${warningsByUnit[code]} • ${msg}`;
+      }
+    } else {
+      warningsByUnit[code] = msg;
+    }
+  };
+
   // Merge backend warnings if available
   if (validationResult && validationResult.warnings) {
     validationResult.warnings.forEach(w => {
       if (w.unitCode && completedUnitCodes.has(w.unitCode)) return;
-      warningsList.push(w);
-      if (w.unitCode && !warningsByUnit[w.unitCode]) {
-        warningsByUnit[w.unitCode] = w.message;
+      const isPrereq = w.type?.includes('PREREQUISITE') || Boolean(w.prereqCode);
+      const isWaived = w.unitCode && waivedUnits.has(w.unitCode) && isPrereq;
+      if (isWaived) {
+        warningsList.push({
+          ...w,
+          severity: 'waived',
+          isWaived: true,
+          message: `[Chair Waiver Approved] Prerequisite waived by Academic Chair for ${w.unitCode}.`
+        });
+      } else {
+        warningsList.push(w);
+        if (w.unitCode) {
+          appendUnitWarning(w.unitCode, w.message);
+        }
       }
     });
   }
@@ -287,19 +338,19 @@ export default function PlanBuilder({
     // BR-01 Offering Check
     if (isTri3 && t3RestrictedUnits.has(unit.code)) {
       const msg = `Unit ${unit.code} (${unit.title}) is NOT offered in Tri-Semester 3 (T3) at Singapore Campus.`;
-      if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
+      appendUnitWarning(unit.code, msg);
       if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
         warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
       }
     } else if (isS2Only && s1OnlyUnits.has(unit.code)) {
       const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 1 and cannot be taken in Semester 2.`;
-      if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
+      appendUnitWarning(unit.code, msg);
       if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
         warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
       }
     } else if (isS1Only && s2OnlyUnits.has(unit.code)) {
       const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 2 and cannot be taken in Semester 1.`;
-      if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
+      appendUnitWarning(unit.code, msg);
       if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
         warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
       }
@@ -317,16 +368,22 @@ export default function PlanBuilder({
       });
 
       if (attemptedUnitCodes.has(prereqCode) && !isCompleted && !isScheduledPrior) {
-        const msg = `Prerequisite Subject ${prereqCode} was FAILED in student history. You must re-enroll and pass ${prereqCode} before taking ${unit.code}.`;
-        if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
-        if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-02_PREREQUISITE_FAILED')) {
-          warningsList.push({ type: 'BR-02_PREREQUISITE_FAILED', severity: 'error', unitCode: unit.code, prereqCode, message: msg });
+        const isWaived = waivedUnits.has(unit.code);
+        const msg = isWaived
+          ? `[Chair Waiver Approved] Prerequisite Subject ${prereqCode} waived by Academic Chair for ${unit.code}.`
+          : `Prerequisite Subject ${prereqCode} was FAILED in student history. You must re-enroll and pass ${prereqCode} before taking ${unit.code}.`;
+        if (!isWaived) appendUnitWarning(unit.code, msg);
+        if (!warningsList.some(w => w.unitCode === unit.code && (w.type === 'BR-02_PREREQUISITE_FAILED' || w.type === 'BR-02_PREREQUISITE_UNMET'))) {
+          warningsList.push({ type: 'BR-02_PREREQUISITE_FAILED', severity: isWaived ? 'waived' : 'error', unitCode: unit.code, prereqCode, message: msg, isWaived });
         }
       } else if (!isCompleted && !isScheduledPrior) {
-        const msg = `Unit ${unit.code} requires prerequisite ${prereqCode}, which is neither completed in history nor scheduled in a prior teaching period.`;
-        if (!warningsByUnit[unit.code]) warningsByUnit[unit.code] = msg;
-        if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-02_PREREQUISITE_UNMET')) {
-          warningsList.push({ type: 'BR-02_PREREQUISITE_UNMET', severity: 'error', unitCode: unit.code, prereqCode, message: msg });
+        const isWaived = waivedUnits.has(unit.code);
+        const msg = isWaived
+          ? `[Chair Waiver Approved] Prerequisite Subject ${prereqCode} waived by Academic Chair for ${unit.code}.`
+          : `Unit ${unit.code} requires prerequisite ${prereqCode}, which is neither completed in history nor scheduled in a prior teaching period.`;
+        if (!isWaived) appendUnitWarning(unit.code, msg);
+        if (!warningsList.some(w => w.unitCode === unit.code && (w.type === 'BR-02_PREREQUISITE_UNMET' || w.type === 'BR-02_PREREQUISITE_FAILED'))) {
+          warningsList.push({ type: 'BR-02_PREREQUISITE_UNMET', severity: isWaived ? 'waived' : 'error', unitCode: unit.code, prereqCode, message: msg, isWaived });
         }
       }
     }
@@ -975,11 +1032,8 @@ export default function PlanBuilder({
 
   const isNewStudent = 
     student?.account_category === 'new_student' || 
-    Number(student?.student_id) === 3 || 
     Number(student?.student_id) === 4 ||
-    student?.student_number === '31234563' ||
     student?.student_number === '31234564' ||
-    student?.alias_code === 'BIS1' ||
     student?.alias_code === 'AI2';
 
   const isPlanOfficiallyGranted = planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved';
@@ -1068,27 +1122,39 @@ export default function PlanBuilder({
               </span>
 
               {/* Submit / Update Plan Request Button */}
-              <button
-                type="button"
-                onClick={() => setShowSubmitPlanRequestModal(true)}
-                className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-xl text-xs font-black transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 font-heading tracking-tight"
-                title="Submit or update study plan request for Academic Chair review"
-              >
-                <Send className="w-3.5 h-3.5 text-white" />
-                <span>{planStatus === 'request_submitted' ? 'Update Plan Request' : 'Submit Plan Request'}</span>
-                <ArrowRight className="w-4 h-4 opacity-80" />
-              </button>
+              {planStatus === 'request_submitted' ? (
+                <button
+                  type="button"
+                  disabled={true}
+                  className="bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 px-4 py-2 rounded-xl text-xs font-black shadow-none flex items-center gap-1.5 cursor-not-allowed opacity-75 font-heading tracking-tight"
+                  title="Your study plan request is currently submitted and under review by the Academic Chair."
+                >
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Request Submitted</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowSubmitPlanRequestModal(true)}
+                  className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-xl text-xs font-black transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 font-heading tracking-tight"
+                  title="Submit study plan request for Academic Chair review"
+                >
+                  <Send className="w-3.5 h-3.5 text-white" />
+                  <span>Submit Plan Request</span>
+                  <ArrowRight className="w-4 h-4 opacity-80" />
+                </button>
+              )}
 
-              {/* Export Document Button (Existing students) */}
+              {/* Confirmation of Enrolment (CoE) / Export Document Button (Existing students) */}
               {onOpenOfficialDocument && !isNewStudentInitial && (
                 <button
                   type="button"
                   onClick={onOpenOfficialDocument}
                   className="bg-slate-900 hover:bg-slate-800 dark:bg-red-700 dark:hover:bg-red-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 font-sans"
-                  title="Preview Official Study Plan document and select export format (PDF, CSV)"
+                  title={planStatus === 'approved' ? 'Generate official Confirmation of Enrolment (CoE) certificate & study plan' : 'Preview Official Study Plan document and select export format (PDF, CSV)'}
                 >
                   <BookOpen className="w-3.5 h-3.5 text-white" />
-                  <span>Export Document</span>
+                  <span>{planStatus === 'approved' ? 'Generate Confirmation of Enrolment (CoE)' : 'Study Plan Document & CoE'}</span>
                 </button>
               )}
             </div>
@@ -1252,20 +1318,29 @@ export default function PlanBuilder({
                               <button
                                 type="button"
                                 onClick={() => {
+                                  if (planStatus === 'request_submitted') {
+                                    setDragWarningToast('Active Request Pending: You already have a study plan request awaiting Academic Chair review.');
+                                    setTimeout(() => setDragWarningToast(null), 5000);
+                                    return;
+                                  }
                                   setReqYear(academicYear);
                                   if (p.period_id === 1 || p.period_id === 2) {
-                                    setReqLayout('semester');
-                                    setReqPeriodIds([p.period_id]);
+                                    setLayoutType('semester');
+                                    setReqPeriods([p.period_id]);
                                   } else {
-                                    setReqLayout('trimester');
-                                    setReqPeriodIds([p.period_id]);
+                                    setLayoutType('trimester');
+                                    setReqPeriods([p.period_id]);
                                   }
                                   setShowSubmitPlanRequestModal(true);
                                 }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-95 font-heading"
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold shadow-sm transition-all font-heading ${
+                                  planStatus === 'request_submitted'
+                                    ? 'bg-amber-600/90 text-white cursor-not-allowed opacity-80'
+                                    : 'bg-red-700 hover:bg-red-800 text-white cursor-pointer active:scale-95 hover:shadow-md'
+                                }`}
                               >
                                 <Send className="w-3.5 h-3.5" />
-                                <span>Submit Request to Unlock</span>
+                                <span>{planStatus === 'request_submitted' ? 'Request Pending Review' : 'Submit Request to Unlock'}</span>
                               </button>
                             </div>
                           </div>
@@ -1398,12 +1473,41 @@ export default function PlanBuilder({
                                               <RotateCcw className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" /> FAILED ({hist?.grade || 'F'})
                                             </span>
                                           )}
+                                          {waivedUnits?.has(u.code) && (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-purple-50 dark:bg-purple-950/70 text-purple-900 dark:text-purple-200 border-2 border-purple-500 dark:border-purple-600 shadow-2xs" title="Prerequisite waived by Academic Chair">
+                                              <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" /> Chair Waiver
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
 
                                       <div className="text-slate-900 dark:text-white text-xs font-bold leading-snug break-words pt-0.5" title={u.title}>
                                         {u.title}
                                       </div>
+
+                                      {/* Student View Warning Notice (VAL-05 / VAL-06 / VAL-07) */}
+                                      {warningsByUnit[u.code] && !isCompleted && !waivedUnits?.has(u.code) && (() => {
+                                        const wMsg = warningsByUnit[u.code] || '';
+                                        const hasOff = wMsg.includes('NOT offered') || wMsg.includes('offered ONLY') || wMsg.includes('Offering') || wMsg.includes('offering');
+                                        const hasPre = wMsg.includes('FAILED') || wMsg.includes('requires prerequisite') || wMsg.includes('prerequisite') || wMsg.includes('Prerequisite');
+                                        const badgeLabel = (hasOff && hasPre) ? 'Offering & Prereq Issue' : hasOff ? 'Offering Mismatch' : wMsg.includes('FAILED') ? 'Prerequisite Failed' : 'Prerequisite Unmet';
+                                        return (
+                                          <div 
+                                            className="mt-1 flex items-center justify-between gap-1.5 text-[10px] font-semibold text-rose-800 dark:text-rose-200 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-lg px-2 py-1 leading-snug"
+                                            title={wMsg}
+                                          >
+                                            <div className="flex items-center gap-1.5 truncate">
+                                              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                                              <span className="font-bold uppercase tracking-wider font-heading truncate">
+                                                {badgeLabel}
+                                              </span>
+                                            </div>
+                                            <span className="text-[9px] font-mono font-bold text-rose-600 dark:text-rose-400 shrink-0 bg-white/80 dark:bg-slate-900/80 px-1 py-0.5 rounded" title={wMsg}>
+                                              Rule Notice
+                                            </span>
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                   );
                                 })}
@@ -1446,7 +1550,7 @@ export default function PlanBuilder({
               yearName="Official 3-Year Study Plan (72 CP)"
               planStatus={planStatus}
               planUnitsCount={planUnits.length}
-              isAlreadyAgreed={isAlreadyAgreed || Boolean(currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1])}
+              isAlreadyAgreed={isAlreadyAgreed || Boolean(currentPlan?.studentSignature || currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1])}
               isYearCompleted={false}
               isYearLocked={false}
               onAgreePlan={(sigObj) => {
@@ -1455,7 +1559,7 @@ export default function PlanBuilder({
               onRejectPlan={(reason) => {
                 if (onRejectPlan) onRejectPlan(reason, 'ALL');
               }}
-              currentSignature={currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1]}
+              currentSignature={currentPlan?.studentSignature || currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1]}
             />
           </>
         )}
@@ -1740,6 +1844,10 @@ export default function PlanBuilder({
                 <button
                   type="button"
                   onClick={() => {
+                    if (planStatus === 'request_submitted') {
+                      alert('Active Request Pending: You already have a study plan request under review by the Academic Chair. Duplicate requests are not permitted.');
+                      return;
+                    }
                     if (reqPeriods.length === 0) {
                       alert(layoutType === 'semester' ? 'Please select at least one semester period.' : 'Please select at least one trimester period.');
                       return;
@@ -1838,6 +1946,48 @@ export default function PlanBuilder({
                   {planStatus === 'agreed' && 'Student digital sign-off complete. Click Final Approve below or Retrieve & Amend in Repository to edit.'}
                   {planStatus === 'approved' && 'Official approved plan archived & locked. To create a new draft version, click Retrieve & Amend in Stored Repository.'}
                 </p>
+
+                {/* Approval Stages Progression Stepper (APP-01 / APP-02) */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    {workflowSteps.map((step) => {
+                      const isCurrent = (
+                        (step.id === 'draft' && (planStatus === 'draft' || planStatus === 'request_submitted')) ||
+                        (step.id === 'recommended' && planStatus === 'recommended') ||
+                        (step.id === 'agreed' && planStatus === 'agreed') ||
+                        (step.id === 'approved' && (planStatus === 'approved' || planStatus === 'stored'))
+                      );
+                      const isPassed = (
+                        (step.id === 'draft' && planStatus !== 'draft' && planStatus !== 'request_submitted') ||
+                        (step.id === 'recommended' && (planStatus === 'agreed' || planStatus === 'approved' || planStatus === 'stored')) ||
+                        (step.id === 'agreed' && (planStatus === 'approved' || planStatus === 'stored')) ||
+                        (step.id === 'approved' && (planStatus === 'approved' || planStatus === 'stored'))
+                      );
+
+                      return (
+                        <div
+                          key={step.id}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all ${
+                            isCurrent
+                              ? 'bg-red-50 dark:bg-red-950/70 border-red-500 dark:border-red-600 text-red-950 dark:text-red-200 ring-2 ring-red-500/20 shadow-2xs font-sans'
+                              : isPassed
+                              ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
+                              : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'
+                          }`}
+                        >
+                          {isPassed ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          ) : isCurrent ? (
+                            <div className="w-2 h-2 rounded-full bg-red-600 dark:bg-red-400 animate-pulse shrink-0" />
+                          ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0" />
+                          )}
+                          <span>{step.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1865,7 +2015,7 @@ export default function PlanBuilder({
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black uppercase tracking-wider font-heading text-purple-900 dark:text-purple-200">
-                    📩 Student Plan Request Submitted
+                    📩 {isNewStudent ? 'New Student' : 'Existing Student'} Plan Request Submitted
                   </span>
                   <span className="text-[10px] font-mono bg-purple-200 dark:bg-purple-900 text-purple-900 dark:text-purple-100 px-2 py-0.5 rounded font-bold">
                     Target Year {currentPlan.requestYear || 2026}
@@ -2073,14 +2223,49 @@ export default function PlanBuilder({
                   {warningsList && warningsList.length > 0 ? (
                     warningsList
                       .filter((w, index, self) => index === self.findIndex(t => t.message === w.message))
-                      .map((w, idx) => (
-                        <div key={idx} className="flex items-start gap-2 p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-200 text-xs font-medium rounded-xl">
-                          <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold">{w.unitCode ? `${w.unitCode}: ` : ''}</span>{w.message}
+                      .map((w, idx) => {
+                        const isPrereqWarning = w.type?.includes('PREREQUISITE') || Boolean(w.prereqCode);
+                        const isUnitWaived = w.unitCode && waivedUnits.has(w.unitCode);
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`flex items-start justify-between gap-2.5 p-2.5 rounded-xl text-xs font-medium border ${
+                              isUnitWaived
+                                ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800 text-purple-950 dark:text-purple-200'
+                                : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-200'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2 flex-1 min-w-0">
+                              {isUnitWaived ? (
+                                <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+                              ) : (
+                                <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                              )}
+                              <div className="break-words">
+                                <span className="font-bold">{w.unitCode ? `${w.unitCode}: ` : ''}</span>
+                                {isUnitWaived ? `[Chair Waiver Approved] Prerequisite for ${w.unitCode} waived by Academic Chair.` : w.message}
+                              </div>
+                            </div>
+
+                            {isChair && isPrereqWarning && w.unitCode && (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleWaiver(w.unitCode)}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold shrink-0 transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs font-sans ${
+                                  isUnitWaived
+                                    ? 'bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600'
+                                    : 'bg-purple-700 hover:bg-purple-800 text-white border border-purple-800'
+                                }`}
+                                title={isUnitWaived ? 'Revoke Chair Waiver' : 'Grant Academic Chair Waiver Override'}
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>{isUnitWaived ? 'Revoke Waiver' : 'Grant Waiver'}</span>
+                              </button>
+                            )}
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                   ) : (
                     <div className="flex items-center gap-2 p-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-emerald-900 dark:text-emerald-300 font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -2130,7 +2315,7 @@ export default function PlanBuilder({
                         className="px-3.5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white border border-slate-800 dark:border-slate-700 rounded-xl font-bold text-xs shadow-2xs transition-colors flex items-center gap-1.5"
                       >
                         <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Export Document</span>
+                        <span>{planStatus === 'approved' ? 'Generate Confirmation of Enrolment (CoE)' : 'Study Plan Document & CoE'}</span>
                       </button>
                     )}
                   </div>
@@ -2364,6 +2549,8 @@ export default function PlanBuilder({
                                   });
                                   setRequestCommentInput(semesterRequests[key] || '');
                                 } : undefined}
+                                waivedUnits={waivedUnits}
+                                onToggleWaiver={handleToggleWaiver}
                               />
                             );
                           })}
@@ -2470,7 +2657,33 @@ export default function PlanBuilder({
                       <>
                         {(planStatus === 'draft' || planStatus === 'request_submitted' || planStatus === 'recommended') && (
                           <button
-                            onClick={() => onRecommendPlan && onRecommendPlan()}
+                            onClick={() => {
+                              // Check for unresolved critical validation errors (REC-01 / M06:R104)
+                              const unresolvedCritical = warningsList.filter(w => {
+                                if (w.unitCode && waivedUnits.has(w.unitCode) && (w.type?.includes('PREREQUISITE') || w.prereqCode)) {
+                                  return false;
+                                }
+                                return (
+                                  w.type === 'BR-01_OFFERING_MISMATCH' ||
+                                  w.type === 'BR-02_PREREQUISITE_FAILED' ||
+                                  w.type === 'BR-02_PREREQUISITE_UNMET' ||
+                                  w.type === 'BR-04_CREDIT_LOAD_EXCEEDED' ||
+                                  w.severity === 'error'
+                                );
+                              });
+
+                              if (unresolvedCritical.length > 0) {
+                                const firstErr = unresolvedCritical[0];
+                                const unitPrefix = firstErr.unitCode ? `[${firstErr.unitCode}] ` : '';
+                                setDragWarningToast(`Recommendation Blocked: Study plan contains unresolved critical issues (${unitPrefix}${firstErr.message}). Please resolve errors or grant an Academic Chair Waiver before recommending.`);
+                                setTimeout(() => setDragWarningToast(null), 8000);
+                                return;
+                              }
+
+                              if (onRecommendPlan) {
+                                onRecommendPlan(Array.from(waivedUnits));
+                              }
+                            }}
                             className="px-5 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl font-extrabold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-red-800 font-sans"
                           >
                             <Send className="w-4 h-4 text-white/90" />
@@ -2491,6 +2704,23 @@ export default function PlanBuilder({
                       </>
                     ) : (
                       <>
+                        {planStatus === 'recommended' && onRejectPlan && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const reason = prompt('Please enter your feedback or reason for requesting changes from the Academic Chair:');
+                              if (reason !== null && reason.trim()) {
+                                onRejectPlan(reason.trim());
+                              }
+                            }}
+                            className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 rounded-xl font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 font-sans"
+                            title="Disagree with proposed study plan and request amendments"
+                          >
+                            <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                            <span>Disagree / Request Changes</span>
+                          </button>
+                        )}
+
                         {(planStatus === 'draft' || planStatus === 'recommended') && (
                           <button
                             onClick={() => onAgreePlan && onAgreePlan()}

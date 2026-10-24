@@ -100,7 +100,7 @@ export async function seedDatabase() {
             'MAS162': ['T1', 'T2', 'T3'],
             'MAS164': ['T1', 'T2', 'T3'],
             'MAS183': ['T1', 'T2', 'T3'],
-            'ICT301': ['T1', 'T2', 'T3'],
+            'ICT301': ['T1', 'T2'],
             'ICT302': ['T1', 'T2', 'T3'],
             'ICT303': ['T1', 'T2', 'T3'],
             'ICT304': ['T1', 'T2', 'T3'],
@@ -130,9 +130,10 @@ export async function seedDatabase() {
         for (const s of mockStudents) {
             const sid = s.student_id === 0 ? 99 : s.student_id;
             const validStatus = ['active', 'inactive', 'graduated', 'suspended'].includes(s.study_status) ? s.study_status : 'active';
+            const validCategory = ['admin', 'existing_student', 'new_student'].includes(s.account_category) ? s.account_category : 'existing_student';
             await connection.query(
-                `INSERT INTO Student (student_id, student_number, first_name, last_name, email, course_id, location_id, commencement_year, study_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [sid, s.student_number, s.first_name, s.last_name, s.email, s.course_id, s.location_id, s.commencement_year, validStatus]
+                `INSERT INTO Student (student_id, student_number, first_name, last_name, email, course_id, location_id, commencement_year, study_status, account_category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [sid, s.student_number, s.first_name, s.last_name, s.email, s.course_id, s.location_id, s.commencement_year, validStatus, validCategory]
             );
         }
         console.log(`✅ Seeded ${mockStudents.length} Students`);
@@ -176,7 +177,7 @@ export async function seedDatabase() {
             {
                 student_id: 2,
                 title: 'PT3-BSIT Computer Science Plan 2026',
-                status: 'draft',
+                status: 'agreed',
                 total_credit_points: 72,
                 units: [
                     { code: 'ICT100', year_level: 1, period_id: 3, sequence_order: 1 },
@@ -208,9 +209,34 @@ export async function seedDatabase() {
             {
                 student_id: 3,
                 title: 'PT3-BSIT Business Info Systems Plan 2026',
-                status: 'draft',
-                total_credit_points: 0,
-                units: []
+                status: 'recommended',
+                total_credit_points: 72,
+                units: [
+                    { code: 'ICT100', year_level: 1, period_id: 3, sequence_order: 1 },
+                    { code: 'ICT158', year_level: 1, period_id: 3, sequence_order: 2 },
+                    { code: 'ICT159', year_level: 1, period_id: 3, sequence_order: 3 },
+                    { code: 'MAS162', year_level: 1, period_id: 3, sequence_order: 4 },
+                    { code: 'ICT167', year_level: 1, period_id: 4, sequence_order: 1 },
+                    { code: 'ICT169', year_level: 1, period_id: 4, sequence_order: 2 },
+                    { code: 'ICT145', year_level: 1, period_id: 4, sequence_order: 3 },
+                    { code: 'MAS164', year_level: 1, period_id: 4, sequence_order: 4 },
+                    { code: 'ICT170', year_level: 1, period_id: 5, sequence_order: 1 },
+                    { code: 'ICT284', year_level: 1, period_id: 5, sequence_order: 2 },
+                    { code: 'ICT285', year_level: 1, period_id: 5, sequence_order: 3 },
+                    { code: 'ICT201', year_level: 1, period_id: 5, sequence_order: 4 },
+                    { code: 'ICT292', year_level: 2, period_id: 3, sequence_order: 1 },
+                    { code: 'BSC203', year_level: 2, period_id: 3, sequence_order: 2 },
+                    { code: 'MAS183', year_level: 2, period_id: 3, sequence_order: 3 },
+                    { code: 'ICT202', year_level: 2, period_id: 3, sequence_order: 4 },
+                    { code: 'ICT301', year_level: 2, period_id: 4, sequence_order: 1 },
+                    { code: 'ICT283', year_level: 2, period_id: 4, sequence_order: 2 },
+                    { code: 'ICT305', year_level: 2, period_id: 4, sequence_order: 3 },
+                    { code: 'ICT393', year_level: 2, period_id: 4, sequence_order: 4 },
+                    { code: 'ICT302', year_level: 2, period_id: 5, sequence_order: 1 },
+                    { code: 'ICT373', year_level: 2, period_id: 5, sequence_order: 2 },
+                    { code: 'ICT374', year_level: 2, period_id: 5, sequence_order: 3 },
+                    { code: 'ICT394', year_level: 2, period_id: 5, sequence_order: 4 }
+                ]
             },
             {
                 student_id: 4,
@@ -240,6 +266,88 @@ export async function seedDatabase() {
         }
         console.log(`✅ Seeded ${initialStudentPlans.length} initial Study Plans with Trimester 1 2026 units`);
 
+        // 10. Seed Multi-Version Study Plan Audit Trail (StudyPlanVersion)
+        const initialVersions = [
+            {
+                plan_id: 1,
+                version_number: 1,
+                amendment_reason: 'Initial 36 CP Study Plan structure generated for Alex Mercer',
+                created_by: 'Academic Chair',
+                snapshot_json: JSON.stringify({ plan_id: 1, student_id: 1, status: 'draft', total_cp: 36 })
+            },
+            {
+                plan_id: 1,
+                version_number: 2,
+                amendment_reason: 'Academic Chair recommended Year 1 plan to student for review',
+                created_by: 'Academic Chair',
+                snapshot_json: JSON.stringify({ plan_id: 1, student_id: 1, status: 'recommended', total_cp: 36 })
+            },
+            {
+                plan_id: 1,
+                version_number: 3,
+                amendment_reason: 'Alex Mercer agreed and digitally signed study plan progression',
+                created_by: 'Student: Alex Mercer',
+                snapshot_json: JSON.stringify({ plan_id: 1, student_id: 1, status: 'agreed', total_cp: 36 })
+            },
+            {
+                plan_id: 1,
+                version_number: 4,
+                amendment_reason: 'Study Plan officially APPROVED & finalized by Academic Chair',
+                created_by: 'Academic Chair',
+                snapshot_json: JSON.stringify({ plan_id: 1, student_id: 1, status: 'approved', total_cp: 36 })
+            },
+            {
+                plan_id: 2,
+                version_number: 1,
+                amendment_reason: 'Initial 72 CP standard Computer Science plan drafted',
+                created_by: 'Academic Chair',
+                snapshot_json: JSON.stringify({ plan_id: 2, student_id: 2, status: 'draft', total_cp: 72 })
+            },
+            {
+                plan_id: 2,
+                version_number: 2,
+                amendment_reason: 'Academic Chair recommended 72 CP plan to Sarah Jenkins',
+                created_by: 'Academic Chair',
+                snapshot_json: JSON.stringify({ plan_id: 2, student_id: 2, status: 'recommended', total_cp: 72 })
+            },
+            {
+                plan_id: 2,
+                version_number: 3,
+                amendment_reason: 'Student agreed and digitally signed proposed study plan (72 CP)',
+                created_by: 'Student: Sarah Jenkins',
+                snapshot_json: JSON.stringify({ plan_id: 2, student_id: 2, status: 'agreed', total_cp: 72 })
+            },
+            {
+                plan_id: 3,
+                version_number: 1,
+                amendment_reason: 'Student request submitted for Business Information Systems curriculum',
+                created_by: 'Student: Michael Chang',
+                snapshot_json: JSON.stringify({ plan_id: 3, student_id: 3, status: 'request_submitted', total_cp: 0 })
+            },
+            {
+                plan_id: 3,
+                version_number: 2,
+                amendment_reason: 'Academic Chair recommended 72 CP Study Plan for Business Information Systems for student review & sign-off',
+                created_by: 'Academic Chair',
+                snapshot_json: JSON.stringify({ plan_id: 3, student_id: 3, status: 'recommended', total_cp: 72 })
+            },
+            {
+                plan_id: 4,
+                version_number: 1,
+                amendment_reason: 'Initial study plan draft record created for new student onboarding',
+                created_by: 'Academic Chair',
+                snapshot_json: JSON.stringify({ plan_id: 4, student_id: 4, status: 'draft', total_cp: 0 })
+            }
+        ];
+
+        for (const v of initialVersions) {
+            await connection.query(
+                `INSERT INTO StudyPlanVersion (plan_id, version_number, amendment_reason, snapshot_json, created_by) VALUES (?, ?, ?, ?, ?)`,
+                [v.plan_id, v.version_number, v.amendment_reason, v.snapshot_json, v.created_by]
+            );
+        }
+        console.log(`✅ Seeded ${initialVersions.length} StudyPlanVersion records with rich multi-version audit history`);
+
         console.log('🎉 Database seeding complete!');
     } catch (err) {
         console.error('❌ Error seeding database:', err);
@@ -248,6 +356,6 @@ export async function seedDatabase() {
     }
 }
 
-if (process.argv[1].endsWith('seedDb.js')) {
+if (process.argv[1] && process.argv[1].endsWith('seedDb.js')) {
     seedDatabase().then(() => process.exit(0));
 }

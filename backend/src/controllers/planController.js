@@ -20,7 +20,7 @@ export async function getAuditLog(req, res) {
                 sp.status AS plan_status
             FROM StudyPlanVersion spv
             LEFT JOIN StudyPlan sp ON spv.plan_id = sp.plan_id
-            LEFT JOIN Student s ON spv.student_id = s.student_id
+            LEFT JOIN Student s ON sp.student_id = s.student_id
             ORDER BY spv.created_at DESC, spv.version_id DESC
             LIMIT 50
         `);

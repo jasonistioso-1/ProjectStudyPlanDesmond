@@ -20,6 +20,8 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
 
   if (!student) return null;
 
+  const isApproved = currentPlan?.status === 'approved';
+
   const years = [
     { level: 1, yearLabel: 'Year 1 – 2026' },
     { level: 2, yearLabel: 'Year 2 – 2027' },
@@ -89,19 +91,32 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
     lines.push(`"Course Code","${courseCode}"`);
     lines.push(`"Course Name","${cleanCourseName}"`);
     lines.push(`"Major Pathway","${majorName}"`);
+    lines.push(`"Plan Status","${String(currentPlan?.status || 'approved').toUpperCase()}"`);
     lines.push(`"Total Credit Load","${planUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP"`);
     lines.push('');
-    lines.push('"Year Level","Teaching Period","Unit Code","Unit Title","Credit Points"');
+    lines.push('"Year Level","Academic Year","Teaching Period","Sequence Order","Unit Code","Unit Title","Credit Points"');
 
-    const sorted = [...planUnits].sort((a, b) => (Number(a.year_level) - Number(b.year_level)) || (Number(a.period_id) - Number(b.period_id)));
+    const sorted = [...planUnits].sort((a, b) => {
+      const yA = Number(a.year_level || 1);
+      const yB = Number(b.year_level || 1);
+      if (yA !== yB) return yA - yB;
+      const pA = Number(a.period_id || 3);
+      const pB = Number(b.period_id || 3);
+      if (pA !== pB) return pA - pB;
+      return Number(a.sequence_order || 1) - Number(b.sequence_order || 1);
+    });
+
     if (sorted.length === 0) {
-      lines.push('"No Units Scheduled","No units selected in this study plan","","","0 CP"');
+      lines.push('"Year 1","2026","Trimester 1","1","","No Units Scheduled","0 CP"');
     } else {
-      sorted.forEach(u => {
+      sorted.forEach((u, idx) => {
         const pName = getPeriodName(u);
         const titleClean = (u.title || u.unit_title || '').replace(/"/g, '""');
         const unitCode = u.code || u.unit_code || '';
-        lines.push(`"Year ${u.year_level || 1}","${pName}","${unitCode}","${titleClean}","${u.credit_points || 3} CP"`);
+        const yLvl = Number(u.year_level || 1);
+        const acadYear = yLvl === 1 ? 2026 : yLvl === 2 ? 2027 : 2028;
+        const seq = u.sequence_order || (idx + 1);
+        lines.push(`"Year ${yLvl}","${acadYear}","${pName}","${seq}","${unitCode}","${titleClean}","${u.credit_points || 3} CP"`);
       });
     }
     return lines;
@@ -144,7 +159,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
             </div>
             <div>
               <h3 className="text-sm font-extrabold font-heading tracking-tight flex items-center gap-2 text-white">
-                Official Academic Study Plan Document
+                {isApproved ? 'Confirmation of Enrolment (CoE) & Approved Study Plan' : 'Official Academic Study Plan Document'}
               </h3>
               <p className="text-[11px] text-slate-400 font-medium">Select a format below to preview before downloading</p>
             </div>
@@ -162,7 +177,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>PDF Document</span>
+              <span>{isApproved ? 'CoE Document (PDF)' : 'PDF Document'}</span>
             </button>
 
             <button
@@ -188,11 +203,24 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
           </button>
         </div>
 
+        {/* Output Restriction Alert for Unapproved Plans (OUT-03) */}
+        {!isApproved && (
+          <div className="no-print mx-6 mt-4 p-3.5 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 rounded-2xl flex items-center gap-3 text-xs text-amber-900 dark:text-amber-200 font-sans shadow-2xs">
+            <ShieldCheck className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <div className="space-y-0.5">
+              <span className="font-bold font-heading uppercase text-[11px] text-amber-800 dark:text-amber-300 block">
+                Official Document Outputs Restricted (Status: {String(currentPlan?.status || 'draft').toUpperCase()})
+              </span>
+              <span>
+                Formal Confirmation of Enrolment (CoE) and CSV exports are strictly restricted until the study plan is officially <strong>Approved</strong> by the Academic Chair.
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* PREVIEW CONTAINER ACCORDING TO ACTIVE FORMAT TAB */}
         <div className="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex-1">
           
-
-
           {/* TAB 1: PDF PRINTABLE PAPER DOCUMENT PREVIEW */}
           {activeTab === 'pdf' && (
             <div className="relative">
@@ -220,7 +248,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
 
                   <div className="text-right">
                     <span className="inline-block bg-slate-900 text-white font-mono text-[10px] font-extrabold px-3 py-1 rounded shadow-2xs tracking-wider uppercase">
-                      OFFICIAL CERTIFIED STUDY PLAN
+                      {isApproved ? 'CONFIRMATION OF ENROLMENT (CoE) - APPROVED' : `STUDY PLAN - ${String(currentPlan?.status || 'DRAFT').toUpperCase()}`}
                     </span>
                     <div className="text-[10px] text-slate-500 font-mono mt-1 font-semibold">
                       Date: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -493,14 +521,21 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
           <div className="flex items-center gap-2">
             <button
               onClick={handleCurrentDownload}
-              disabled={isExporting}
-              className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-md active:scale-95 cursor-pointer font-heading flex items-center gap-1.5 ${
-                activeTab === 'pdf' ? 'bg-red-700 hover:bg-red-600' : 'bg-emerald-600 hover:bg-emerald-500'
+              disabled={isExporting || !isApproved}
+              className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-md active:scale-95 font-heading flex items-center gap-1.5 ${
+                !isApproved
+                  ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed opacity-60'
+                  : activeTab === 'pdf'
+                    ? 'bg-red-700 hover:bg-red-600 cursor-pointer'
+                    : 'bg-emerald-600 hover:bg-emerald-500 cursor-pointer'
               }`}
+              title={!isApproved ? 'Outputs are restricted until the study plan is officially approved by the Academic Chair' : 'Export document'}
             >
               {activeTab === 'pdf' ? <Printer className="w-4 h-4" /> : <Download className="w-4 h-4" />}
               <span>
-                {activeTab === 'pdf' ? 'Print / Download PDF' : 'Download CSV'}
+                {activeTab === 'pdf'
+                  ? (isApproved ? 'Print / Download CoE (PDF)' : 'PDF Restricted (Approval Required)')
+                  : (isApproved ? 'Download Approved Plan (CSV)' : 'CSV Restricted (Approval Required)')}
               </span>
             </button>
             <button
