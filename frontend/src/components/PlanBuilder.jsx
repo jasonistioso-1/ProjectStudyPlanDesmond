@@ -50,7 +50,8 @@ import {
   Wand2,
   Cpu,
   Building2,
-  X
+  X,
+  XCircle
 } from 'lucide-react';
 
 export default function PlanBuilder({
@@ -99,6 +100,8 @@ export default function PlanBuilder({
   const [requestCommentInput, setRequestCommentInput] = useState('');
   const [dragWarningToast, setDragWarningToast] = useState(null);
   const [expandedTrimesters, setExpandedTrimesters] = useState({});
+  const [showDisagreeModal, setShowDisagreeModal] = useState(false);
+  const [disagreeReasonInput, setDisagreeReasonInput] = useState('');
 
   // Student Submit Request Modal State
   const [showSubmitPlanRequestModal, setShowSubmitPlanRequestModal] = useState(false);
@@ -2157,85 +2160,192 @@ export default function PlanBuilder({
         {isPlanDisagreed && (
           <div 
             id="student-feedback-alert-banner"
-            className="bg-gradient-to-r from-amber-50 via-orange-50/50 to-amber-50/30 dark:from-amber-950/80 dark:via-orange-950/60 dark:to-amber-950/40 border-2 border-amber-400 dark:border-amber-600/80 p-4.5 rounded-2xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-sans text-amber-950 dark:text-amber-100 animate-in fade-in slide-in-from-top-2 duration-300"
+            className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-amber-500/15 dark:from-amber-950/70 dark:via-slate-900/90 dark:to-orange-950/50 border-2 border-amber-400 dark:border-amber-500/40 p-5 sm:p-6 rounded-3xl shadow-xl shadow-amber-500/5 dark:shadow-2xl dark:shadow-amber-950/40 font-sans text-amber-950 dark:text-amber-100 animate-in fade-in slide-in-from-top-3 duration-300 backdrop-blur-md"
           >
-            <div className="flex items-start gap-3.5 flex-1 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-300 dark:border-amber-700/60 shadow-2xs mt-0.5">
-                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
-              </div>
-              <div className="space-y-1.5 flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider font-heading text-amber-900 dark:text-amber-200">
-                    Student Requested Changes / Plan Disagreed
-                  </span>
-                  <span className="text-[10px] font-mono bg-amber-200/90 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100 px-2.5 py-0.5 rounded-full font-black border border-amber-300 dark:border-amber-700 shadow-2xs animate-pulse">
-                    Action Required
-                  </span>
-                  {studentDisagreementNotif?.timestamp && (
-                    <span className="text-[11px] text-amber-700/80 dark:text-amber-300/80 font-medium ml-auto">
-                      {studentDisagreementNotif.timestamp}
+            {/* Ambient luxury accent glow in background */}
+            <div className="absolute -right-20 -top-20 w-72 h-72 bg-gradient-to-bl from-amber-500/20 via-orange-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-gradient-to-tr from-amber-600/15 via-orange-400/10 to-transparent rounded-full blur-2xl pointer-events-none" />
+
+            <div className="relative z-10 space-y-4">
+              {/* Top Row: Alert Header Strip */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/80 dark:border-amber-800/60">
+                <div className="flex items-center gap-3">
+                  <div className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30 shrink-0">
+                    <AlertTriangle className="w-5 h-5 text-white" />
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500 ring-2 ring-white dark:ring-slate-900"></span>
                     </span>
-                  )}
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs sm:text-[13px] font-black uppercase tracking-wider font-heading text-amber-900 dark:text-amber-200">
+                        Student Requested Changes / Plan Disagreed
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-mono bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-0.5 rounded-full font-black shadow-xs tracking-wide uppercase">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        Action Required
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-800/80 dark:text-amber-300/80 font-medium mt-0.5">
+                      The student reviewed the recommended study plan and requested structural adjustments before agreeing.
+                    </p>
+                  </div>
                 </div>
 
-                {effectiveRejectionComment ? (
-                  <div className="mt-2 mb-1 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-700/70 rounded-xl p-3 shadow-xs backdrop-blur-xs">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <MessageSquareQuote className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 font-heading">
-                        Student Feedback Note:
-                      </span>
-                      {student?.first_name && (
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
-                          • {student.first_name} {student.last_name} ({student.student_number || student.alias_code})
+                {studentDisagreementNotif?.timestamp && (
+                  <div className="flex items-center gap-1.5 self-start sm:self-center px-3 py-1 rounded-xl bg-amber-100/80 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 text-xs font-mono font-bold border border-amber-200 dark:border-amber-700/60 shadow-2xs shrink-0">
+                    <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>{studentDisagreementNotif.timestamp}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Middle Section: Student Feedback Dialogue Box & Action Suite */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                {/* Left/Main Column: Student Profile & Speech Bubble (8 cols on lg) */}
+                <div className="lg:col-span-8 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-600/50 rounded-2xl p-4 sm:p-5 shadow-xs backdrop-blur-sm flex flex-col justify-between gap-3.5">
+                  {/* Student Identity Strip */}
+                  <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-amber-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-500 text-white font-black text-xs flex items-center justify-center shadow-2xs shrink-0 font-heading">
+                        {student?.first_name ? `${student.first_name[0]}${student.last_name ? student.last_name[0] : ''}` : 'ST'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white font-heading truncate">
+                            {student?.first_name ? `${student.first_name} ${student.last_name}` : 'Enrolled Student'}
+                          </span>
+                          <span className="text-[11px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                            ID: {student?.student_number || student?.alias_code || '31234561'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">
+                          Course: <strong className="text-slate-700 dark:text-slate-300 font-semibold">{student?.course_code || 'PT3-BSIT'}</strong> • Singapore Campus
                         </span>
-                      )}
+                      </div>
                     </div>
-                    <div className="pl-3.5 border-l-2 border-amber-500 dark:border-amber-400 py-0.5">
-                      <p className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-amber-50 font-sans tracking-tight leading-relaxed italic">
-                        “{effectiveRejectionComment}”
+
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/80 text-[10px] font-extrabold text-amber-800 dark:text-amber-300 uppercase tracking-wider font-heading">
+                      <MessageSquareQuote className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                      Student Feedback Note
+                    </span>
+                  </div>
+
+                  {/* Speech Bubble / Quote Content */}
+                  <div className="bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-amber-50/60 dark:from-slate-950/80 dark:via-slate-900/90 dark:to-amber-950/30 border border-amber-200 dark:border-amber-700/50 rounded-xl p-3.5 sm:p-4 shadow-inner relative">
+                    <div className="flex items-start gap-3">
+                      <MessageSquareQuote className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 opacity-90" />
+                      <div className="flex-1 min-w-0">
+                        {effectiveRejectionComment ? (
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-amber-50 font-sans tracking-tight leading-relaxed italic break-words">
+                            “{effectiveRejectionComment}”
+                          </p>
+                        ) : (
+                          <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 italic">
+                            “Student indicated disagreement and requested amendments on the study plan structure.”
+                          </p>
+                        )}
+
+                        {/* Extracted Unit Mention Chip if any unit code is mentioned in comment */}
+                        {(() => {
+                          if (!effectiveRejectionComment) return null;
+                          const matchedUnit = (catalogUnits || []).find(u => 
+                            effectiveRejectionComment.toLowerCase().includes(u.code.toLowerCase())
+                          );
+                          if (!matchedUnit) return null;
+                          return (
+                            <div className="mt-2.5 flex items-center gap-2 pt-2 border-t border-amber-200/70 dark:border-amber-800/40 text-[11px]">
+                              <span className="text-amber-800 dark:text-amber-300 font-extrabold font-heading">Referenced Unit:</span>
+                              <span className="bg-red-700 text-white font-mono font-black px-2 py-0.5 rounded text-[10px] shadow-2xs">
+                                {matchedUnit.code}
+                              </span>
+                              <span className="text-slate-600 dark:text-slate-300 font-medium truncate">
+                                {matchedUnit.title} ({matchedUnit.credit_points || 3} CP)
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Academic Chair Resolution Actions (4 cols on lg) */}
+                {isChair ? (
+                  <div className="lg:col-span-4 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-600/50 rounded-2xl p-4 sm:p-5 shadow-xs backdrop-blur-sm flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-heading">
+                        <Sliders className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        <span>Chair Resolution Suite</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">
+                        Apply adjustments on the study plan canvas, then re-recommend to {student?.first_name || 'student'}.
                       </p>
+                    </div>
+
+                    <div className="space-y-2 pt-1">
+                      {onRecommendPlan && (
+                        <button
+                          type="button"
+                          onClick={() => onRecommendPlan(Array.from(waivedUnits))}
+                          className="w-full px-4 py-2.5 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-700 hover:via-orange-700 hover:to-amber-800 text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 font-heading tracking-wide"
+                          title="Re-recommend updated study plan to student"
+                        >
+                          <Send className="w-3.5 h-3.5 text-white shrink-0" />
+                          <span>Re-Recommend Plan</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-white/80 shrink-0" />
+                        </button>
+                      )}
+
+                      {onAutoGeneratePlan && (
+                        <button
+                          type="button"
+                          onClick={handleOpenAutoGenModal}
+                          className="w-full px-3.5 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-extrabold shadow-2xs flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 font-heading"
+                          title="Auto-fill recommended study plan based on course offerings and prerequisite rules"
+                        >
+                          <Wand2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                          <span>Adjust / Preset Plan</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                    Student indicated disagreement and requested amendments on their recommended plan.
-                  </p>
+                  <div className="lg:col-span-4 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-600/50 rounded-2xl p-4 sm:p-5 shadow-xs backdrop-blur-sm flex flex-col justify-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-200 font-heading">
+                      Request Status: Under Review
+                    </span>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                      Your change request has been delivered to Academic Chair Dr. Aris Thorne. You will be notified when an amended plan is ready for your signature.
+                    </p>
+                  </div>
                 )}
+              </div>
 
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                  <span>Please adjust the teaching period assignments or unit structure based on the student's request, then re-recommend the study plan.</span>
-                </p>
+              {/* Bottom Row: 3-Step Guided Workflow Strip */}
+              <div className="bg-amber-100/60 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/40 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                  <span className="font-bold text-amber-950 dark:text-amber-100 font-heading uppercase tracking-wider text-[10px]">
+                    Amendment Workflow:
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 text-[11px]">
+                  <span className="bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-amber-200/60 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
+                    1. Review Student Note
+                  </span>
+                  <span className="text-amber-500 dark:text-amber-400 font-bold">➔</span>
+                  <span className="bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-amber-200/60 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
+                    2. Adjust Canvas Units
+                  </span>
+                  <span className="text-amber-500 dark:text-amber-400 font-bold">➔</span>
+                  <span className="bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-amber-200/60 dark:border-slate-700 font-bold text-amber-700 dark:text-amber-300">
+                    3. Re-Recommend Plan
+                  </span>
+                </div>
               </div>
             </div>
-
-            {isChair && (
-              <div className="flex items-center gap-2 shrink-0 self-stretch md:self-auto pt-2 md:pt-0 border-t md:border-t-0 border-amber-200 dark:border-amber-800/60">
-                {onAutoGeneratePlan && (
-                  <button
-                    type="button"
-                    onClick={handleOpenAutoGenModal}
-                    className="px-3.5 py-2 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 border border-amber-300 dark:border-amber-700 rounded-xl text-xs font-bold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
-                    title="Auto-fill recommended study plan based on course offerings and prerequisite rules"
-                  >
-                    <Wand2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                    <span>Adjust / Preset Plan</span>
-                  </button>
-                )}
-                {onRecommendPlan && (
-                  <button
-                    type="button"
-                    onClick={() => onRecommendPlan(Array.from(waivedUnits))}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white rounded-xl text-xs font-extrabold shadow-xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
-                    title="Re-recommend updated study plan to student"
-                  >
-                    <Send className="w-3.5 h-3.5 text-white shrink-0" />
-                    <span>Re-Recommend Plan</span>
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         )}
 
@@ -2888,12 +2998,7 @@ export default function PlanBuilder({
                         {planStatus === 'recommended' && onRejectPlan && (
                           <button
                             type="button"
-                            onClick={() => {
-                              const reason = prompt('Please enter your feedback or reason for requesting changes from the Academic Chair:');
-                              if (reason !== null && reason.trim()) {
-                                onRejectPlan(reason.trim());
-                              }
-                            }}
+                            onClick={() => setShowDisagreeModal(true)}
                             className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 rounded-xl font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 font-sans"
                             title="Disagree with proposed study plan and request amendments"
                           >
@@ -3046,6 +3151,97 @@ export default function PlanBuilder({
             </button>
           </div>
         )}
+        {/* STUDENT DISAGREEMENT / REQUEST CHANGES MODAL */}
+        {showDisagreeModal && (
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-[999] animate-in fade-in duration-200 font-sans">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold shadow-2xs border border-rose-200/60 dark:border-rose-900/60">
+                    <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
+                      Request Study Plan Changes
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                      Provide feedback or amendment requests to Academic Chair Dr. Aris Thorne.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDisagreeModal(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white flex items-center justify-center font-bold cursor-pointer transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-200 font-heading">
+                  Detail your requested changes or feedback:
+                </label>
+                <textarea
+                  rows={3}
+                  value={disagreeReasonInput}
+                  onChange={(e) => setDisagreeReasonInput(e.target.value)}
+                  placeholder="e.g. Please swap ICT202 to Trimester 3 due to timetable clash, or reduce load to 9 CP..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-inner"
+                />
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <span className="text-[10px] text-slate-400 font-semibold block w-full">Quick suggestions:</span>
+                  {[
+                    "Swap subject to next trimester",
+                    "Reduce CP credit load for this year",
+                    "Timetable / schedule clash conflict",
+                    "Prefer online delivery format",
+                    "Prerequisite waiver clarification"
+                  ].map((sugg) => (
+                    <button
+                      key={sugg}
+                      type="button"
+                      onClick={() => setDisagreeReasonInput(sugg)}
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/60 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-semibold border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                    >
+                      + {sugg}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowDisagreeModal(false)}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cleanComment = disagreeReasonInput.trim();
+                    if (!cleanComment) {
+                      alert('Please enter your feedback or reason for requesting changes.');
+                      return;
+                    }
+                    if (onRejectPlan) {
+                      onRejectPlan(cleanComment);
+                    }
+                    setShowDisagreeModal(false);
+                    setDisagreeReasonInput('');
+                  }}
+                  className="px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-700 hover:to-red-800 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-2 cursor-pointer transition-all active:scale-95 font-heading uppercase tracking-wider"
+                >
+                  <Send className="w-3.5 h-3.5 text-white" />
+                  <span>Submit Change Request</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* AUTO SYSTEM GENERATION SCOPE SELECTION MODAL */}
         {showAutoGenModal && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[999] flex items-center justify-center p-4 font-sans animate-in fade-in duration-150">
