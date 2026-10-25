@@ -82,7 +82,10 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
       (p.student_name && p.student_name.toLowerCase().includes(q)) ||
       (p.student_number && p.student_number.toLowerCase().includes(q)) ||
       (p.course_code && p.course_code.toLowerCase().includes(q)) ||
-      (p.title && p.title.toLowerCase().includes(q))
+      (p.title && p.title.toLowerCase().includes(q)) ||
+      (p.status && p.status.toLowerCase().includes(q)) ||
+      (p.rejectionComment && p.rejectionComment.toLowerCase().includes(q)) ||
+      (p.rejection_comment && p.rejection_comment.toLowerCase().includes(q))
     );
   });
 
@@ -113,6 +116,10 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
           </span>
         );
       case 'rejected':
+      case 'change_requested':
+      case 'changes_requested':
+      case 'changes_plan':
+      case 'disagreed':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-600 dark:bg-amber-600 text-white border border-amber-700 shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
