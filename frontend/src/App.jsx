@@ -212,7 +212,16 @@ export default function App() {
         const u = JSON.parse(savedUser);
         const sId = Number(u.student_id);
         if (sId && mockClientStudentPlans[sId]) {
-          return mockClientStudentPlans[sId].plan;
+          const raw = localStorage.getItem('spr_student_plans_cache');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed[sId] && parsed[sId].plan) {
+              return parsed[sId].plan;
+            }
+          }
+          if (mockClientStudentPlans[sId]) {
+            return mockClientStudentPlans[sId].plan;
+          }
         }
       }
     } catch (e) {}
@@ -224,9 +233,17 @@ export default function App() {
       if (savedUser) {
         const u = JSON.parse(savedUser);
         const sId = Number(u.student_id);
-        if (sId === 3 || sId === 4) return []; // Both Michael Chang & Emily Watson start clean (0 CP)
-        if (sId && mockClientStudentPlans[sId]) {
-          return mockClientStudentPlans[sId].units;
+        if (sId) {
+          const raw = localStorage.getItem('spr_student_plans_cache');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed[sId] && Array.isArray(parsed[sId].units)) {
+              return parsed[sId].units;
+            }
+          }
+          if (mockClientStudentPlans[sId] && Array.isArray(mockClientStudentPlans[sId].units)) {
+            return mockClientStudentPlans[sId].units;
+          }
         }
       }
     } catch (e) {}
@@ -253,18 +270,34 @@ export default function App() {
           parsed['2'] = { plan: mockClientStudentPlans[2].plan, units: mockClientStudentPlans[2].units };
         }
 
-        // Ensure New Students (Michael Chang [3] & Emily Watson [4]) ALWAYS start fresh from 0 CP draft
-        parsed[3] = {
-          plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-10-24 11:02', version_number: 1 },
-          units: []
-        };
-        parsed['3'] = parsed[3];
+        // For New Students (Michael Chang [3] & Emily Watson [4]), preserve plan if active (recommended/requested/agreed)
+        const isSt3Active = parsed[3]?.plan?.status === 'recommended' || 
+                            parsed[3]?.plan?.status === 'request_submitted' || 
+                            parsed[3]?.plan?.status === 'agreed' || 
+                            parsed[3]?.plan?.status === 'approved' || 
+                            parsed[3]?.plan?.status === 'rejected' ||
+                            (parsed[3]?.units && parsed[3].units.length > 0 && parsed[3].plan?.status !== 'draft');
+        if (!parsed[3] || (!isSt3Active && (parsed[3].plan?.total_credit_points === 72 || !parsed[3].plan))) {
+          parsed[3] = {
+            plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-10-24 11:02', version_number: 1 },
+            units: []
+          };
+          parsed['3'] = parsed[3];
+        }
 
-        parsed[4] = {
-          plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-09-13 14:10', version_number: 1 },
-          units: []
-        };
-        parsed['4'] = parsed[4];
+        const isSt4Active = parsed[4]?.plan?.status === 'recommended' || 
+                            parsed[4]?.plan?.status === 'request_submitted' || 
+                            parsed[4]?.plan?.status === 'agreed' || 
+                            parsed[4]?.plan?.status === 'approved' || 
+                            parsed[4]?.plan?.status === 'rejected' ||
+                            (parsed[4]?.units && parsed[4].units.length > 0 && parsed[4].plan?.status !== 'draft');
+        if (!parsed[4] || (!isSt4Active && (parsed[4].plan?.total_credit_points === 72 || !parsed[4].plan))) {
+          parsed[4] = {
+            plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-09-13 14:10', version_number: 1 },
+            units: []
+          };
+          parsed['4'] = parsed[4];
+        }
 
         try {
           localStorage.setItem('spr_student_plans_cache', JSON.stringify(parsed));
@@ -294,14 +327,14 @@ export default function App() {
     } catch (e) {}
   }, [allStudentPlansMap]);
 
-  // On application mount, ensure clean state for new students (Michael Chang [3] & Emily Watson [4])
+  // On application mount, sanitize legacy 72 CP draft bugs while keeping active recommendations intact
   useEffect(() => {
     try {
       const raw = localStorage.getItem('spr_student_plans_cache');
       if (raw) {
         const cacheMap = JSON.parse(raw);
         let changed = false;
-        if (cacheMap[3]?.units?.length > 0 || cacheMap[3]?.plan?.total_credit_points > 0 || cacheMap[3]?.plan?.status !== 'draft') {
+        if (cacheMap[3]?.plan?.total_credit_points === 72 && cacheMap[3]?.plan?.status === 'draft') {
           cacheMap[3] = {
             plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-10-24 11:02', version_number: 1 },
             units: []
@@ -312,23 +345,6 @@ export default function App() {
         if (changed) {
           localStorage.setItem('spr_student_plans_cache', JSON.stringify(cacheMap));
           setAllStudentPlansMap(cacheMap);
-        }
-      }
-      // If currently logged in as Michael Chang, ensure currentPlan is 0 CP draft
-      const savedUser = localStorage.getItem('spr_logged_user');
-      if (savedUser) {
-        const u = JSON.parse(savedUser);
-        if (Number(u.student_id) === 3) {
-          setCurrentPlan({
-            plan_id: 3,
-            student_id: 3,
-            title: 'PT3-BSIT Business Info Systems Plan 2026',
-            status: 'draft',
-            total_credit_points: 0,
-            updated_at: '2026-10-24 11:02',
-            version_number: 1
-          });
-          setPlanUnits([]);
         }
       }
     } catch (e) {}
@@ -734,6 +750,21 @@ export default function App() {
         manuallySubmittedInSession: true
       };
       setCurrentPlan(updatedPlan);
+      setAllStudentPlansMap(prev => {
+        const nextMap = {
+          ...prev,
+          [selectedStudent.student_id]: {
+            plan: updatedPlan,
+            units: planUnits
+          },
+          [String(selectedStudent.student_id)]: {
+            plan: updatedPlan,
+            units: planUnits
+          }
+        };
+        try { localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap)); } catch (e) {}
+        return nextMap;
+      });
 
       updatePlanRecordAndLogAudit(
         'request_submitted',
@@ -1433,26 +1464,6 @@ export default function App() {
     const isNewStudent = Number(student.student_id) === 3 || student.student_number === '31234563' ||
                          Number(student.student_id) === 4 || student.student_number === '31234564';
 
-    // Student 3 (Michael Chang) must ALWAYS start from 0 CP clean draft unless specifically instructed by in-session planOptions
-    if (Number(student.student_id) === 3 && (!planOptions && (cached?.plan?.total_credit_points === 72 || cached?.plan?.status === 'recommended' || !cached?.plan || (cached?.units && cached.units.length > 0)))) {
-      cached = {
-        plan: {
-          plan_id: 3,
-          student_id: 3,
-          title: 'PT3-BSIT Business Info Systems Plan 2026',
-          status: 'draft',
-          total_credit_points: 0,
-          updated_at: '2026-10-24 11:02',
-          version_number: 1
-        },
-        units: []
-      };
-      setAllStudentPlansMap(prev => {
-        const next = { ...prev, 3: cached, '3': cached };
-        try { localStorage.setItem('spr_student_plans_cache', JSON.stringify(next)); } catch (e) {}
-        return next;
-      });
-    }
 
     const isNewStudentPlanActive = cached?.plan?.manuallySubmittedInSession || 
                                   cached?.plan?.status === 'recommended' || 
