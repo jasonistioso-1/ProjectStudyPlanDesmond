@@ -57,6 +57,7 @@ export async function getPlanByStudent(req, res) {
         const plan = planRows[0];
         if (plan) {
             plan.rejectionComment = plan.rejection_comment || null;
+            plan.rejection_comment = plan.rejection_comment || null;
         }
 
         // Fetch plan units
@@ -237,9 +238,15 @@ export async function rejectPlan(req, res) {
         const { rejection_comment } = req.body;
 
         await pool.query(
-            `UPDATE StudyPlan SET status = 'rejected', rejection_comment = ?, updated_at = NOW() WHERE plan_id = ?`,
-            [rejection_comment || null, planId]
+            `UPDATE StudyPlan SET status = 'rejected', rejection_comment = ?, updated_at = NOW() WHERE plan_id = ? OR student_id = ?`,
+            [rejection_comment || null, planId, planId]
         );
+
+        if (mockStudentPlans[Number(planId)]) {
+            mockStudentPlans[Number(planId)].plan.status = 'rejected';
+            mockStudentPlans[Number(planId)].plan.rejectionComment = rejection_comment;
+            mockStudentPlans[Number(planId)].plan.rejection_comment = rejection_comment;
+        }
 
         res.json({
             message: 'Student change request/disagreement recorded successfully',

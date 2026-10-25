@@ -636,19 +636,31 @@ export default function App() {
     setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
 
     const targetYr = notif.targetYear || 1;
+    const isDisagreementNotif = notif.title?.includes('Disagreed') || 
+                                notif.title?.includes('Change Requested') || 
+                                notif.title?.includes('Rejected') ||
+                                notif.actionLabel?.includes('Review Student Feedback');
+
+    const extractedComment = notif.rejectionComment || 
+                             notif.comment || 
+                             (notif.message?.match(/"([^"]+)"/)?.[1]) || 
+                             null;
+
     const planOptions = {
       targetYearLevel: targetYr,
-      forceScrollTrigger: Date.now()
+      forceScrollTrigger: Date.now(),
+      rejectionComment: isDisagreementNotif ? (extractedComment || 'Student requested changes') : undefined,
+      status: isDisagreementNotif ? 'rejected' : undefined
     };
 
     let targetStudentObj = null;
     if (notif.studentId) {
-      targetStudentObj = studentsList.find(s => s.student_id === notif.studentId);
+      targetStudentObj = studentsList.find(s => Number(s.student_id) === Number(notif.studentId));
       if (targetStudentObj) {
         if (currentUser?.role === 'chair') {
           handleSelectStudent(targetStudentObj, 'chair', planOptions);
         } else if (currentUser?.role === 'student') {
-          const myProfile = studentsList.find(s => s.student_id === currentUser.student_id) || targetStudentObj;
+          const myProfile = studentsList.find(s => Number(s.student_id) === Number(currentUser.student_id)) || targetStudentObj;
           handleSelectStudent(myProfile, 'student', planOptions);
         } else {
           handleSelectStudent(targetStudentObj, notif.role === 'chair' ? 'chair' : 'student', planOptions);
@@ -663,7 +675,7 @@ export default function App() {
       const stName = targetStudentObj ? `${targetStudentObj.first_name} ${targetStudentObj.last_name}` : 'Student';
       const stNum = targetStudentObj?.student_number ? ` (${targetStudentObj.student_number})` : '';
       updatePlanRecordAndLogAudit(
-        currentPlan?.status || 'draft',
+        isDisagreementNotif ? 'rejected' : (currentPlan?.status || 'draft'),
         `Academic Chair reviewed student request notification for ${stName}${stNum}: "${notif.title} - ${notif.message}"`,
         'Academic Chair'
       );
@@ -681,8 +693,17 @@ export default function App() {
       });
     }
 
-    // Auto-scroll directly down past student header banner & workflow guide to Year 1 / 2 / 3 grid block
-    const scrollToTargetYear = () => {
+    // Auto-scroll directly down to student feedback alert banner if disagreement, or target year block
+    const scrollToTargetSection = () => {
+      if (isDisagreementNotif) {
+        const feedbackBanner = document.getElementById('student-feedback-alert-banner');
+        if (feedbackBanner) {
+          const yOffset = -90;
+          const y = feedbackBanner.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+          return;
+        }
+      }
       const yearBlock = document.getElementById(`year-block-${targetYr}`) || document.getElementById('study-plan-years-section') || document.getElementById('year-grid-canvas');
       if (yearBlock) {
         const yOffset = -85;
@@ -691,9 +712,9 @@ export default function App() {
       }
     };
 
-    setTimeout(scrollToTargetYear, 100);
-    setTimeout(scrollToTargetYear, 350);
-    setTimeout(scrollToTargetYear, 700);
+    setTimeout(scrollToTargetSection, 100);
+    setTimeout(scrollToTargetSection, 350);
+    setTimeout(scrollToTargetSection, 700);
   };
 
   const handleStudentSubmitPlanRequest = ({ year = 2026, periodIds = [3, 4, 5], layoutType = 'trimester', comment = '' }) => {
@@ -1449,23 +1470,44 @@ export default function App() {
     showToast(`Loaded profile for ${student.first_name} ${student.last_name}${categoryTag}`);
 
     // 2. If student ALREADY has a working draft in memory or localStorage, load it directly to prevent wiping data!
-    let cached = allStudentPlansMap[student.student_id];
+    let cached = allStudentPlansMap[student.student_id] || allStudentPlansMap[Number(student.student_id)] || allStudentPlansMap[String(student.student_id)];
     if (!cached) {
       try {
         const saved = localStorage.getItem('spr_student_plans_cache');
         if (saved) {
           const parsed = JSON.parse(saved);
-          cached = parsed[student.student_id];
+          cached = parsed[student.student_id] || parsed[Number(student.student_id)] || parsed[String(student.student_id)];
         }
       } catch (e) {}
     }
+
+    // Check if there is an active disagreement / revision request from notifications
+    const disagreementNotif = (notifications || []).find(n => 
+      (Number(n.studentId) === Number(student.student_id) || String(n.studentId) === String(student.student_id)) &&
+      (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected'))
+    );
+    const notifComment = disagreementNotif?.rejectionComment || 
+                         disagreementNotif?.comment || 
+                         (disagreementNotif?.message?.match(/"([^"]+)"/)?.[1]) || 
+                         null;
+
+    const effectiveRejectionComment = planOptions?.rejectionComment || 
+                                      notifComment || 
+                                      cached?.plan?.rejectionComment || 
+                                      cached?.plan?.rejection_comment || 
+                                      null;
+
+    const isStudentDisagreed = Boolean(effectiveRejectionComment) || 
+                               Boolean(disagreementNotif) || 
+                               planOptions?.status === 'rejected' || 
+                               cached?.plan?.status === 'rejected';
 
     // Special rule for New Students (Michael Chang: 3, Emily Watson: 4)
     const isNewStudent = Number(student.student_id) === 3 || student.student_number === '31234563' ||
                          Number(student.student_id) === 4 || student.student_number === '31234564';
 
-
-    const isNewStudentPlanActive = cached?.plan?.manuallySubmittedInSession || 
+    const isNewStudentPlanActive = isStudentDisagreed ||
+                                  cached?.plan?.manuallySubmittedInSession || 
                                   cached?.plan?.status === 'recommended' || 
                                   cached?.plan?.status === 'agreed' || 
                                   cached?.plan?.status === 'approved' || 
@@ -1499,11 +1541,25 @@ export default function App() {
       }
     }
 
+    // If student has a disagreement on recommended plan but units were empty in cache, restore recommended units from mockClientStudentPlans
+    if (isStudentDisagreed && (!cached || !cached.units || cached.units.length === 0)) {
+      const fallback = mockClientStudentPlans[Number(student.student_id)];
+      if (fallback && fallback.units && fallback.units.length > 0) {
+        cached = {
+          plan: { ...(cached?.plan || fallback.plan), status: 'rejected', rejectionComment: effectiveRejectionComment },
+          units: fallback.units
+        };
+      }
+    }
+
     if (cached && (cached.units?.length > 0 || isNewStudent)) {
       const planToSet = {
         ...cached.plan,
         targetYearLevel: planOptions?.targetYearLevel || cached.plan?.targetYearLevel || 1,
-        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now()
+        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now(),
+        status: isStudentDisagreed ? 'rejected' : (cached.plan?.status || 'draft'),
+        rejectionComment: effectiveRejectionComment,
+        rejection_comment: effectiveRejectionComment
       };
       setCurrentPlan(planToSet);
       setPlanUnits(cached.units || []);
@@ -1524,12 +1580,17 @@ export default function App() {
       const initialPlan = (planData && planData.plan) ? {
         ...planData.plan,
         targetYearLevel: planOptions?.targetYearLevel || planData.plan?.targetYearLevel || 1,
-        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now()
+        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now(),
+        status: isStudentDisagreed ? 'rejected' : (planData.plan?.status || 'draft'),
+        rejectionComment: effectiveRejectionComment || planData.plan?.rejectionComment,
+        rejection_comment: effectiveRejectionComment || planData.plan?.rejection_comment
       } : {
         plan_id: student.student_id,
         student_id: student.student_id,
         title: `${student.course_code || 'PT3-BSIT'} Study Plan`,
-        status: 'draft',
+        status: isStudentDisagreed ? 'rejected' : 'draft',
+        rejectionComment: effectiveRejectionComment,
+        rejection_comment: effectiveRejectionComment,
         total_credit_points: 0,
         targetYearLevel: planOptions?.targetYearLevel || 1,
         forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now()
@@ -1816,10 +1877,12 @@ export default function App() {
   // Student Reject Plan / Request Changes
   const handleRejectPlan = async (rejectionComment) => {
     if (!selectedStudent) return;
+    const cleanComment = typeof rejectionComment === 'string' ? rejectionComment.trim() : 'Changes requested by student';
     const updatedPlan = {
       ...currentPlan,
       status: 'rejected',
-      rejectionComment,
+      rejectionComment: cleanComment,
+      rejection_comment: cleanComment,
       manuallySubmittedInSession: true,
       updated_at: formatCurrentDateTime(),
       version_number: (currentPlan?.version_number || 1) + 1
@@ -1828,6 +1891,14 @@ export default function App() {
     const nextMap = {
       ...allStudentPlansMap,
       [selectedStudent.student_id]: {
+        plan: updatedPlan,
+        units: planUnits
+      },
+      [String(selectedStudent.student_id)]: {
+        plan: updatedPlan,
+        units: planUnits
+      },
+      [Number(selectedStudent.student_id)]: {
         plan: updatedPlan,
         units: planUnits
       }
@@ -1841,9 +1912,24 @@ export default function App() {
       mockClientStudentPlans[Number(selectedStudent.student_id)].plan = updatedPlan;
       mockClientStudentPlans[Number(selectedStudent.student_id)].units = planUnits;
     }
+
+    // Update storedPlansList so repository table has rejected status & feedback comment
+    setStoredPlansList(prev => prev.map(p =>
+      String(p.student_id) === String(selectedStudent.student_id)
+        ? {
+            ...p,
+            status: 'rejected',
+            rejectionComment: cleanComment,
+            rejection_comment: cleanComment,
+            updated_at: updatedPlan.updated_at,
+            version_number: updatedPlan.version_number
+          }
+        : p
+    ));
+
     updatePlanRecordAndLogAudit(
       'rejected',
-      `Student requested changes / rejected study plan with comment: "${rejectionComment}"`,
+      `Student requested changes / rejected study plan with comment: "${cleanComment}"`,
       `Student: ${selectedStudent.first_name} ${selectedStudent.last_name}`
     );
 
@@ -1852,8 +1938,10 @@ export default function App() {
       id: `n-${Date.now()}`,
       role: 'chair',
       studentId: selectedStudent.student_id,
+      rejectionComment: cleanComment,
+      comment: cleanComment,
       title: 'Study Plan Disagreed / Change Requested',
-      message: `${selectedStudent.first_name} ${selectedStudent.last_name} requested amendments on their recommended plan: "${rejectionComment}"`,
+      message: `${selectedStudent.first_name} ${selectedStudent.last_name} requested amendments on their recommended plan: "${cleanComment}"`,
       timestamp: formatNotificationTimestamp(),
       createdTimeMs: Date.now(),
       read: false,
@@ -1866,7 +1954,14 @@ export default function App() {
 
     try {
       const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
-      await rejectPlan(planId, rejectionComment);
+      await rejectPlan(planId, cleanComment);
+      saveStudyPlan({
+        student_id: selectedStudent.student_id,
+        title: `${selectedStudent.course_code || 'PT3-BSIT'} Study Plan`,
+        status: 'rejected',
+        units: planUnits,
+        created_by: `Student: ${selectedStudent.first_name} ${selectedStudent.last_name}`
+      }).catch(err => console.warn('Background save on reject error:', err));
     } catch (err) {
       console.warn('Backend rejectPlan error:', err);
     }
@@ -2086,6 +2181,7 @@ export default function App() {
               onStudentSubmitPlanRequest={handleStudentSubmitPlanRequest}
               onAutoGeneratePlan={handleAutoGeneratePlan}
               onWaiverChange={handleWaiverChange}
+              notifications={notifications}
             />
           )}
 

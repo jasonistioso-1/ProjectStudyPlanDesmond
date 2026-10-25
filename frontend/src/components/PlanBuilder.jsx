@@ -80,7 +80,8 @@ export default function PlanBuilder({
   onRemoveSemesterRequest,
   onStudentSubmitPlanRequest,
   onAutoGeneratePlan,
-  onWaiverChange
+  onWaiverChange,
+  notifications = []
 }) {
   const isChair = activeRole === 'chair';
   const [unitFilter, setUnitFilter] = useState('');
@@ -108,6 +109,27 @@ export default function PlanBuilder({
   // Active Plan Status and Lock Check
   const planStatus = currentPlan ? currentPlan.status : 'draft';
   const isPlanLocked = planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved';
+
+  // Disagreement / Rejection Feedback detection from currentPlan or notifications
+  const studentDisagreementNotif = (notifications || []).find(n =>
+    (Number(n.studentId) === Number(student?.student_id) || String(n.studentId) === String(student?.student_id)) &&
+    (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected'))
+  );
+
+  const notifFeedbackComment = studentDisagreementNotif?.rejectionComment || 
+                               studentDisagreementNotif?.comment || 
+                               (studentDisagreementNotif?.message?.match(/"([^"]+)"/)?.[1]) || 
+                               null;
+
+  const effectiveRejectionComment = currentPlan?.rejectionComment || 
+                                    currentPlan?.rejection_comment || 
+                                    notifFeedbackComment || 
+                                    null;
+
+  const isPlanDisagreed = planStatus === 'rejected' || 
+                          currentPlan?.status === 'rejected' || 
+                          Boolean(effectiveRejectionComment) || 
+                          Boolean(studentDisagreementNotif);
 
   // Academic Chair Waiver State (VAL-04 / M05:R422)
   const [waivedUnits, setWaivedUnits] = useState(() => new Set(currentPlan?.waivedUnits || []));
@@ -2009,6 +2031,7 @@ export default function PlanBuilder({
 
                 <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                   {planStatus === 'draft' && 'Structure units on the canvas and click Recommend to Student at the bottom when ready.'}
+                  {planStatus === 'rejected' && 'Student disagreed with the recommended plan and requested amendments. Please review the student feedback note, adjust units, and re-recommend.'}
                   {planStatus === 'recommended' && 'Plan recommended to student & locked from canvas edits. To modify units, click Retrieve & Amend in Stored Repository.'}
                   {planStatus === 'agreed' && 'Student digital sign-off complete. Click Final Approve below or Retrieve & Amend in Repository to edit.'}
                   {planStatus === 'approved' && 'Official approved plan archived & locked. To create a new draft version, click Retrieve & Amend in Stored Repository.'}
@@ -2129,51 +2152,88 @@ export default function PlanBuilder({
         )}
 
         {/* STUDENT REJECTION / CHANGE REQUEST ALERT BANNER */}
-        {(planStatus === 'rejected' || currentPlan?.rejectionComment) && (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50/40 dark:from-amber-950/70 dark:to-orange-950/40 border-2 border-amber-400 dark:border-amber-600/80 p-4.5 rounded-2xl shadow-sm flex items-start gap-3.5 font-sans text-amber-950 dark:text-amber-100">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-300 dark:border-amber-700/60 shadow-2xs mt-0.5">
-              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
-            </div>
-            <div className="space-y-1.5 flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-wider font-heading text-amber-900 dark:text-amber-200">
-                  Student Requested Changes / Plan Disagreed
-                </span>
-                <span className="text-[10px] font-mono bg-amber-200/90 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100 px-2.5 py-0.5 rounded-full font-black border border-amber-300 dark:border-amber-700 shadow-2xs">
-                  Action Required
-                </span>
+        {isPlanDisagreed && (
+          <div 
+            id="student-feedback-alert-banner"
+            className="bg-gradient-to-r from-amber-50 via-orange-50/50 to-amber-50/30 dark:from-amber-950/80 dark:via-orange-950/60 dark:to-amber-950/40 border-2 border-amber-400 dark:border-amber-600/80 p-4.5 rounded-2xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-sans text-amber-950 dark:text-amber-100 animate-in fade-in slide-in-from-top-2 duration-300"
+          >
+            <div className="flex items-start gap-3.5 flex-1 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-300 dark:border-amber-700/60 shadow-2xs mt-0.5">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
               </div>
-
-              {currentPlan?.rejectionComment ? (
-                <div className="mt-2 mb-1 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-700/70 rounded-xl p-3 shadow-xs backdrop-blur-xs">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <MessageSquareQuote className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                    <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 font-heading">
-                      Student Feedback Note:
+              <div className="space-y-1.5 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider font-heading text-amber-900 dark:text-amber-200">
+                    Student Requested Changes / Plan Disagreed
+                  </span>
+                  <span className="text-[10px] font-mono bg-amber-200/90 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100 px-2.5 py-0.5 rounded-full font-black border border-amber-300 dark:border-amber-700 shadow-2xs animate-pulse">
+                    Action Required
+                  </span>
+                  {studentDisagreementNotif?.timestamp && (
+                    <span className="text-[11px] text-amber-700/80 dark:text-amber-300/80 font-medium ml-auto">
+                      {studentDisagreementNotif.timestamp}
                     </span>
-                    {student?.first_name && (
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
-                        • {student.first_name} {student.last_name} ({student.student_number || student.alias_code})
-                      </span>
-                    )}
-                  </div>
-                  <div className="pl-3.5 border-l-2 border-amber-500 dark:border-amber-400 py-0.5">
-                    <p className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-amber-50 font-sans tracking-tight leading-relaxed italic">
-                      “{currentPlan.rejectionComment}”
-                    </p>
-                  </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  Student indicated disagreement and requested amendments on their recommended plan.
-                </p>
-              )}
 
-              <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                <span>Please adjust the teaching period assignments or unit structure based on the student's request, then re-recommend the study plan.</span>
-              </p>
+                {effectiveRejectionComment ? (
+                  <div className="mt-2 mb-1 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-700/70 rounded-xl p-3 shadow-xs backdrop-blur-xs">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <MessageSquareQuote className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 font-heading">
+                        Student Feedback Note:
+                      </span>
+                      {student?.first_name && (
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                          • {student.first_name} {student.last_name} ({student.student_number || student.alias_code})
+                        </span>
+                      )}
+                    </div>
+                    <div className="pl-3.5 border-l-2 border-amber-500 dark:border-amber-400 py-0.5">
+                      <p className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-amber-50 font-sans tracking-tight leading-relaxed italic">
+                        “{effectiveRejectionComment}”
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    Student indicated disagreement and requested amendments on their recommended plan.
+                  </p>
+                )}
+
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                  <span>Please adjust the teaching period assignments or unit structure based on the student's request, then re-recommend the study plan.</span>
+                </p>
+              </div>
             </div>
+
+            {isChair && (
+              <div className="flex items-center gap-2 shrink-0 self-stretch md:self-auto pt-2 md:pt-0 border-t md:border-t-0 border-amber-200 dark:border-amber-800/60">
+                {onAutoGeneratePlan && (
+                  <button
+                    type="button"
+                    onClick={handleOpenAutoGenModal}
+                    className="px-3.5 py-2 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 border border-amber-300 dark:border-amber-700 rounded-xl text-xs font-bold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    title="Auto-fill recommended study plan based on course offerings and prerequisite rules"
+                  >
+                    <Wand2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span>Adjust / Preset Plan</span>
+                  </button>
+                )}
+                {onRecommendPlan && (
+                  <button
+                    type="button"
+                    onClick={() => onRecommendPlan(Array.from(waivedUnits))}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white rounded-xl text-xs font-extrabold shadow-xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    title="Re-recommend updated study plan to student"
+                  >
+                    <Send className="w-3.5 h-3.5 text-white shrink-0" />
+                    <span>Re-Recommend Plan</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
