@@ -45,9 +45,9 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
       alias_code: 'BIS1',
       course_code: 'PT3-BSIT-BIS03',
       title: 'PT3-BSIT Business Info Systems Plan',
-      status: 'recommended',
+      status: 'draft',
       version_number: 1,
-      total_cp: 72,
+      total_cp: 0,
       created_by: 'Academic Chair',
       updated_at: '2026-10-24 11:02',
       location: 'Singapore Campus'

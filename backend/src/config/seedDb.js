@@ -209,34 +209,9 @@ export async function seedDatabase() {
             {
                 student_id: 3,
                 title: 'PT3-BSIT Business Info Systems Plan 2026',
-                status: 'recommended',
-                total_credit_points: 72,
-                units: [
-                    { code: 'ICT100', year_level: 1, period_id: 3, sequence_order: 1 },
-                    { code: 'ICT158', year_level: 1, period_id: 3, sequence_order: 2 },
-                    { code: 'ICT159', year_level: 1, period_id: 3, sequence_order: 3 },
-                    { code: 'MAS162', year_level: 1, period_id: 3, sequence_order: 4 },
-                    { code: 'ICT167', year_level: 1, period_id: 4, sequence_order: 1 },
-                    { code: 'ICT169', year_level: 1, period_id: 4, sequence_order: 2 },
-                    { code: 'ICT145', year_level: 1, period_id: 4, sequence_order: 3 },
-                    { code: 'MAS164', year_level: 1, period_id: 4, sequence_order: 4 },
-                    { code: 'ICT170', year_level: 1, period_id: 5, sequence_order: 1 },
-                    { code: 'ICT284', year_level: 1, period_id: 5, sequence_order: 2 },
-                    { code: 'ICT285', year_level: 1, period_id: 5, sequence_order: 3 },
-                    { code: 'ICT201', year_level: 1, period_id: 5, sequence_order: 4 },
-                    { code: 'ICT292', year_level: 2, period_id: 3, sequence_order: 1 },
-                    { code: 'BSC203', year_level: 2, period_id: 3, sequence_order: 2 },
-                    { code: 'MAS183', year_level: 2, period_id: 3, sequence_order: 3 },
-                    { code: 'ICT202', year_level: 2, period_id: 3, sequence_order: 4 },
-                    { code: 'ICT301', year_level: 2, period_id: 4, sequence_order: 1 },
-                    { code: 'ICT283', year_level: 2, period_id: 4, sequence_order: 2 },
-                    { code: 'ICT305', year_level: 2, period_id: 4, sequence_order: 3 },
-                    { code: 'ICT393', year_level: 2, period_id: 4, sequence_order: 4 },
-                    { code: 'ICT302', year_level: 2, period_id: 5, sequence_order: 1 },
-                    { code: 'ICT373', year_level: 2, period_id: 5, sequence_order: 2 },
-                    { code: 'ICT374', year_level: 2, period_id: 5, sequence_order: 3 },
-                    { code: 'ICT394', year_level: 2, period_id: 5, sequence_order: 4 }
-                ]
+                status: 'draft',
+                total_credit_points: 0,
+                units: []
             },
             {
                 student_id: 4,
@@ -320,16 +295,9 @@ export async function seedDatabase() {
             {
                 plan_id: 3,
                 version_number: 1,
-                amendment_reason: 'Student request submitted for Business Information Systems curriculum',
-                created_by: 'Student: Michael Chang',
-                snapshot_json: JSON.stringify({ plan_id: 3, student_id: 3, status: 'request_submitted', total_cp: 0 })
-            },
-            {
-                plan_id: 3,
-                version_number: 2,
-                amendment_reason: 'Academic Chair recommended 72 CP Study Plan for Business Information Systems for student review & sign-off',
+                amendment_reason: 'Initial study plan draft record created for new student onboarding',
                 created_by: 'Academic Chair',
-                snapshot_json: JSON.stringify({ plan_id: 3, student_id: 3, status: 'recommended', total_cp: 72 })
+                snapshot_json: JSON.stringify({ plan_id: 3, student_id: 3, status: 'draft', total_cp: 0 })
             },
             {
                 plan_id: 4,

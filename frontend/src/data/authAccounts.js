@@ -75,7 +75,7 @@ export const AUTH_ACCOUNTS = [
     email: 'm.chang@student.pt3solutions.edu.sg',
     username: 'michael',
     aliasCode: 'BIS1',
-    account_category: 'existing_student',
+    account_category: 'new_student',
     aliases: [
       '31234563', 'bis1', 'bis 1', 'bis-1',
       'michael', 'm.chang', 'm.chang@student.pt3solutions.edu.sg',
@@ -83,7 +83,7 @@ export const AUTH_ACCOUNTS = [
     ],
     password: 'michael123',
     role: 'student',
-    roleLabel: 'Student (BIS) - Existing',
+    roleLabel: 'Student (BIS) - New',
     course_name: 'Bachelor of IT (BIS)',
     course_code: 'PT3-BSIT-BIS03',
     avatar: 'MC'

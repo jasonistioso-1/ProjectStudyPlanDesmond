@@ -12,6 +12,7 @@ import DroppablePeriod from './DroppablePeriod';
 import DroppablePaletteContainer from './DroppablePaletteContainer';
 import SignaturePad from './SignaturePad';
 import StudentSelectModal from './StudentSelectModal';
+import { getDynamicOfferings } from './CourseCatalogPreview';
 import {
   CheckCircle2,
   Save,
@@ -40,6 +41,7 @@ import {
   FileText,
   Lock,
   MessageSquare,
+  MessageSquareQuote,
   Send,
   AlertCircle,
   Clock,
@@ -336,20 +338,28 @@ export default function PlanBuilder({
     const isS2Only = unit.period_id === 2;
 
     // BR-01 Offering Check
-    if (isTri3 && t3RestrictedUnits.has(unit.code)) {
-      const msg = `Unit ${unit.code} (${unit.title}) is NOT offered in Tri-Semester 3 (T3) at Singapore Campus.`;
-      appendUnitWarning(unit.code, msg);
-      if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
-        warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
+    const allowedOfferings = getDynamicOfferings(unit.code, layoutType);
+    let currentTermKey = null;
+    let currentTermName = '';
+    if (layoutType === 'semester') {
+      currentTermKey = unit.period_id === 1 ? 'Sem 1' : 'Sem 2';
+      currentTermName = unit.period_id === 1 ? 'Semester 1' : 'Semester 2';
+    } else {
+      if (unit.period_id === 3) {
+        currentTermKey = 'Tri 1';
+        currentTermName = 'Trimester 1';
+      } else if (unit.period_id === 4) {
+        currentTermKey = 'Tri 2';
+        currentTermName = 'Trimester 2';
+      } else if (unit.period_id === 5) {
+        currentTermKey = 'Tri 3';
+        currentTermName = 'Trimester 3';
       }
-    } else if (isS2Only && s1OnlyUnits.has(unit.code)) {
-      const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 1 and cannot be taken in Semester 2.`;
-      appendUnitWarning(unit.code, msg);
-      if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
-        warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
-      }
-    } else if (isS1Only && s2OnlyUnits.has(unit.code)) {
-      const msg = `Unit ${unit.code} (${unit.title}) is offered ONLY in Semester 2 and cannot be taken in Semester 1.`;
+    }
+
+    if (currentTermKey && !allowedOfferings.includes(currentTermKey)) {
+      const allowedStr = allowedOfferings.join(', ');
+      const msg = `Unit ${unit.code} (${unit.title || unit.code}) is offered ONLY in ${allowedStr} at Singapore Campus, but is scheduled in Year ${unit.year_level} ${currentTermName}.`;
       appendUnitWarning(unit.code, msg);
       if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
         warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
@@ -461,31 +471,7 @@ export default function PlanBuilder({
       }
     }
 
-    // 1. Prerequisite Validation
-    const prereqCode = prereqMap[unitCode];
-    if (prereqCode) {
-      const isCompletedInHistory = completedUnitCodes.has(prereqCode);
-      if (!isCompletedInHistory) {
-        const isScheduledPrior = currentUnits.some(other => {
-          if (activeDragCode && other.code === activeDragCode) return false;
-          if (other.code !== prereqCode) return false;
-          if (other.year_level < targetYear) return true;
-          if (other.year_level === targetYear && (other.period_id || 0) < targetPeriod) return true;
-          return false;
-        });
-
-        if (!isScheduledPrior) {
-          const unitObj = catalogUnits.find(u => u.code === unitCode);
-          const title = unitObj ? unitObj.title : unitCode;
-          return {
-            valid: false,
-            message: `Prerequisite Violation: Unit ${unitCode} (${title}) requires prerequisite ${prereqCode}, which has NOT been completed in an earlier teaching period!`
-          };
-        }
-      }
-    }
-
-    // 2. Maximum 12 CP Capacity Limit Validation
+    // 1. Maximum 12 CP Capacity Limit Validation
     const periodUnits = currentUnits.filter(u => {
       if (activeDragCode && u.code === activeDragCode) return false;
       return Number(u.year_level) === Number(targetYear) && Number(u.period_id) === Number(targetPeriod);
@@ -881,10 +867,28 @@ export default function PlanBuilder({
   ], []);
 
   const effectiveCatalog = useMemo(() => {
-    if (!catalogUnits || catalogUnits.length === 0) return defaultFullCatalogUnits;
-    const existingCodes = new Set(catalogUnits.map(u => u.code || u.unit_code));
-    const missingUnits = defaultFullCatalogUnits.filter(u => !existingCodes.has(u.code));
-    return [...catalogUnits, ...missingUnits];
+    const rawList = (!catalogUnits || catalogUnits.length === 0)
+      ? defaultFullCatalogUnits
+      : [...catalogUnits, ...defaultFullCatalogUnits];
+
+    const seen = new Set();
+    const unique = [];
+    rawList.forEach(u => {
+      const code = (u.code || u.unit_code || '').trim().toUpperCase();
+      if (code && !seen.has(code)) {
+        seen.add(code);
+        const digits = code.replace(/[^0-9]/g, '');
+        const derivedLevel = digits.length > 0 ? parseInt(digits.charAt(0) + '00', 10) : 100;
+        const rawLvl = u.level ? parseInt(u.level, 10) : derivedLevel;
+        const normalizedLevel = rawLvl >= 100 ? rawLvl : rawLvl * 100;
+        unique.push({
+          ...u,
+          code,
+          level: normalizedLevel
+        });
+      }
+    });
+    return unique;
   }, [catalogUnits, defaultFullCatalogUnits]);
 
   // Filtered available offerings sorted by level and code (Master Data)
@@ -893,7 +897,7 @@ export default function PlanBuilder({
 
     const list = effectiveCatalog.filter(unit => {
       if (!unit) return false;
-      const unitCode = unit.code || unit.unit_code || '';
+      const unitCode = (unit.code || unit.unit_code || '').trim().toUpperCase();
       const isAlreadyScheduled = scheduledCodesSet && scheduledCodesSet.has ? scheduledCodesSet.has(unitCode) : false;
       if (!showAllCatalogUnits && isAlreadyScheduled) return false;
 
@@ -901,16 +905,23 @@ export default function PlanBuilder({
         if (!['MSP200', 'COM203'].includes(unitCode)) return false;
       } else if (selectedLevel === 'CORE') {
         if (['MSP200', 'COM203'].includes(unitCode)) return false;
-      } else if (selectedLevel !== 'ALL' && String(unit.level) !== String(selectedLevel)) {
-        return false;
+      } else if (selectedLevel !== 'ALL') {
+        const targetLvl = parseInt(selectedLevel, 10);
+        const unitLvl = parseInt(unit.level, 10);
+        const normTarget = targetLvl >= 100 ? targetLvl : targetLvl * 100;
+        const normUnit = unitLvl >= 100 ? unitLvl : unitLvl * 100;
+        if (normTarget !== normUnit) {
+          return false;
+        }
       }
 
       if (unitFilter && typeof unitFilter === 'string' && unitFilter.trim()) {
-        const query = unitFilter.toLowerCase();
-        return (
-          unitCode.toLowerCase().includes(query) ||
-          (unit.title && String(unit.title).toLowerCase().includes(query))
-        );
+        const query = unitFilter.toLowerCase().trim();
+        const code = unitCode.toLowerCase();
+        const title = (unit.title || '').toLowerCase();
+        if (!code.includes(query) && !title.includes(query)) {
+          return false;
+        }
       }
       return true;
     });
@@ -954,10 +965,19 @@ export default function PlanBuilder({
         const yearHistory = completedHistory.filter(h => {
           const yTaken = Number(h.year_taken || 2026);
           const calcLvl = yTaken === 2026 ? 1 : yTaken === 2027 ? 2 : 3;
-          return calcLvl === yL && Number(h.period_id) === pI;
+          return calcLvl === yL;
         });
 
-        return yearHistory.map(h => {
+        const itemsWithPeriod = yearHistory.filter(h => Number(h.period_id) === pI || (pI === 1 && (h.period_code === 'S1' || h.period_id === 1)) || (pI === 2 && (h.period_code === 'S2' || h.period_id === 2)));
+        let targetHistoryUnits = [];
+        if (itemsWithPeriod.length > 0) {
+          targetHistoryUnits = itemsWithPeriod;
+        } else if (yearHistory.length > 0) {
+          const semIdx = pI === 1 ? 0 : 1;
+          targetHistoryUnits = yearHistory.slice(semIdx * 6, (semIdx + 1) * 6);
+        }
+
+        return targetHistoryUnits.map(h => {
           const uCode = h.unit_code || h.code;
           const catUnit = catalogUnits.find(c => c.code === uCode);
           return {
@@ -1032,6 +1052,9 @@ export default function PlanBuilder({
 
   const isNewStudent = 
     student?.account_category === 'new_student' || 
+    Number(student?.student_id) === 3 ||
+    student?.student_number === '31234563' ||
+    student?.alias_code === 'BIS1' ||
     Number(student?.student_id) === 4 ||
     student?.student_number === '31234564' ||
     student?.alias_code === 'AI2';
@@ -1096,9 +1119,14 @@ export default function PlanBuilder({
                     {student?.location_name || 'Singapore Campus'}
                   </span>
                 </p>
-                {isNewStudentInitial && planStatus !== 'request_submitted' && (
+                {isNewStudentInitial && planStatus !== 'request_submitted' && planStatus !== 'rejected' && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 pt-0.5">
                     Please submit your study plan request to begin mapping your units.
+                  </p>
+                )}
+                {planStatus === 'rejected' && (
+                  <p className="text-xs text-rose-600 dark:text-rose-400 font-medium pt-0.5">
+                    Change requested. The Academic Chair is currently reviewing your comments.
                   </p>
                 )}
               </div>
@@ -1122,15 +1150,15 @@ export default function PlanBuilder({
               </span>
 
               {/* Submit / Update Plan Request Button */}
-              {planStatus === 'request_submitted' ? (
+              {planStatus === 'request_submitted' || planStatus === 'rejected' ? (
                 <button
                   type="button"
                   disabled={true}
                   className="bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 px-4 py-2 rounded-xl text-xs font-black shadow-none flex items-center gap-1.5 cursor-not-allowed opacity-75 font-heading tracking-tight"
-                  title="Your study plan request is currently submitted and under review by the Academic Chair."
+                  title={planStatus === 'rejected' ? "You requested amendments for this study plan. The Academic Chair is reviewing your comments." : "Your study plan request is currently submitted and under review by the Academic Chair."}
                 >
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Request Submitted</span>
+                  <span>{planStatus === 'rejected' ? 'Revision Pending Chair Review' : 'Request Submitted'}</span>
                 </button>
               ) : (
                 <button
@@ -1221,6 +1249,43 @@ export default function PlanBuilder({
                 </div>
                 <span className="text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-3 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800 shrink-0 self-start sm:self-center">
                   Awaiting Chair Action
+                </span>
+              </div>
+            )}
+
+            {/* REJECTED / CHANGE REQUESTED STATUS BANNER */}
+            {planStatus === 'rejected' && (
+              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white font-heading">
+                      Change Request Under Review
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-sans">
+                      You requested revisions for your study plan. The Academic Chair has been notified and is reviewing your feedback.
+                    </p>
+                    {currentPlan?.rejectionComment && (
+                      <div className="mt-2 bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl p-2.5 shadow-2xs">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <MessageSquareQuote className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                          <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 dark:text-rose-300 font-heading">
+                            Your Revision Feedback:
+                          </span>
+                        </div>
+                        <div className="pl-3.5 border-l-2 border-rose-400 dark:border-rose-600 py-0.5">
+                          <p className="text-xs font-bold text-rose-950 dark:text-rose-100 font-sans italic">
+                            “{currentPlan.rejectionComment}”
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold text-rose-800 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/50 px-3 py-1 rounded-xl border border-rose-200 dark:border-rose-800 shrink-0 self-start sm:self-center">
+                  Revision Pending Chair Review
                 </span>
               </div>
             )}
@@ -1318,8 +1383,8 @@ export default function PlanBuilder({
                               <button
                                 type="button"
                                 onClick={() => {
-                                  if (planStatus === 'request_submitted') {
-                                    setDragWarningToast('Active Request Pending: You already have a study plan request awaiting Academic Chair review.');
+                                  if (planStatus === 'request_submitted' || planStatus === 'rejected') {
+                                    setDragWarningToast(planStatus === 'rejected' ? 'Revision Pending: You have requested amendments for this study plan. The Academic Chair is reviewing your comments.' : 'Active Request Pending: You already have a study plan request awaiting Academic Chair review.');
                                     setTimeout(() => setDragWarningToast(null), 5000);
                                     return;
                                   }
@@ -1334,13 +1399,13 @@ export default function PlanBuilder({
                                   setShowSubmitPlanRequestModal(true);
                                 }}
                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold shadow-sm transition-all font-heading ${
-                                  planStatus === 'request_submitted'
-                                    ? 'bg-amber-600/90 text-white cursor-not-allowed opacity-80'
+                                  planStatus === 'request_submitted' || planStatus === 'rejected'
+                                    ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-80'
                                     : 'bg-red-700 hover:bg-red-800 text-white cursor-pointer active:scale-95 hover:shadow-md'
                                 }`}
                               >
                                 <Send className="w-3.5 h-3.5" />
-                                <span>{planStatus === 'request_submitted' ? 'Request Pending Review' : 'Submit Request to Unlock'}</span>
+                                <span>{planStatus === 'rejected' ? 'Revision Pending Chair Review' : planStatus === 'request_submitted' ? 'Request Pending Review' : 'Submit Request to Unlock'}</span>
                               </button>
                             </div>
                           </div>
@@ -1846,8 +1911,8 @@ export default function PlanBuilder({
                 <button
                   type="button"
                   onClick={() => {
-                    if (planStatus === 'request_submitted') {
-                      alert('Active Request Pending: You already have a study plan request under review by the Academic Chair. Duplicate requests are not permitted.');
+                    if (planStatus === 'request_submitted' || planStatus === 'rejected') {
+                      alert(planStatus === 'rejected' ? 'Revision Pending: You have requested amendments for this study plan. The Academic Chair is reviewing your comments.' : 'Active Request Pending: You already have a study plan request under review by the Academic Chair. Duplicate requests are not permitted.');
                       return;
                     }
                     if (reqPeriods.length === 0) {
@@ -1955,7 +2020,7 @@ export default function PlanBuilder({
                     {workflowSteps.map((step) => {
                       const isCurrent = (
                         (step.id === 'draft' && (planStatus === 'draft' || planStatus === 'request_submitted')) ||
-                        (step.id === 'recommended' && planStatus === 'recommended') ||
+                        (step.id === 'recommended' && (planStatus === 'recommended' || planStatus === 'rejected')) ||
                         (step.id === 'agreed' && planStatus === 'agreed') ||
                         (step.id === 'approved' && (planStatus === 'approved' || planStatus === 'stored'))
                       );
@@ -2024,8 +2089,23 @@ export default function PlanBuilder({
                   </span>
                 </div>
                 <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  Student requested study plan for Trimesters 1, 2, 3 ({currentPlan.requestYear || 2026}). {currentPlan.requestComment && <em className="italic">"{currentPlan.requestComment}"</em>}
+                  Student requested study plan for Trimesters 1, 2, 3 ({currentPlan.requestYear || 2026}).
                 </p>
+                {currentPlan.requestComment && (
+                  <div className="mt-1.5 mb-1 bg-white/90 dark:bg-slate-800/80 border border-purple-200 dark:border-purple-800/60 rounded-xl p-2.5 shadow-2xs">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <MessageSquareQuote className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+                      <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-300 font-heading">
+                        Student Note / Request:
+                      </span>
+                    </div>
+                    <div className="pl-3.5 border-l-2 border-purple-400 dark:border-purple-600 py-0.5">
+                      <p className="text-xs font-bold text-slate-900 dark:text-purple-100 font-sans italic">
+                        “{currentPlan.requestComment}”
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <p className="text-[11px] text-slate-600 dark:text-slate-400">
                   Choose <strong>Auto System Generation</strong> to select target semesters and build an optimal plan, or arrange units manually.
                 </p>
@@ -2049,23 +2129,49 @@ export default function PlanBuilder({
         )}
 
         {/* STUDENT REJECTION / CHANGE REQUEST ALERT BANNER */}
-        {currentPlan?.rejectionComment && (
-          <div className="bg-amber-50 dark:bg-amber-950/60 border-2 border-amber-400 dark:border-amber-700 p-4 rounded-2xl shadow-xs flex items-start gap-3 font-sans text-amber-950 dark:text-amber-100">
-            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-wider font-heading text-amber-800 dark:text-amber-300">
-                  ⚠️ Student Requested Changes / Plan Rejected
+        {(planStatus === 'rejected' || currentPlan?.rejectionComment) && (
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50/40 dark:from-amber-950/70 dark:to-orange-950/40 border-2 border-amber-400 dark:border-amber-600/80 p-4.5 rounded-2xl shadow-sm flex items-start gap-3.5 font-sans text-amber-950 dark:text-amber-100">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/15 dark:bg-amber-400/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-300 dark:border-amber-700/60 shadow-2xs mt-0.5">
+              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+            </div>
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider font-heading text-amber-900 dark:text-amber-200">
+                  Student Requested Changes / Plan Disagreed
                 </span>
-                <span className="text-[10px] font-mono bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 px-2 py-0.5 rounded font-bold">
+                <span className="text-[10px] font-mono bg-amber-200/90 dark:bg-amber-900/80 text-amber-950 dark:text-amber-100 px-2.5 py-0.5 rounded-full font-black border border-amber-300 dark:border-amber-700 shadow-2xs">
                   Action Required
                 </span>
               </div>
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                Student Comment: <em className="text-amber-900 dark:text-amber-200 italic font-serif">"{currentPlan.rejectionComment}"</em>
-              </p>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Please adjust the teaching period assignments or unit structure based on the student's request, then re-recommend the study plan.
+
+              {currentPlan?.rejectionComment ? (
+                <div className="mt-2 mb-1 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-700/70 rounded-xl p-3 shadow-xs backdrop-blur-xs">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <MessageSquareQuote className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 font-heading">
+                      Student Feedback Note:
+                    </span>
+                    {student?.first_name && (
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                        • {student.first_name} {student.last_name} ({student.student_number || student.alias_code})
+                      </span>
+                    )}
+                  </div>
+                  <div className="pl-3.5 border-l-2 border-amber-500 dark:border-amber-400 py-0.5">
+                    <p className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-amber-50 font-sans tracking-tight leading-relaxed italic">
+                      “{currentPlan.rejectionComment}”
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  Student indicated disagreement and requested amendments on their recommended plan.
+                </p>
+              )}
+
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                <span>Please adjust the teaching period assignments or unit structure based on the student's request, then re-recommend the study plan.</span>
               </p>
             </div>
           </div>
@@ -2353,10 +2459,8 @@ export default function PlanBuilder({
                     {years.map(y => {
                       const isActive = viewMode === 'single' && activeYearLevel === y.level;
                       const isPassed = passedYears.has(y.level);
-                      const yearUnitsCP = planUnits
-                        .filter(u => u.year_level === y.level)
-                        .reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
-                      const yearCP = isPassed ? 36 : yearUnitsCP;
+                      const yearRenderedUnits = defaultPeriodList.flatMap(p => getSemesterUnits(y.level, p.period_id));
+                      const yearCP = yearRenderedUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
 
                       return (
                         <button
@@ -2628,7 +2732,7 @@ export default function PlanBuilder({
                       <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden flex p-0.5 border border-slate-200/60 dark:border-slate-700/60">
                         <div
                           className={`h-full transition-all duration-300 rounded-full ${
-                            totalCP >= 72 ? 'bg-emerald-600' : 'bg-red-600'
+                            totalCP >= 72 ? 'bg-emerald-600' : totalCP >= 36 ? 'bg-blue-600' : 'bg-red-600'
                           }`}
                           style={{ width: `${Math.min(100, Math.round((totalCP / 72) * 100))}%` }}
                         />
@@ -2657,7 +2761,7 @@ export default function PlanBuilder({
 
                     {isChair ? (
                       <>
-                        {(planStatus === 'draft' || planStatus === 'request_submitted' || planStatus === 'recommended') && (
+                        {(planStatus === 'draft' || planStatus === 'request_submitted' || planStatus === 'recommended' || planStatus === 'rejected') && (
                           <button
                             onClick={() => {
                               // Check for unresolved critical validation errors (REC-01 / M06:R104)
@@ -2689,15 +2793,28 @@ export default function PlanBuilder({
                             className="px-5 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl font-extrabold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-red-800 font-sans"
                           >
                             <Send className="w-4 h-4 text-white/90" />
-                            <span>{planStatus === 'recommended' ? 'Update & Re-Recommend' : 'Recommend Study Plan to Student'}</span>
+                            <span>{planStatus === 'recommended' || planStatus === 'rejected' ? 'Update & Re-Recommend' : 'Recommend Study Plan to Student'}</span>
                             <ArrowRight className="w-4 h-4 text-white/90" />
                           </button>
                         )}
 
-                        {planStatus === 'agreed' && (
+                        {planStatus !== 'approved' && (
                           <button
-                            onClick={() => onApprovePlan && onApprovePlan()}
-                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm hover:shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                            type="button"
+                            onClick={() => {
+                              if (planStatus !== 'agreed') {
+                                setDragWarningToast(`Approval Blocked: Final approval requires student agreement and digital sign-off first (Current plan status: ${planStatus.toUpperCase()}).`);
+                                setTimeout(() => setDragWarningToast(null), 6000);
+                                return;
+                              }
+                              if (onApprovePlan) onApprovePlan();
+                            }}
+                            className={`px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2 active:scale-95 cursor-pointer font-sans ${
+                              planStatus === 'agreed'
+                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow-md'
+                                : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 hover:bg-slate-300 dark:hover:bg-slate-700'
+                            }`}
+                            title={planStatus === 'agreed' ? 'Final Approve and archive study plan' : 'Final approval is blocked until student digital agreement is recorded'}
                           >
                             <ShieldCheck className="w-4 h-4 text-white/90" />
                             <span>Final Approve Plan</span>

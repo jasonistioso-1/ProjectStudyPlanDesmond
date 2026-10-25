@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, ChevronDown, Calendar, CheckCircle2 } from 'lucide-react';
+import { getDynamicOfferings } from './CourseCatalogPreview';
 
 export function getUnitClassification(unitCode) {
   const code = (unitCode || '').toUpperCase();
@@ -69,6 +70,8 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
   };
 
   const prereqText = getPrereqText();
+  const dynamicOfferings = getDynamicOfferings(unit.code, layoutType);
+  const offeringsText = dynamicOfferings.map(o => o.replace('Trimester ', 'T').replace('Semester ', 'S')).join(', ');
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `palette_${unit.code || unit.unit_id}`,
@@ -183,6 +186,10 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
             <span className="text-slate-500 dark:text-slate-400">
               Prereq: <strong className={`font-mono px-1 rounded ${prereqText === 'None' ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>{prereqText}</strong>
             </span>
+            <span className="text-slate-300 dark:text-slate-600">•</span>
+            <span className="font-bold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded text-[10px] font-mono border border-blue-200 dark:border-blue-800" title={`Singapore Campus Offerings: ${dynamicOfferings.join(', ')}`}>
+              📅 {offeringsText}
+            </span>
           </div>
         </div>
       </div>
@@ -221,23 +228,37 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
 
             {/* Trimester/Semester List */}
             <div className="space-y-0.5 pt-1 max-h-48 overflow-y-auto pr-0.5">
-              {periodOptions.map(opt => (
-                <button
-                  key={`${opt.year}_${opt.period}`}
-                  onClick={() => {
-                    setShowPicker(false);
-                    if (onAddToSpecificSemester) {
-                      onAddToSpecificSemester(unit, opt.year, opt.period);
-                    } else {
-                      onAdd(unit);
-                    }
-                  }}
-                  className="w-full text-left px-2.5 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-800 dark:text-slate-200 font-medium text-[11px] transition-colors flex items-center justify-between"
-                >
-                  <span>{opt.label}</span>
-                  <Plus className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100" />
-                </button>
-              ))}
+              {periodOptions.map(opt => {
+                const termKey = layoutType === 'semester'
+                  ? (opt.period === 1 ? 'Sem 1' : 'Sem 2')
+                  : (opt.period === 3 ? 'Tri 1' : opt.period === 4 ? 'Tri 2' : 'Tri 3');
+                const isOfferedInTerm = dynamicOfferings.includes(termKey);
+
+                return (
+                  <button
+                    key={`${opt.year}_${opt.period}`}
+                    onClick={() => {
+                      setShowPicker(false);
+                      if (onAddToSpecificSemester) {
+                        onAddToSpecificSemester(unit, opt.year, opt.period);
+                      } else {
+                        onAdd(unit);
+                      }
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] transition-colors flex items-center justify-between ${
+                      isOfferedInTerm
+                        ? 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'
+                        : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-normal'
+                    }`}
+                    title={isOfferedInTerm ? 'Matches unit offering schedule' : `Warning: Unit is only offered in ${dynamicOfferings.join(', ')}`}
+                  >
+                    <span>{opt.label}</span>
+                    <span className="text-[10px] opacity-75 font-mono">
+                      {isOfferedInTerm ? '✓ Available' : '⚠️ Restricted'}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

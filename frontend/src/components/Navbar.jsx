@@ -117,7 +117,15 @@ export default function Navbar({
   const isChair = activeRole === 'chair';
   const roleTarget = isChair ? 'chair' : 'student';
 
-  const filteredNotifications = notifications.filter(n => n.role === roleTarget);
+  const filteredNotifications = notifications.filter(n => {
+    if (n.role !== roleTarget) return false;
+    if (!isChair && currentUser?.role === 'student' && currentUser?.student_id) {
+      if (n.studentId && String(n.studentId) !== String(currentUser.student_id)) {
+        return false;
+      }
+    }
+    return true;
+  });
   const unreadCount = filteredNotifications.filter(n => !n.read).length;
 
   const formatNotificationDate = (n) => {

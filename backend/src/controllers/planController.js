@@ -55,6 +55,9 @@ export async function getPlanByStudent(req, res) {
         }
 
         const plan = planRows[0];
+        if (plan) {
+            plan.rejectionComment = plan.rejection_comment || null;
+        }
 
         // Fetch plan units
         const [unitRows] = await pool.query(
@@ -218,11 +221,31 @@ export async function recommendPlan(req, res) {
         const { recommended_by } = req.body;
 
         await pool.query(
-            `UPDATE StudyPlan SET status = 'recommended', recommended_at = NOW(), created_by = ? WHERE plan_id = ?`,
+            `UPDATE StudyPlan SET status = 'recommended', rejection_comment = NULL, recommended_at = NOW(), created_by = ? WHERE plan_id = ?`,
             [recommended_by || 'Academic Chair', planId]
         );
 
         res.json({ message: 'Study plan marked as RECOMMENDED for student review', status: 'recommended' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
+export async function rejectPlan(req, res) {
+    try {
+        const { planId } = req.params;
+        const { rejection_comment } = req.body;
+
+        await pool.query(
+            `UPDATE StudyPlan SET status = 'rejected', rejection_comment = ?, updated_at = NOW() WHERE plan_id = ?`,
+            [rejection_comment || null, planId]
+        );
+
+        res.json({
+            message: 'Student change request/disagreement recorded successfully',
+            status: 'rejected',
+            rejectionComment: rejection_comment
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

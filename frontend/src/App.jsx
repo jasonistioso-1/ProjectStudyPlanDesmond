@@ -4,7 +4,7 @@ import StudentSelectModal from './components/StudentSelectModal';
 import AcademicHistoryView from './components/AcademicHistoryView';
 import PlanBuilder from './components/PlanBuilder';
 import StoredPlansView from './components/StoredPlansView';
-import CourseCatalogPreview from './components/CourseCatalogPreview';
+import CourseCatalogPreview, { getDynamicOfferings } from './components/CourseCatalogPreview';
 import CertificateView from './components/CertificateView';
 import DataImportModal from './components/DataImportModal';
 import OfficialStudyPlanDocumentModal from './components/OfficialStudyPlanDocumentModal';
@@ -24,6 +24,7 @@ import {
   validatePlan,
   saveStudyPlan,
   recommendPlan,
+  rejectPlan,
   agreePlan,
   approvePlan,
   fetchAuditLog,
@@ -107,7 +108,7 @@ const initialSampleStudents = [
     location_name: 'PT3 Solutions Singapore Campus',
     commencement_year: 2026,
     study_status: 'active',
-    account_category: 'existing_student',
+    account_category: 'new_student',
     alias_code: 'BIS1'
   },
   {
@@ -223,7 +224,7 @@ export default function App() {
       if (savedUser) {
         const u = JSON.parse(savedUser);
         const sId = Number(u.student_id);
-        if (sId === 4) return []; // Emily Watson starts clean (0 CP)
+        if (sId === 3 || sId === 4) return []; // Both Michael Chang & Emily Watson start clean (0 CP)
         if (sId && mockClientStudentPlans[sId]) {
           return mockClientStudentPlans[sId].units;
         }
@@ -252,27 +253,23 @@ export default function App() {
           parsed['2'] = { plan: mockClientStudentPlans[2].plan, units: mockClientStudentPlans[2].units };
         }
 
-        // Student 3 (Michael Chang - Existing Student): Must have recommended 72 CP plan with 24 units
-        if (!parsed[3] || !parsed[3].units || parsed[3].units.length === 0 || parsed[3].plan?.status !== 'recommended' || parsed[3].plan?.total_credit_points === 0) {
-          parsed[3] = { plan: mockClientStudentPlans[3].plan, units: mockClientStudentPlans[3].units };
-        }
-        if (parsed['3'] && (!parsed['3'].units || parsed['3'].units.length === 0 || parsed['3'].plan?.status !== 'recommended' || parsed['3'].plan?.total_credit_points === 0)) {
-          parsed['3'] = { plan: mockClientStudentPlans[3].plan, units: mockClientStudentPlans[3].units };
-        }
+        // Ensure New Students (Michael Chang [3] & Emily Watson [4]) ALWAYS start fresh from 0 CP draft
+        parsed[3] = {
+          plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-10-24 11:02', version_number: 1 },
+          units: []
+        };
+        parsed['3'] = parsed[3];
 
-        // Ensure Emily Watson (student 4) starts fresh from the beginning (unsubmitted draft, 0 units) unless manually submitted in session
-        if (parsed[4] && !parsed[4].plan?.manuallySubmittedInSession && parsed[4].plan?.status === 'draft') {
-          parsed[4] = {
-            plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
-            units: []
-          };
-        }
-        if (parsed['4'] && !parsed['4'].plan?.manuallySubmittedInSession && parsed['4'].plan?.status === 'draft') {
-          parsed['4'] = {
-            plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0 },
-            units: []
-          };
-        }
+        parsed[4] = {
+          plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-09-13 14:10', version_number: 1 },
+          units: []
+        };
+        parsed['4'] = parsed[4];
+
+        try {
+          localStorage.setItem('spr_student_plans_cache', JSON.stringify(parsed));
+        } catch (e) {}
+
         return parsed;
       }
     } catch (e) {}
@@ -296,6 +293,47 @@ export default function App() {
       });
     } catch (e) {}
   }, [allStudentPlansMap]);
+
+  // On application mount, ensure clean state for new students (Michael Chang [3] & Emily Watson [4])
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('spr_student_plans_cache');
+      if (raw) {
+        const cacheMap = JSON.parse(raw);
+        let changed = false;
+        if (cacheMap[3]?.units?.length > 0 || cacheMap[3]?.plan?.total_credit_points > 0 || cacheMap[3]?.plan?.status !== 'draft') {
+          cacheMap[3] = {
+            plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-10-24 11:02', version_number: 1 },
+            units: []
+          };
+          cacheMap['3'] = cacheMap[3];
+          changed = true;
+        }
+        if (changed) {
+          localStorage.setItem('spr_student_plans_cache', JSON.stringify(cacheMap));
+          setAllStudentPlansMap(cacheMap);
+        }
+      }
+      // If currently logged in as Michael Chang, ensure currentPlan is 0 CP draft
+      const savedUser = localStorage.getItem('spr_logged_user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        if (Number(u.student_id) === 3) {
+          setCurrentPlan({
+            plan_id: 3,
+            student_id: 3,
+            title: 'PT3-BSIT Business Info Systems Plan 2026',
+            status: 'draft',
+            total_credit_points: 0,
+            updated_at: '2026-10-24 11:02',
+            version_number: 1
+          });
+          setPlanUnits([]);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
   const [validationResult, setValidationResult] = useState(null);
   const [activeTab, setActiveTab] = useState('STUDY_PLAN');
   
@@ -339,9 +377,9 @@ export default function App() {
       alias_code: 'BIS1',
       course_code: 'PT3-BSIT-BIS03',
       title: 'PT3-BSIT Business Info Systems Plan',
-      status: 'recommended',
+      status: 'draft',
       version_number: 1,
-      total_cp: 72,
+      total_cp: 0,
       created_by: 'Academic Chair',
       updated_at: '2026-10-24 11:02',
       location: 'Singapore Campus'
@@ -425,18 +463,6 @@ export default function App() {
       {
         id: 'n-1',
         role: 'chair',
-        studentId: 3,
-        title: 'Existing Student Plan Request from Michael Chang',
-        message: 'Michael Chang (BIS1) submitted a study plan request for Year 1 Trimesters 1, 2, 3 (2026).',
-        timestamp: formatNotificationTimestamp(Date.now() - 7200000),
-        createdTimeMs: Date.now() - 7200000,
-        read: false,
-        actionType: 'AUTO_GENERATE',
-        actionLabel: 'Review & Auto-Generate'
-      },
-      {
-        id: 'n-2',
-        role: 'chair',
         studentId: 1,
         title: 'Existing Student Plan Request from Alex Mercer',
         message: 'Alex Mercer submitted a study plan request for Trimesters 1, 2, 3 (2026).',
@@ -447,16 +473,16 @@ export default function App() {
         actionLabel: 'Review & Auto-Generate'
       },
       {
-        id: 'n-3',
+        id: 'n-2',
         role: 'student',
-        studentId: 3,
-        title: 'Study Plan Recommended',
-        message: 'Academic Chair Dr. Aris Thorne recommended your 72 CP Study Plan for review and sign-off.',
+        studentId: 2,
+        title: 'Study Plan Signed and Agreed',
+        message: 'You have agreed and signed your 72 CP Study Plan for Computer Science (PT3-BSIT-CS02).',
         timestamp: formatNotificationTimestamp(Date.now() - 1800000),
         createdTimeMs: Date.now() - 1800000,
         read: false,
         actionType: 'REVIEW',
-        actionLabel: 'Review Recommended Plan'
+        actionLabel: 'View Agreed Plan'
       }
     ];
   });
@@ -593,14 +619,23 @@ export default function App() {
   const handleSelectNotification = (notif) => {
     setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
 
+    const targetYr = notif.targetYear || 1;
+    const planOptions = {
+      targetYearLevel: targetYr,
+      forceScrollTrigger: Date.now()
+    };
+
     let targetStudentObj = null;
     if (notif.studentId) {
       targetStudentObj = studentsList.find(s => s.student_id === notif.studentId);
       if (targetStudentObj) {
-        if (currentUser?.role !== 'student') {
-          handleSelectStudent(targetStudentObj, 'chair');
+        if (currentUser?.role === 'chair') {
+          handleSelectStudent(targetStudentObj, 'chair', planOptions);
+        } else if (currentUser?.role === 'student') {
+          const myProfile = studentsList.find(s => s.student_id === currentUser.student_id) || targetStudentObj;
+          handleSelectStudent(myProfile, 'student', planOptions);
         } else {
-          handleSelectStudent(targetStudentObj, 'student');
+          handleSelectStudent(targetStudentObj, notif.role === 'chair' ? 'chair' : 'student', planOptions);
         }
       }
     }
@@ -621,13 +656,6 @@ export default function App() {
     }
 
     setActiveTab('STUDY_PLAN');
-
-    const targetYr = notif.targetYear || 1;
-    setCurrentPlan(prev => ({
-      ...prev,
-      targetYearLevel: targetYr,
-      forceScrollTrigger: Date.now()
-    }));
 
     if (notif.actionType === 'AUTO_GENERATE' && notif.studentId) {
       handleAutoGeneratePlan(notif.studentId, {
@@ -656,6 +684,10 @@ export default function App() {
     if (!selectedStudent) return;
     if (currentPlan?.status === 'request_submitted') {
       showToast('⚠️ You already have an active study plan request under review by the Academic Chair.');
+      return;
+    }
+    if (currentPlan?.status === 'rejected') {
+      showToast('⚠️ You have already requested changes for this study plan. The Academic Chair is reviewing your comments.');
       return;
     }
     const stName = `${selectedStudent.first_name} ${selectedStudent.last_name}`;
@@ -774,113 +806,114 @@ export default function App() {
     }
 
     // Complete 72 CP Presets (24 units × 3 CP = 72 CP total: 8 units in Y1, 8 units in Y2, 8 units in Y3)
+    // 100% compliant with Singapore Campus Offering Calendars and Unit Prerequisite sequences
     const MAJOR_PRESETS = {
       ai: {
         trimester: [
           // Year 1 (8 units = 24 CP)
           { year: 1, period_id: 3, cores: ['ICT100', 'ICT158', 'ICT159'] },
-          { year: 1, period_id: 4, cores: ['ICT167', 'ICT145', 'MAS162'] },
-          { year: 1, period_id: 5, cores: ['ICT169', 'ICT170'] },
+          { year: 1, period_id: 4, cores: ['ICT145', 'MAS162', 'ICT169'] },
+          { year: 1, period_id: 5, cores: ['ICT170', 'MAS183'] },
           // Year 2 (8 units = 24 CP)
-          { year: 2, period_id: 3, cores: ['ICT201', 'ICT202', 'ICT283'] },
-          { year: 2, period_id: 4, cores: ['ICT203', 'ICT206', 'ICT285'] },
-          { year: 2, period_id: 5, cores: ['BSC203', 'ICT292'] },
+          { year: 2, period_id: 3, cores: ['ICT167', 'ICT201', 'ICT285'] },
+          { year: 2, period_id: 4, cores: ['ICT202', 'ICT283', 'ICT206'] },
+          { year: 2, period_id: 5, cores: ['ICT203', 'BSC203'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 3, cores: ['ICT302', 'ICT303', 'ICT304'] },
-          { year: 3, period_id: 4, cores: ['ICT305', 'ICT301', 'ICT374'] },
-          { year: 3, period_id: 5, cores: ['ICT373', 'MAS183'] }
+          { year: 3, period_id: 3, cores: ['ICT292', 'ICT302', 'ICT304'] },
+          { year: 3, period_id: 4, cores: ['ICT303', 'ICT305', 'ICT301'] },
+          { year: 3, period_id: 5, cores: ['ICT374', 'ICT373'] }
         ],
         semester: [
           // Year 1 (8 units = 24 CP)
-          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'MAS162'] },
-          { year: 1, period_id: 2, cores: ['ICT167', 'ICT145', 'ICT169', 'ICT170'] },
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'ICT145'] },
+          { year: 1, period_id: 2, cores: ['MAS162', 'ICT169', 'ICT170', 'MAS183'] },
           // Year 2 (8 units = 24 CP)
-          { year: 2, period_id: 1, cores: ['ICT201', 'ICT202', 'ICT283', 'ICT285'] },
-          { year: 2, period_id: 2, cores: ['ICT203', 'ICT206', 'BSC203', 'ICT292'] },
+          { year: 2, period_id: 1, cores: ['ICT167', 'ICT202', 'ICT285', 'ICT292'] },
+          { year: 2, period_id: 2, cores: ['ICT201', 'ICT303', 'ICT305', 'ICT301'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 1, cores: ['ICT302', 'ICT303', 'ICT304', 'ICT305'] },
-          { year: 3, period_id: 2, cores: ['ICT373', 'ICT374', 'ICT301', 'MAS183'] }
+          { year: 3, period_id: 1, cores: ['ICT283', 'ICT203', 'ICT206', 'BSC203'] },
+          { year: 3, period_id: 2, cores: ['ICT302', 'ICT304', 'ICT374', 'ICT373'] }
         ]
       },
       cs: {
         trimester: [
           // Year 1 (8 units = 24 CP)
           { year: 1, period_id: 3, cores: ['ICT100', 'ICT158', 'ICT159'] },
-          { year: 1, period_id: 4, cores: ['ICT167', 'MAS162', 'MAS164'] },
-          { year: 1, period_id: 5, cores: ['ICT169', 'ICT170'] },
+          { year: 1, period_id: 4, cores: ['MAS162', 'MAS164', 'ICT169'] },
+          { year: 1, period_id: 5, cores: ['ICT170', 'MAS183'] },
           // Year 2 (8 units = 24 CP)
-          { year: 2, period_id: 3, cores: ['ICT283', 'ICT284', 'ICT285'] },
-          { year: 2, period_id: 4, cores: ['ICT201', 'ICT202', 'ICT292'] },
-          { year: 2, period_id: 5, cores: ['ICT206', 'BSC203'] },
+          { year: 2, period_id: 3, cores: ['ICT145', 'ICT167', 'ICT284'] },
+          { year: 2, period_id: 4, cores: ['ICT283', 'ICT285', 'ICT201'] },
+          { year: 2, period_id: 5, cores: ['ICT202', 'ICT292'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 3, cores: ['ICT302', 'ICT373', 'ICT374'] },
-          { year: 3, period_id: 4, cores: ['ICT305', 'ICT203', 'ICT301'] },
-          { year: 3, period_id: 5, cores: ['MAS183', 'ICT145'] }
+          { year: 3, period_id: 3, cores: ['BSC203', 'ICT203', 'ICT302'] },
+          { year: 3, period_id: 4, cores: ['ICT206', 'ICT374', 'ICT301'] },
+          { year: 3, period_id: 5, cores: ['ICT373', 'ICT305'] }
         ],
         semester: [
           // Year 1 (8 units = 24 CP)
-          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'MAS162'] },
-          { year: 1, period_id: 2, cores: ['ICT167', 'MAS164', 'ICT169', 'ICT170'] },
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'MAS164'] },
+          { year: 1, period_id: 2, cores: ['MAS162', 'ICT169', 'ICT170', 'MAS183'] },
           // Year 2 (8 units = 24 CP)
-          { year: 2, period_id: 1, cores: ['ICT283', 'ICT284', 'ICT285', 'ICT201'] },
-          { year: 2, period_id: 2, cores: ['ICT202', 'ICT292', 'ICT206', 'BSC203'] },
+          { year: 2, period_id: 1, cores: ['ICT145', 'ICT167', 'ICT285', 'ICT202'] },
+          { year: 2, period_id: 2, cores: ['ICT283', 'ICT284', 'ICT201', 'ICT305'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 1, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT305'] },
-          { year: 3, period_id: 2, cores: ['ICT203', 'ICT301', 'MAS183', 'ICT145'] }
+          { year: 3, period_id: 1, cores: ['ICT292', 'ICT206', 'BSC203', 'ICT203'] },
+          { year: 3, period_id: 2, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT301'] }
         ]
       },
       bis: {
         trimester: [
           // Year 1 (8 units = 24 CP)
           { year: 1, period_id: 3, cores: ['ICT100', 'ICT158', 'ICT159'] },
-          { year: 1, period_id: 4, cores: ['ICT167', 'ICT169', 'MAS162'] },
+          { year: 1, period_id: 4, cores: ['ICT169', 'MAS162', 'ICT145'] },
           { year: 1, period_id: 5, cores: ['ICT170', 'MAS183'] },
           // Year 2 (8 units = 24 CP)
-          { year: 2, period_id: 3, cores: ['ICT201', 'ICT284', 'ICT285'] },
-          { year: 2, period_id: 4, cores: ['ICT292', 'BSC203', 'ICT145'] },
-          { year: 2, period_id: 5, cores: ['ICT283', 'ICT202'] },
+          { year: 2, period_id: 3, cores: ['MAS164', 'ICT167', 'ICT201'] },
+          { year: 2, period_id: 4, cores: ['ICT284', 'ICT285', 'ICT292'] },
+          { year: 2, period_id: 5, cores: ['BSC203', 'ICT202'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 3, cores: ['ICT302', 'ICT393', 'ICT394'] },
-          { year: 3, period_id: 4, cores: ['ICT301', 'ICT305', 'MAS164'] },
-          { year: 3, period_id: 5, cores: ['ICT373', 'ICT206'] }
+          { year: 3, period_id: 3, cores: ['ICT283', 'ICT302', 'ICT393'] },
+          { year: 3, period_id: 4, cores: ['ICT206', 'ICT394', 'ICT301'] },
+          { year: 3, period_id: 5, cores: ['ICT305', 'ICT373'] }
         ],
         semester: [
           // Year 1 (8 units = 24 CP)
-          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'MAS162'] },
-          { year: 1, period_id: 2, cores: ['ICT167', 'ICT169', 'ICT170', 'MAS183'] },
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'ICT169'] },
+          { year: 1, period_id: 2, cores: ['MAS162', 'ICT170', 'MAS183', 'ICT167'] },
           // Year 2 (8 units = 24 CP)
-          { year: 2, period_id: 1, cores: ['ICT201', 'ICT284', 'ICT285', 'ICT292'] },
-          { year: 2, period_id: 2, cores: ['BSC203', 'ICT145', 'ICT283', 'ICT202'] },
+          { year: 2, period_id: 1, cores: ['ICT145', 'MAS164', 'ICT285', 'ICT292'] },
+          { year: 2, period_id: 2, cores: ['ICT201', 'ICT284', 'ICT394', 'ICT301'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 1, cores: ['ICT302', 'ICT393', 'ICT394', 'ICT301'] },
-          { year: 3, period_id: 2, cores: ['ICT305', 'MAS164', 'ICT373', 'ICT206'] }
+          { year: 3, period_id: 1, cores: ['BSC203', 'ICT283', 'ICT202', 'ICT206'] },
+          { year: 3, period_id: 2, cores: ['ICT302', 'ICT393', 'ICT305', 'ICT373'] }
         ]
       },
       se: {
         trimester: [
           // Year 1 (8 units = 24 CP)
           { year: 1, period_id: 3, cores: ['ICT100', 'ICT158', 'ICT159'] },
-          { year: 1, period_id: 4, cores: ['ICT167', 'ICT145', 'MAS162'] },
-          { year: 1, period_id: 5, cores: ['ICT169', 'ICT170'] },
+          { year: 1, period_id: 4, cores: ['ICT145', 'MAS162', 'ICT169'] },
+          { year: 1, period_id: 5, cores: ['ICT170', 'MAS183'] },
           // Year 2 (8 units = 24 CP)
-          { year: 2, period_id: 3, cores: ['ICT201', 'ICT283', 'ICT284'] },
-          { year: 2, period_id: 4, cores: ['ICT285', 'BSC203', 'ICT292'] },
-          { year: 2, period_id: 5, cores: ['ICT203', 'MAS183'] },
+          { year: 2, period_id: 3, cores: ['MAS164', 'ICT167', 'ICT201'] },
+          { year: 2, period_id: 4, cores: ['ICT283', 'ICT284', 'ICT285'] },
+          { year: 2, period_id: 5, cores: ['BSC203', 'ICT292'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 3, cores: ['ICT302', 'ICT373', 'ICT374'] },
-          { year: 3, period_id: 4, cores: ['ICT301', 'ICT304', 'ICT305'] },
-          { year: 3, period_id: 5, cores: ['MAS164', 'ICT202'] }
+          { year: 3, period_id: 3, cores: ['ICT203', 'ICT302', 'ICT373'] },
+          { year: 3, period_id: 4, cores: ['ICT202', 'ICT374', 'ICT301'] },
+          { year: 3, period_id: 5, cores: ['ICT304', 'ICT305'] }
         ],
         semester: [
           // Year 1 (8 units = 24 CP)
-          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'MAS162'] },
-          { year: 1, period_id: 2, cores: ['ICT167', 'ICT145', 'ICT169', 'ICT170'] },
+          { year: 1, period_id: 1, cores: ['ICT100', 'ICT158', 'ICT159', 'ICT145'] },
+          { year: 1, period_id: 2, cores: ['MAS162', 'ICT169', 'ICT170', 'MAS183'] },
           // Year 2 (8 units = 24 CP)
-          { year: 2, period_id: 1, cores: ['ICT201', 'ICT283', 'ICT284', 'ICT285'] },
-          { year: 2, period_id: 2, cores: ['BSC203', 'ICT292', 'ICT203', 'MAS183'] },
+          { year: 2, period_id: 1, cores: ['MAS164', 'ICT167', 'ICT292', 'ICT202'] },
+          { year: 2, period_id: 2, cores: ['ICT201', 'ICT284', 'ICT301', 'ICT305'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 1, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT301'] },
-          { year: 3, period_id: 2, cores: ['ICT304', 'ICT305', 'MAS164', 'ICT202'] }
+          { year: 3, period_id: 1, cores: ['ICT283', 'ICT285', 'BSC203', 'ICT203'] },
+          { year: 3, period_id: 2, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT304'] }
         ]
       }
     };
@@ -898,6 +931,19 @@ export default function App() {
     }
 
     const presetsList = (MAJOR_PRESETS[majorKey] && MAJOR_PRESETS[majorKey][layoutType]) || MAJOR_PRESETS.ai.trimester;
+
+    const isOfferingValid = (code, periodId) => {
+      const allowed = getDynamicOfferings(code, layoutType);
+      let termKey = null;
+      if (layoutType === 'semester') {
+        termKey = periodId === 1 ? 'Sem 1' : 'Sem 2';
+      } else {
+        if (periodId === 3) termKey = 'Tri 1';
+        else if (periodId === 4) termKey = 'Tri 2';
+        else if (periodId === 5) termKey = 'Tri 3';
+      }
+      return termKey ? allowed.includes(termKey) : true;
+    };
 
     const getUnitPrereqCode = (unit) => {
       const staticMap = {
@@ -946,6 +992,7 @@ export default function App() {
           for (const coreCode of presetBlock.cores) {
             if (scheduledCodes.has(coreCode)) continue;
             if (completedCodes.has(coreCode) && !isAllYears) continue;
+            if (!isOfferingValid(coreCode, periodId)) continue;
 
             const unit = (catalogUnits || []).find(u => u.code === coreCode) || {
               code: coreCode,
@@ -1020,6 +1067,7 @@ export default function App() {
             if (year === 1 && uLvl > 199) return false;
             if (year === 2 && (uLvl < 200 || uLvl > 299)) return false;
             if (year === 3 && uLvl < 300) return false;
+            if (!isOfferingValid(u.code, periodId)) return false;
             return isPrereqSatisfied(u, year, periodId, scheduledUnits);
           });
 
@@ -1316,7 +1364,7 @@ export default function App() {
     });
   };
 
-  const handleSelectStudent = async (student, roleOverride = null) => {
+  const handleSelectStudent = async (student, roleOverride = null, planOptions = null) => {
     // 1. Preserve previous student's working draft in cache map before switching
     if (selectedStudent && currentPlan && Number(selectedStudent.student_id) !== Number(student.student_id)) {
       setAllStudentPlansMap(prev => {
@@ -1381,30 +1429,55 @@ export default function App() {
       } catch (e) {}
     }
 
-    // Special rule for Emily Watson (student_id: 4 / 31234564): starts from clean slate only if no plan has been recommended/generated
-    const isEmily = Number(student.student_id) === 4 || student.student_number === '31234564';
-    const isEmilyPlanActive = cached?.plan?.manuallySubmittedInSession || 
-                              cached?.plan?.status === 'recommended' || 
-                              cached?.plan?.status === 'agreed' || 
-                              cached?.plan?.status === 'approved' || 
-                              (cached?.units && cached.units.length > 0);
-    if (isEmily && !isEmilyPlanActive) {
+    // Special rule for New Students (Michael Chang: 3, Emily Watson: 4)
+    const isNewStudent = Number(student.student_id) === 3 || student.student_number === '31234563' ||
+                         Number(student.student_id) === 4 || student.student_number === '31234564';
+
+    // Student 3 (Michael Chang) must ALWAYS start from 0 CP clean draft unless specifically instructed by in-session planOptions
+    if (Number(student.student_id) === 3 && (!planOptions && (cached?.plan?.total_credit_points === 72 || cached?.plan?.status === 'recommended' || !cached?.plan || (cached?.units && cached.units.length > 0)))) {
       cached = {
         plan: {
-          plan_id: 4,
-          student_id: 4,
-          title: 'PT3-BSIT Artificial Intelligence Plan 2026',
+          plan_id: 3,
+          student_id: 3,
+          title: 'PT3-BSIT Business Info Systems Plan 2026',
           status: 'draft',
           total_credit_points: 0,
-          updated_at: '2026-09-13 14:10',
+          updated_at: '2026-10-24 11:02',
+          version_number: 1
+        },
+        units: []
+      };
+      setAllStudentPlansMap(prev => {
+        const next = { ...prev, 3: cached, '3': cached };
+        try { localStorage.setItem('spr_student_plans_cache', JSON.stringify(next)); } catch (e) {}
+        return next;
+      });
+    }
+
+    const isNewStudentPlanActive = cached?.plan?.manuallySubmittedInSession || 
+                                  cached?.plan?.status === 'recommended' || 
+                                  cached?.plan?.status === 'agreed' || 
+                                  cached?.plan?.status === 'approved' || 
+                                  cached?.plan?.status === 'rejected' ||
+                                  cached?.plan?.status === 'request_submitted' ||
+                                  (cached?.units && cached.units.length > 0);
+    if (isNewStudent && !isNewStudentPlanActive) {
+      cached = {
+        plan: {
+          plan_id: Number(student.student_id),
+          student_id: Number(student.student_id),
+          title: Number(student.student_id) === 3 ? 'PT3-BSIT Business Info Systems Plan 2026' : 'PT3-BSIT Artificial Intelligence Plan 2026',
+          status: 'draft',
+          total_credit_points: 0,
+          updated_at: '2026-10-24 11:02',
           version_number: 1
         },
         units: []
       };
     }
 
-    // For existing students (Alex: 1, Sarah: 2, Michael: 3), if cached has empty units or missing plan, fall back to mockClientStudentPlans!
-    const isExistingStudent = [1, 2, 3].includes(Number(student.student_id)) || ['31234561', '31234562', '31234563'].includes(student.student_number);
+    // For existing students (Alex: 1, Sarah: 2), if cached has empty units or missing plan, fall back to mockClientStudentPlans!
+    const isExistingStudent = [1, 2].includes(Number(student.student_id)) || ['31234561', '31234562'].includes(student.student_number);
     if (isExistingStudent && (!cached || !cached.units || cached.units.length === 0)) {
       const fallback = mockClientStudentPlans[Number(student.student_id)];
       if (fallback && fallback.units && fallback.units.length > 0) {
@@ -1415,8 +1488,13 @@ export default function App() {
       }
     }
 
-    if (cached && (cached.units?.length > 0 || isEmily)) {
-      setCurrentPlan(cached.plan);
+    if (cached && (cached.units?.length > 0 || isNewStudent)) {
+      const planToSet = {
+        ...cached.plan,
+        targetYearLevel: planOptions?.targetYearLevel || cached.plan?.targetYearLevel || 1,
+        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now()
+      };
+      setCurrentPlan(planToSet);
       setPlanUnits(cached.units || []);
       runValidation(student.student_id, student.location_id, cached.units || []);
       fetchStudentHistory(student.student_id).then(h => setHistory(h || [])).catch(console.error);
@@ -1432,12 +1510,18 @@ export default function App() {
 
       setHistory(historyData || []);
       
-      const initialPlan = (planData && planData.plan) ? planData.plan : {
+      const initialPlan = (planData && planData.plan) ? {
+        ...planData.plan,
+        targetYearLevel: planOptions?.targetYearLevel || planData.plan?.targetYearLevel || 1,
+        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now()
+      } : {
         plan_id: student.student_id,
         student_id: student.student_id,
         title: `${student.course_code || 'PT3-BSIT'} Study Plan`,
         status: 'draft',
-        total_credit_points: 0
+        total_credit_points: 0,
+        targetYearLevel: planOptions?.targetYearLevel || 1,
+        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now()
       };
       const initialUnits = (planData && planData.units) ? planData.units : [];
 
@@ -1704,7 +1788,7 @@ export default function App() {
       timestamp: formatNotificationTimestamp(),
       createdTimeMs: Date.now(),
       read: false,
-      actionType: 'AUTO_GENERATE',
+      actionType: 'REVIEW',
       actionLabel: 'Review & Final Approve'
     };
     setNotifications(prev => [agreeNotif, ...prev]);
@@ -1719,23 +1803,29 @@ export default function App() {
   };
 
   // Student Reject Plan / Request Changes
-  const handleRejectPlan = (rejectionComment) => {
+  const handleRejectPlan = async (rejectionComment) => {
     if (!selectedStudent) return;
     const updatedPlan = {
       ...currentPlan,
       status: 'rejected',
       rejectionComment,
+      manuallySubmittedInSession: true,
       updated_at: formatCurrentDateTime(),
       version_number: (currentPlan?.version_number || 1) + 1
     };
     setCurrentPlan(updatedPlan);
-    setAllStudentPlansMap(prev => ({
-      ...prev,
+    const nextMap = {
+      ...allStudentPlansMap,
       [selectedStudent.student_id]: {
         plan: updatedPlan,
         units: planUnits
       }
-    }));
+    };
+    setAllStudentPlansMap(nextMap);
+    try {
+      localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+    } catch (e) {}
+
     if (mockClientStudentPlans[Number(selectedStudent.student_id)]) {
       mockClientStudentPlans[Number(selectedStudent.student_id)].plan = updatedPlan;
       mockClientStudentPlans[Number(selectedStudent.student_id)].units = planUnits;
@@ -1756,17 +1846,28 @@ export default function App() {
       timestamp: formatNotificationTimestamp(),
       createdTimeMs: Date.now(),
       read: false,
-      actionType: 'AUTO_GENERATE',
+      actionType: 'REVIEW',
       actionLabel: 'Review Student Feedback'
     };
     setNotifications(prev => [rejectNotif, ...prev]);
 
     showToast(`Study plan change request submitted to Academic Chair!`);
+
+    try {
+      const planId = currentPlan ? currentPlan.plan_id : selectedStudent.student_id;
+      await rejectPlan(planId, rejectionComment);
+    } catch (err) {
+      console.warn('Backend rejectPlan error:', err);
+    }
   };
 
   // Chair Approve & Finalise Plan
   const handleApprovePlan = async () => {
     if (!selectedStudent) return;
+    if (currentPlan?.status !== 'agreed') {
+      showToast(`⚠️ Final Approval Blocked: Plan cannot be approved prior to student digital agreement. Current status is ${currentPlan?.status ? currentPlan.status.toUpperCase() : 'DRAFT'}.`);
+      return;
+    }
     const updatedPlan = { ...currentPlan, status: 'approved', updated_at: formatCurrentDateTime(), version_number: (currentPlan?.version_number || 1) + 1 };
     setCurrentPlan(updatedPlan);
     setAllStudentPlansMap(prev => ({
