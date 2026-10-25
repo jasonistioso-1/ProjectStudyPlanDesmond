@@ -2241,10 +2241,8 @@ export default function PlanBuilder({
                 )}
               </div>
 
-              {/* Middle Section: Student Feedback Dialogue Box & Action Suite */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-                {/* Left/Main Column: Student Profile & Speech Bubble (8 cols on lg) */}
-                <div className="lg:col-span-8 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-600/50 rounded-2xl p-4 sm:p-5 shadow-xs backdrop-blur-sm flex flex-col justify-between gap-3.5">
+              {/* Middle Section: Student Feedback Dialogue Box */}
+              <div className="w-full bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-600/50 rounded-2xl p-4 sm:p-5 shadow-xs backdrop-blur-sm flex flex-col justify-between gap-3.5">
                   {/* Student Identity Strip */}
                   <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-amber-100 dark:border-slate-800">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -2381,58 +2379,6 @@ export default function PlanBuilder({
                     </div>
                   </div>
                 </div>
-
-                {/* Right Column: Academic Chair Resolution Actions (4 cols on lg) */}
-                {isChair ? (
-                  <div className="lg:col-span-4 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-600/50 rounded-2xl p-4 sm:p-5 shadow-xs backdrop-blur-sm flex flex-col justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-heading">
-                        <Sliders className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                        <span>Chair Resolution Suite</span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug">
-                        Apply adjustments on the study plan canvas, then re-recommend to {student?.first_name || 'student'}.
-                      </p>
-                    </div>
-
-                    <div className="space-y-2 pt-1">
-                      {onRecommendPlan && (
-                        <button
-                          type="button"
-                          onClick={() => onRecommendPlan(Array.from(waivedUnits))}
-                          className="w-full px-4 py-2.5 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-700 hover:via-orange-700 hover:to-amber-800 text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 font-heading tracking-wide"
-                          title="Re-recommend updated study plan to student"
-                        >
-                          <Send className="w-3.5 h-3.5 text-white shrink-0" />
-                          <span>Re-Recommend Plan</span>
-                          <ArrowRight className="w-3.5 h-3.5 text-white/80 shrink-0" />
-                        </button>
-                      )}
-
-                      {onAutoGeneratePlan && (
-                        <button
-                          type="button"
-                          onClick={handleOpenAutoGenModal}
-                          className="w-full px-3.5 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-extrabold shadow-2xs flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 font-heading"
-                          title="Auto-fill recommended study plan based on course offerings and prerequisite rules"
-                        >
-                          <Wand2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                          <span>Adjust / Preset Plan</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="lg:col-span-4 bg-white/95 dark:bg-slate-900/90 border border-amber-300/90 dark:border-amber-600/50 rounded-2xl p-4 sm:p-5 shadow-xs backdrop-blur-sm flex flex-col justify-center gap-2">
-                    <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-200 font-heading">
-                      Request Status: Under Review
-                    </span>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
-                      Your change request has been delivered to Academic Chair Dr. Aris Thorne. You will be notified when an amended plan is ready for your signature.
-                    </p>
-                  </div>
-                )}
-              </div>
 
               {/* Bottom Row: 3-Step Guided Workflow Strip */}
               <div className="bg-amber-100/60 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/40 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
