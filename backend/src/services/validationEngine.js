@@ -5,9 +5,10 @@ import { mockStudentHistory, mockTeachingPeriods, mockPrerequisites } from '../c
  * Data-Driven Validation Engine for Study Plan Repository (SPR)
  * Enforces BR-01 (Unit Offerings), BR-02 (Prerequisites), Max 12 CP per period, and History rules.
  */
-export async function validateStudyPlan({ studentId, locationId, planUnits }) {
+export async function validateStudyPlan({ studentId, locationId, planUnits, waivedUnits = [] }) {
     const warnings = [];
     const info = [];
+    const waivedSet = new Set(Array.isArray(waivedUnits) ? waivedUnits : []);
 
     try {
         // 1. Fetch Student History if studentId provided
@@ -202,7 +203,7 @@ export async function validateStudyPlan({ studentId, locationId, planUnits }) {
                     return false;
                 });
 
-                if (!isPassedInHistory && !isScheduledPrior) {
+                if (!isPassedInHistory && !isScheduledPrior && !waivedSet.has(unit.code)) {
                     warnings.push({
                         type: 'BR-02_PREREQUISITE_UNMET',
                         severity: 'error',

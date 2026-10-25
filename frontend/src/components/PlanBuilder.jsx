@@ -217,13 +217,15 @@ export default function PlanBuilder({
       return;
     }
 
-    if (currentPlan?.targetYearLevel) {
-      setScopeYear(currentPlan.targetYearLevel);
+    if (activeYearLevel && typeof activeYearLevel === 'number') {
+      setScopeYear(activeYearLevel);
+    } else if (currentPlan?.targetYearLevel) {
+      setScopeYear(Number(currentPlan.targetYearLevel));
     } else if (currentPlan?.requestYear) {
-      setScopeYear(currentPlan.requestYear === 2027 ? 2 : currentPlan.requestYear === 2028 ? 3 : 1);
+      setScopeYear(Number(currentPlan.requestYear) === 2027 ? 2 : Number(currentPlan.requestYear) === 2028 ? 3 : 1);
     }
     if (currentPlan?.requestPeriods && currentPlan.requestPeriods.length > 0) {
-      setScopePeriods(currentPlan.requestPeriods);
+      setScopePeriods(currentPlan.requestPeriods.map(Number));
     }
     setShowAutoGenModal(true);
   };
@@ -3176,9 +3178,97 @@ export default function PlanBuilder({
 
               {/* 3. Target Periods to Prioritize */}
               <div className="space-y-2">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
-                  3. Target Periods to Prioritize:
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
+                    3. Target Periods to Prioritize:
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    {modalLayoutType === 'trimester' ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setScopePeriods([3, 4, 5])}
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer ${
+                            scopePeriods.length === 3
+                              ? 'bg-red-700 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          All Terms
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setScopePeriods([3])}
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer ${
+                            scopePeriods.length === 1 && scopePeriods[0] === 3
+                              ? 'bg-red-700 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          T1 Only
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setScopePeriods([4])}
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer ${
+                            scopePeriods.length === 1 && scopePeriods[0] === 4
+                              ? 'bg-red-700 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          T2 Only
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setScopePeriods([5])}
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer ${
+                            scopePeriods.length === 1 && scopePeriods[0] === 5
+                              ? 'bg-red-700 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          T3 Only
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setScopePeriods([1, 2])}
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer ${
+                            scopePeriods.length === 2
+                              ? 'bg-red-700 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          Both Semesters
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setScopePeriods([1])}
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer ${
+                            scopePeriods.length === 1 && scopePeriods[0] === 1
+                              ? 'bg-red-700 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          S1 Only
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setScopePeriods([2])}
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer ${
+                            scopePeriods.length === 1 && scopePeriods[0] === 2
+                              ? 'bg-red-700 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          S2 Only
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
                 <div className={`grid ${modalLayoutType === 'semester' ? 'grid-cols-2' : 'grid-cols-3'} gap-2.5`}>
                   {(modalLayoutType === 'semester' ? [
                     { id: 1, label: 'Semester 1 (S1)' },
@@ -3247,6 +3337,10 @@ export default function PlanBuilder({
                   onClick={() => {
                     setShowAutoGenModal(false);
                     setLayoutType(modalLayoutType);
+                    if (typeof scopeYear === 'number') {
+                      setActiveYearLevel(scopeYear);
+                      setViewMode('single');
+                    }
                     if (onAutoGeneratePlan) {
                       onAutoGeneratePlan(student?.student_id, {
                         targetYearLevel: scopeYear,

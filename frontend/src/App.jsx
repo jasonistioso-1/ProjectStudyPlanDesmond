@@ -823,7 +823,9 @@ export default function App() {
 
     const layoutType = options.layoutType || currentPlan?.layoutType || (options.requestPeriods && options.requestPeriods.some(p => p === 1 || p === 2) ? 'semester' : 'trimester');
     const defaultPeriods = layoutType === 'semester' ? [1, 2] : [3, 4, 5];
-    const requestedPeriods = (options.requestPeriods && options.requestPeriods.length > 0) ? options.requestPeriods : (currentPlan?.requestPeriods || defaultPeriods);
+    const requestedPeriods = (options.requestPeriods && options.requestPeriods.length > 0)
+      ? options.requestPeriods.map(Number)
+      : (currentPlan?.requestPeriods ? currentPlan.requestPeriods.map(Number) : defaultPeriods);
 
     // Determine numerical target year level if specific year (1, 2, 3) selected, or 'all'
     const targetLvlNum = typeof targetYearLvl === 'number'
@@ -837,8 +839,8 @@ export default function App() {
 
     // Determine exact target slots (year_level, period_id) being auto-filled
     const isTargetSlot = (yearLevel, periodId) => {
-      const matchesYear = yearsToFill.includes(yearLevel);
-      const matchesPeriod = requestedPeriods.includes(periodId);
+      const matchesYear = yearsToFill.map(Number).includes(Number(yearLevel));
+      const matchesPeriod = requestedPeriods.map(Number).includes(Number(periodId));
       return matchesYear && matchesPeriod;
     };
 
@@ -852,7 +854,7 @@ export default function App() {
       if (!isTargetSlot(u.year_level, u.period_id)) {
         scheduledUnits.push(u);
         scheduledCodes.add(u.code);
-        const pKey = `y${u.year_level}_p${u.period_id}`;
+        const pKey = `y${Number(u.year_level)}_p${Number(u.period_id)}`;
         periodLoads[pKey] = (periodLoads[pKey] || 0) + Number(u.credit_points || 3);
       }
     }
@@ -987,12 +989,13 @@ export default function App() {
     const isOfferingValid = (code, periodId) => {
       const allowed = getDynamicOfferings(code, layoutType);
       let termKey = null;
+      const pNum = Number(periodId);
       if (layoutType === 'semester') {
-        termKey = periodId === 1 ? 'Sem 1' : 'Sem 2';
+        termKey = pNum === 1 ? 'Sem 1' : 'Sem 2';
       } else {
-        if (periodId === 3) termKey = 'Tri 1';
-        else if (periodId === 4) termKey = 'Tri 2';
-        else if (periodId === 5) termKey = 'Tri 3';
+        if (pNum === 3) termKey = 'Tri 1';
+        else if (pNum === 4) termKey = 'Tri 2';
+        else if (pNum === 5) termKey = 'Tri 3';
       }
       return termKey ? allowed.includes(termKey) : true;
     };
@@ -1015,31 +1018,59 @@ export default function App() {
       return null;
     };
 
-    const isPrereqSatisfied = (unit, year, periodId, scheduledUnitsList) => {
+    const isPrereqSatisfied = (unit, year, periodId, scheduledUnitsList, isPreset = false) => {
       const prereq = getUnitPrereqCode(unit);
       if (!prereq) return true;
       if (completedCodes.has(prereq)) return true;
-      return scheduledUnitsList.some(s => {
+
+      // Check if prerequisite is already scheduled in an earlier period/year
+      const alreadyScheduled = scheduledUnitsList.some(s => {
         if (s.code !== prereq) return false;
-        if (s.year_level < year) return true;
-        if (s.year_level === year && s.period_id < periodId) return true;
+        const sYear = Number(s.year_level);
+        const uYear = Number(year);
+        const sPeriod = Number(s.period_id);
+        const uPeriod = Number(periodId);
+        if (sYear < uYear) return true;
+        if (sYear === uYear && sPeriod < uPeriod) return true;
         return false;
       });
+      if (alreadyScheduled) return true;
+
+      // When auto-filling accredited preset units:
+      // If partial scope is selected (e.g. filling only Year 3 or Year 2),
+      // prerequisites from earlier years belong to accredited study progression
+      // and must NOT block official presets from being placed.
+      if (isPreset) {
+        return true;
+      }
+
+      // For fallback candidate fill when filling a specific year in isolation:
+      if (!isAllYears) {
+        const prereqUnit = (catalogUnits || []).find(p => p.code === prereq);
+        const prereqLvl = prereqUnit ? Number(prereqUnit.level || 100) : 100;
+        const prereqYear = prereqLvl >= 300 ? 3 : (prereqLvl >= 200 ? 2 : 1);
+        if (prereqYear < Number(year) && !yearsToFill.map(Number).includes(prereqYear)) {
+          return true;
+        }
+      }
+
+      return false;
     };
 
     const getTargetPeriodCP = (periodId) => {
+      const pNum = Number(periodId);
       if (layoutType === 'semester') return 12; // 4 units × 3 CP = 12 CP
-      if (periodId === 5) return 6; // Trimester 3: 2 units × 3 CP = 6 CP
+      if (pNum === 5) return 6; // Trimester 3: 2 units × 3 CP = 6 CP
       return 9; // Trimesters 1 & 2: 3 units × 3 CP = 9 CP
     };
 
     // STEP 1: Prescribed Core Units Placement from Major Preset
     for (const year of yearsToFill) {
       for (const periodId of requestedPeriods) {
-        const pKey = `y${year}_p${periodId}`;
+        const pKey = `y${Number(year)}_p${Number(periodId)}`;
         periodLoads[pKey] = periodLoads[pKey] || 0;
 
-        const presetBlock = presetsList.find(b => b.year === year && b.period_id === periodId);
+        const presetBlock = presetsList.find(b => Number(b.year) === Number(year) && Number(b.period_id) === Number(periodId));
         if (presetBlock && presetBlock.cores) {
           for (const coreCode of presetBlock.cores) {
             if (scheduledCodes.has(coreCode)) continue;
@@ -1050,17 +1081,17 @@ export default function App() {
               code: coreCode,
               title: coreCode,
               credit_points: 3,
-              level: year === 1 ? 100 : year === 2 ? 200 : 300
+              level: Number(year) === 1 ? 100 : Number(year) === 2 ? 200 : 300
             };
-            if (!isPrereqSatisfied(unit, year, periodId, scheduledUnits)) continue;
+            if (!isPrereqSatisfied(unit, year, periodId, scheduledUnits, true)) continue;
 
             const unitCP = Number(unit.credit_points || 3);
             if ((periodLoads[pKey] || 0) + unitCP <= 12) {
               scheduledUnits.push({
                 ...unit,
                 unit_id: unit.unit_id || Math.floor(Math.random() * 100000),
-                year_level: year,
-                period_id: periodId,
+                year_level: Number(year),
+                period_id: Number(periodId),
                 credit_points: unitCP,
                 sequence_order: scheduledUnits.length + 1
               });
@@ -1108,7 +1139,7 @@ export default function App() {
 
     for (const year of yearsToFill) {
       for (const periodId of requestedPeriods) {
-        const pKey = `y${year}_p${periodId}`;
+        const pKey = `y${Number(year)}_p${Number(periodId)}`;
         const targetCapacity = getTargetPeriodCP(periodId);
 
         while ((periodLoads[pKey] || 0) < targetCapacity) {
@@ -1116,11 +1147,12 @@ export default function App() {
             if (scheduledCodes.has(u.code)) return false;
             if (completedCodes.has(u.code) && !isAllYears) return false;
             const uLvl = Number(u.level || 100);
-            if (year === 1 && uLvl > 199) return false;
-            if (year === 2 && (uLvl < 200 || uLvl > 299)) return false;
-            if (year === 3 && uLvl < 300) return false;
+            const yrNum = Number(year);
+            if (yrNum === 1 && uLvl > 199) return false;
+            if (yrNum === 2 && (uLvl < 200 || uLvl > 299)) return false;
+            if (yrNum === 3 && uLvl < 200) return false;
             if (!isOfferingValid(u.code, periodId)) return false;
-            return isPrereqSatisfied(u, year, periodId, scheduledUnits);
+            return isPrereqSatisfied(u, yrNum, periodId, scheduledUnits, false);
           });
 
           if (!candidate) break;
@@ -1130,8 +1162,8 @@ export default function App() {
             scheduledUnits.push({
               ...candidate,
               unit_id: candidate.unit_id || Math.floor(Math.random() * 100000),
-              year_level: year,
-              period_id: periodId,
+              year_level: Number(year),
+              period_id: Number(periodId),
               credit_points: unitCP,
               sequence_order: scheduledUnits.length + 1
             });
@@ -1153,11 +1185,15 @@ export default function App() {
     const wasApproved = currentPlan?.status === 'approved' || currentPlan?.status === 'agreed' || currentPlan?.status === 'stored';
     const newStatus = 'draft';
 
+    const targetFocusYear = targetLvlNum || (currentPlan?.requestYear === 2027 ? 2 : currentPlan?.requestYear === 2028 ? 3 : 1);
+
     const updatedPlan = {
       ...currentPlan,
       status: newStatus,
       total_credit_points: totalGeneratedCP,
       layoutType: layoutType,
+      targetYearLevel: targetFocusYear,
+      forceScrollTrigger: Date.now(),
       studentSignature: wasApproved ? null : currentPlan?.studentSignature,
       signature: wasApproved ? null : currentPlan?.signature,
       updated_at: formatCurrentDateTime(),
@@ -1210,11 +1246,18 @@ export default function App() {
       created_by: 'Academic Chair'
     }).catch(err => console.warn('Background savePlan error:', err));
 
+    const yearScopeLabel = targetLvlNum ? `Year ${targetLvlNum} (${targetLvlNum === 1 ? 2026 : targetLvlNum === 2 ? 2027 : 2028})` : 'All 3 Years';
+    const periodScopeLabel = (requestedPeriods.length === 3 && layoutType === 'trimester')
+      ? 'All Trimesters'
+      : (requestedPeriods.length === 2 && layoutType === 'semester')
+      ? 'All Semesters'
+      : requestedPeriods.map(p => p === 1 ? 'S1' : p === 2 ? 'S2' : p === 3 ? 'T1' : p === 4 ? 'T2' : 'T3').join(', ');
+
     updatePlanRecordAndLogAudit(
       newStatus,
       wasApproved
-        ? `Approved plan re-opened and reset to DRAFT via Auto System Generation for requested year ${reqYear} (${totalGeneratedCP} CP)`
-        : `Auto System Generation applied for requested year ${reqYear} (${totalGeneratedCP} CP)`,
+        ? `Approved plan re-opened and reset to DRAFT via Auto System Generation for ${yearScopeLabel} [${periodScopeLabel}] (${totalGeneratedCP} CP)`
+        : `Auto System Generation applied for ${yearScopeLabel} [${periodScopeLabel}] (${totalGeneratedCP} CP)`,
       'Academic Chair',
       targetStudent,
       scheduledUnits
@@ -1224,11 +1267,11 @@ export default function App() {
       id: `n-${Date.now()}`,
       role: 'student',
       studentId: targetStudent.student_id,
-      targetYear: targetYearLvl,
+      targetYear: targetFocusYear,
       title: wasApproved ? 'Approved Plan Re-opened for Replan' : 'Study Plan Auto-Generated',
       message: wasApproved
-        ? `Academic Chair generated a new study plan structure for ${reqYear}. Status reset to Draft for review (${totalGeneratedCP} CP).`
-        : `Academic Chair generated a recommended ${totalGeneratedCP} CP Study Plan tailored to your degree requirements.`,
+        ? `Academic Chair generated a new study plan structure for ${yearScopeLabel} [${periodScopeLabel}]. Status reset to Draft (${totalGeneratedCP} CP).`
+        : `Academic Chair generated a prescribed study plan for ${yearScopeLabel} [${periodScopeLabel}] (${totalGeneratedCP} CP total).`,
       timestamp: formatNotificationTimestamp(),
       createdTimeMs: Date.now(),
       read: false,
@@ -1239,8 +1282,8 @@ export default function App() {
 
     showToast(
       wasApproved
-        ? `Approved plan re-opened! Auto-generated new ${totalGeneratedCP} CP plan for ${targetStudent.first_name} (Status reset to Draft).`
-        : `Auto-generated ${totalGeneratedCP} CP plan for ${targetStudent.first_name} (${targetStudent.course_code || 'PT3-BSIT'})!`
+        ? `Approved plan re-opened! Auto-filled ${totalGeneratedCP} CP for ${targetStudent.first_name} [${yearScopeLabel} • ${periodScopeLabel}].`
+        : `Auto-filled preset units for ${targetStudent.first_name} [${yearScopeLabel} • ${periodScopeLabel}] (${totalGeneratedCP} CP total)!`
     );
   };
 
@@ -1618,7 +1661,8 @@ export default function App() {
       const res = await validatePlan({
         studentId: studentId || (selectedStudent ? selectedStudent.student_id : null),
         locationId: locationId || (selectedStudent ? selectedStudent.location_id : null),
-        planUnits: units
+        planUnits: units,
+        waivedUnits: Array.from(currentPlan?.waivedUnits || [])
       });
       setValidationResult(res);
     } catch (err) {
