@@ -134,6 +134,19 @@ export default function PlanBuilder({
                           Boolean(effectiveRejectionComment) || 
                           Boolean(studentDisagreementNotif);
 
+  // View More / Show Less toggle state for student feedback and change requests
+  const [isFeedbackExpanded, setIsFeedbackExpanded] = useState(false);
+
+  const semesterRequestEntries = useMemo(() => {
+    return Object.entries(semesterRequests || {}).filter(
+      ([_, comment]) => typeof comment === 'string' && comment.trim().length > 0
+    );
+  }, [semesterRequests]);
+
+  const isCommentLong = Boolean(effectiveRejectionComment && (effectiveRejectionComment.length > 110 || effectiveRejectionComment.includes('\n')));
+  const hasSemesterRequests = semesterRequestEntries.length > 0;
+  const canToggleFeedback = Boolean(isCommentLong || hasSemesterRequests);
+
   // Academic Chair Waiver State (VAL-04 / M05:R422)
   const [waivedUnits, setWaivedUnits] = useState(() => new Set(currentPlan?.waivedUnits || []));
 
@@ -2182,10 +2195,6 @@ export default function PlanBuilder({
                       <span className="text-xs sm:text-[13px] font-black uppercase tracking-wider font-heading text-amber-900 dark:text-amber-200">
                         Student Requested Changes / Plan Disagreed
                       </span>
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-mono bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-0.5 rounded-full font-black shadow-xs tracking-wide uppercase">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                        Action Required
-                      </span>
                     </div>
                     <p className="text-xs text-amber-800/80 dark:text-amber-300/80 font-medium mt-0.5">
                       The student reviewed the recommended study plan and requested structural adjustments before agreeing.
@@ -2238,7 +2247,9 @@ export default function PlanBuilder({
                       <MessageSquareQuote className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 opacity-90" />
                       <div className="flex-1 min-w-0">
                         {effectiveRejectionComment ? (
-                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-amber-50 font-sans tracking-tight leading-relaxed italic break-words">
+                          <p className={`text-xs sm:text-sm font-bold text-slate-900 dark:text-amber-50 font-sans tracking-tight leading-relaxed italic break-words whitespace-pre-line ${
+                            !isFeedbackExpanded && isCommentLong ? 'line-clamp-2' : ''
+                          }`}>
                             “{effectiveRejectionComment}”
                           </p>
                         ) : (
@@ -2266,6 +2277,75 @@ export default function PlanBuilder({
                             </div>
                           );
                         })()}
+
+                        {/* Trimester-Specific Requests when collapsed / expanded */}
+                        {hasSemesterRequests && (
+                          isFeedbackExpanded ? (
+                            <div className="mt-3 pt-2.5 border-t border-amber-200/80 dark:border-amber-800/60 space-y-2 animate-in fade-in duration-200">
+                              <div className="flex items-center gap-1.5">
+                                <Sliders className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                                <span className="text-[11px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-200 font-heading">
+                                  Trimester-Specific Requests ({semesterRequestEntries.length}):
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {semesterRequestEntries.map(([periodKey, reqText]) => (
+                                  <div 
+                                    key={periodKey}
+                                    className="bg-white/95 dark:bg-slate-900/95 border border-amber-200 dark:border-amber-700/60 rounded-xl p-2.5 shadow-2xs"
+                                  >
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="font-mono font-black text-amber-900 dark:text-amber-200 text-[10px] bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded">
+                                        {periodKey.replace('Y', 'Year ').replace('-P', ' Trimester ')}
+                                      </span>
+                                      {onRemoveSemesterRequest && isChair && (
+                                        <button
+                                          type="button"
+                                          onClick={() => onRemoveSemesterRequest(periodKey)}
+                                          className="text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline font-bold cursor-pointer"
+                                        >
+                                          Resolve
+                                        </button>
+                                      )}
+                                    </div>
+                                    <p className="text-slate-700 dark:text-slate-300 text-xs font-semibold italic break-words">
+                                      "{reqText}"
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-2.5 flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-100/90 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 text-[10px] font-mono font-bold border border-amber-200 dark:border-amber-700/60 shadow-2xs">
+                                <Sliders className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                                +{semesterRequestEntries.length} Trimester Request{semesterRequestEntries.length > 1 ? 's' : ''} Attached
+                              </span>
+                            </div>
+                          )
+                        )}
+
+                        {/* View More / Show Less Toggle Button */}
+                        {canToggleFeedback && (
+                          <div className="mt-2.5 pt-1.5 flex items-center">
+                            <button
+                              type="button"
+                              onClick={() => setIsFeedbackExpanded(prev => !prev)}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-100 hover:underline cursor-pointer transition-colors"
+                            >
+                              <span>
+                                {isFeedbackExpanded 
+                                  ? 'Show Less' 
+                                  : `View More ${hasSemesterRequests ? `(${semesterRequestEntries.length} Trimester Request${semesterRequestEntries.length > 1 ? 's' : ''} & Full Note)` : '(Full Note)'}`}
+                              </span>
+                              {isFeedbackExpanded ? (
+                                <ChevronUp className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                              ) : (
+                                <ChevronDown className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                              )}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
