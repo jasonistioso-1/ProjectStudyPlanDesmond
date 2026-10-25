@@ -51,7 +51,8 @@ import {
   Cpu,
   Building2,
   X,
-  XCircle
+  XCircle,
+  FileEdit
 } from 'lucide-react';
 
 export default function PlanBuilder({
@@ -82,7 +83,8 @@ export default function PlanBuilder({
   onStudentSubmitPlanRequest,
   onAutoGeneratePlan,
   onWaiverChange,
-  notifications = []
+  notifications = [],
+  onUnlockForAmendment
 }) {
   const isChair = activeRole === 'chair';
   const [unitFilter, setUnitFilter] = useState('');
@@ -109,9 +111,8 @@ export default function PlanBuilder({
   const [reqPeriods, setReqPeriods] = useState([3, 4, 5]); // Default all 3 trimesters selected
   const [reqComment, setReqComment] = useState('');
 
-  // Active Plan Status and Lock Check
+  // Active Plan Status
   const planStatus = currentPlan ? currentPlan.status : 'draft';
-  const isPlanLocked = planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved';
 
   // Disagreement / Rejection Feedback detection from currentPlan or notifications
   const studentDisagreementNotif = (notifications || []).find(n =>
@@ -133,6 +134,19 @@ export default function PlanBuilder({
                           currentPlan?.status === 'rejected' || 
                           Boolean(effectiveRejectionComment) || 
                           Boolean(studentDisagreementNotif);
+
+  // Active Plan Lock Check
+  // Academic Chair can ALWAYS edit if:
+  // 1. Student requested changes / disagreed (isPlanDisagreed)
+  // 2. Plan was retrieved for amendment (currentPlan?.isAmending)
+  // 3. Plan is in draft, request_submitted, or rejected
+  const isPlanLocked = !isChair ? (
+    planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved'
+  ) : (
+    !currentPlan?.isAmending &&
+    !isPlanDisagreed &&
+    (planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved')
+  );
 
   // View More / Show Less toggle state for student feedback and change requests
   const [isFeedbackExpanded, setIsFeedbackExpanded] = useState(false);
@@ -2034,25 +2048,28 @@ export default function PlanBuilder({
               <div className="space-y-0.5 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-extrabold text-slate-900 dark:text-white tracking-tight font-heading">
-                    {isPlanLocked ? 'Study Plan Locked' : 'Academic Plan Governance'}
+                    {isPlanLocked ? 'Study Plan Locked' : (currentPlan?.isAmending ? 'Study Plan Amendment in Progress' : 'Academic Plan Governance')}
                   </span>
 
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border font-mono ${
+                    currentPlan?.isAmending ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-400' :
                     planStatus === 'approved' ? 'bg-emerald-100/90 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' :
                     planStatus === 'agreed' ? 'bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-800' :
                     planStatus === 'recommended' ? 'bg-amber-100/90 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' :
+                    planStatus === 'rejected' ? 'bg-rose-100/90 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border-rose-300' :
                     'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                   }`}>
-                    {planStatus === 'draft' ? 'Drafting Sequence' : planStatus}
+                    {currentPlan?.isAmending ? 'Amendment Draft' : planStatus === 'draft' ? 'Drafting Sequence' : planStatus === 'rejected' ? 'Change Requested' : planStatus}
                   </span>
                 </div>
 
                 <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                  {planStatus === 'draft' && 'Structure units on the canvas and click Recommend to Student at the bottom when ready.'}
-                  {planStatus === 'rejected' && 'Student disagreed with the recommended plan and requested amendments. Please review the student feedback note, adjust units, and re-recommend.'}
-                  {planStatus === 'recommended' && 'Plan recommended to student & locked from canvas edits. To modify units, click Retrieve & Amend in Stored Repository.'}
-                  {planStatus === 'agreed' && 'Student digital sign-off complete. Click Final Approve below or Retrieve & Amend in Repository to edit.'}
-                  {planStatus === 'approved' && 'Official approved plan archived & locked. To create a new draft version, click Retrieve & Amend in Stored Repository.'}
+                  {currentPlan?.isAmending && 'You are currently amending this study plan. Canvas is unlocked. Adjust units freely, then click Re-Recommend or Final Approve.'}
+                  {!currentPlan?.isAmending && planStatus === 'draft' && 'Structure units on the canvas and click Recommend to Student at the bottom when ready.'}
+                  {!currentPlan?.isAmending && planStatus === 'rejected' && 'Student disagreed with the recommended plan and requested amendments. Please review the student feedback note, adjust units, and re-recommend.'}
+                  {!currentPlan?.isAmending && planStatus === 'recommended' && 'Plan recommended to student & locked from canvas edits. To modify units, click Unlock & Amend Canvas.'}
+                  {!currentPlan?.isAmending && planStatus === 'agreed' && 'Student digital sign-off complete. Click Final Approve below or Unlock & Amend Canvas to edit.'}
+                  {!currentPlan?.isAmending && planStatus === 'approved' && 'Official approved plan archived & locked. To create a new draft version, click Unlock & Amend Canvas.'}
                 </p>
 
                 {/* Approval Stages Progression Stepper (APP-01 / APP-02) */}
@@ -2099,19 +2116,33 @@ export default function PlanBuilder({
               </div>
             </div>
 
-            <button
-              onClick={() => setShowWorkflowGuide(prev => !prev)}
-              className={`px-3.5 py-2 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer shrink-0 ${
-                showWorkflowGuide
-                  ? 'bg-red-700 text-white border border-red-800 shadow-xs'
-                  : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
-              }`}
-              title="Toggle System Workflow & User Guide"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-              <span>{showWorkflowGuide ? 'Hide User Guide' : 'System User Guide'}</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showWorkflowGuide ? 'rotate-180' : ''}`} />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {isPlanLocked && isChair && (
+                <button
+                  type="button"
+                  onClick={onUnlockForAmendment}
+                  className="px-3.5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0 font-heading"
+                  title="Unlock this study plan to modify and amend units on the canvas"
+                >
+                  <FileEdit className="w-3.5 h-3.5" />
+                  <span>Unlock & Amend Canvas</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setShowWorkflowGuide(prev => !prev)}
+                className={`px-3.5 py-2 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer shrink-0 ${
+                  showWorkflowGuide
+                    ? 'bg-red-700 text-white border border-red-800 shadow-xs'
+                    : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+                }`}
+                title="Toggle System Workflow & User Guide"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                <span>{showWorkflowGuide ? 'Hide User Guide' : 'System User Guide'}</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showWorkflowGuide ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
           </div>
         )}
 

@@ -2011,6 +2011,28 @@ export default function App() {
     }
   };
 
+  // Chair Unlock Plan for Amendment
+  const handleUnlockForAmendment = () => {
+    if (!currentPlan) return;
+    const nextVersion = Number(((currentPlan?.version_number || 1) + 0.1).toFixed(1));
+    const updatedTime = formatCurrentDateTime();
+    const updatedPlan = {
+      ...currentPlan,
+      status: 'draft',
+      isAmending: true,
+      amendedFromStatus: currentPlan.status,
+      version_number: nextVersion,
+      updated_at: updatedTime
+    };
+    setCurrentPlan(updatedPlan);
+    setStoredPlansList(prev => prev.map(p =>
+      String(p.student_id) === String(selectedStudent?.student_id)
+        ? { ...p, status: 'draft', isAmending: true, version_number: nextVersion, updated_at: updatedTime }
+        : p
+    ));
+    showToast(`Study plan unlocked for amendment (v${nextVersion} Draft)! Canvas is now editable.`);
+  };
+
   // Chair Approve & Finalise Plan
   const handleApprovePlan = async () => {
     if (!selectedStudent) return;
@@ -2226,6 +2248,7 @@ export default function App() {
               onAutoGeneratePlan={handleAutoGeneratePlan}
               onWaiverChange={handleWaiverChange}
               notifications={notifications}
+              onUnlockForAmendment={handleUnlockForAmendment}
             />
           )}
 
@@ -2244,17 +2267,38 @@ export default function App() {
                 handleSelectStudent(st);
                 setActiveTab('STUDY_PLAN');
 
-                // Preserve the actual plan record status (recommended, agreed, approved, or draft)
-                const targetStatus = planRecord?.status || 'draft';
-                const updatedTime = planRecord?.updated_at || formatCurrentDateTime();
+                // Retrieve & Amend: Unlocks the plan into an active amendment working draft
+                const isAlreadyEditable = planRecord?.status === 'draft' || planRecord?.status === 'rejected' || planRecord?.status === 'request_submitted';
+                const nextStatus = isAlreadyEditable ? (planRecord?.status || 'draft') : 'draft';
+                const updatedTime = formatCurrentDateTime();
+                const nextVersion = isAlreadyEditable
+                  ? (planRecord?.version_number || 1)
+                  : Number(((planRecord?.version_number || 1) + 0.1).toFixed(1));
+
                 setCurrentPlan(prev => ({
                   ...prev,
-                  status: targetStatus,
+                  status: nextStatus,
+                  isAmending: true,
+                  amendedFromStatus: planRecord?.status,
+                  version_number: nextVersion,
                   updated_at: updatedTime,
                   total_credit_points: planRecord?.total_credit_points || prev?.total_credit_points || 0
                 }));
 
-                showToast(`Retrieved ${targetStatus.toUpperCase()} plan for ${st.first_name || ''} ${st.last_name || ''}.`);
+                // Update storedPlansList so repository table reflects amendment draft
+                setStoredPlansList(prev => prev.map(p =>
+                  String(p.student_id) === String(st.student_id)
+                    ? {
+                        ...p,
+                        status: nextStatus,
+                        isAmending: true,
+                        version_number: nextVersion,
+                        updated_at: updatedTime
+                      }
+                    : p
+                ));
+
+                showToast(`Retrieved ${st.first_name || ''}'s plan for Amendment! Canvas unlocked for editing.`);
                 setTimeout(() => {
                   const el = document.getElementById('year-block-1') || document.getElementById('study-plan-years-section');
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });

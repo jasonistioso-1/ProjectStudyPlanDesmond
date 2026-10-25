@@ -114,7 +114,8 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
         );
       case 'rejected':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-700 text-white border border-rose-800 shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-600 dark:bg-amber-600 text-white border border-amber-700 shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             Change Requested
           </span>
         );
@@ -219,6 +220,11 @@ export default function StoredPlansView({ students = [], storedPlans, activeRole
                   </td>
                   <td className="p-4">
                     {getStatusBadge(plan.status)}
+                    {(plan.rejectionComment || plan.rejection_comment) && (
+                      <span className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold italic line-clamp-1 max-w-[160px] block mt-1" title={plan.rejectionComment || plan.rejection_comment}>
+                        💬 "{plan.rejectionComment || plan.rejection_comment}"
+                      </span>
+                    )}
                   </td>
                   <td className="p-4">
                     <span className="inline-block bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300">
