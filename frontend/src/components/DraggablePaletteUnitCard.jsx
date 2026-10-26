@@ -70,8 +70,9 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
   };
 
   const prereqText = getPrereqText();
-  const dynamicOfferings = getDynamicOfferings(unit.code, layoutType);
-  const offeringsText = dynamicOfferings.map(o => o.replace('Trimester ', 'T').replace('Semester ', 'S')).join(', ');
+  const semOfferings = getDynamicOfferings(unit.code, 'semester').map(o => o.replace('Semester ', 'S').replace('Sem ', 'S'));
+  const triOfferings = getDynamicOfferings(unit.code, 'trimester').map(o => o.replace('Trimester ', 'T').replace('Tri ', 'T'));
+  const offeringsTitle = `Singapore Campus Offerings: Semester [${semOfferings.join(', ')}] | Trimester [${triOfferings.join(', ')}]`;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `palette_${unit.code || unit.unit_id}`,
@@ -187,8 +188,9 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
               Prereq: <strong className={`font-mono px-1 rounded ${prereqText === 'None' ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>{prereqText}</strong>
             </span>
             <span className="text-slate-300 dark:text-slate-600">•</span>
-            <span className="font-bold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded text-[10px] font-mono border border-blue-200 dark:border-blue-800" title={`Singapore Campus Offerings: ${dynamicOfferings.join(', ')}`}>
-              📅 {offeringsText}
+            <span className="font-bold bg-blue-50/80 dark:bg-blue-950/70 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-[10px] font-mono border border-blue-200/80 dark:border-blue-800/80 flex items-center gap-1" title={offeringsTitle}>
+              <Calendar className="w-3 h-3 text-red-600 dark:text-red-400 shrink-0" />
+              <span>Sem: <strong className="text-purple-700 dark:text-purple-300 font-extrabold">{semOfferings.join(', ')}</strong> • Tri: <strong className="text-blue-700 dark:text-blue-300 font-extrabold">{triOfferings.join(', ')}</strong></span>
             </span>
           </div>
         </div>
@@ -229,10 +231,12 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
             {/* Trimester/Semester List */}
             <div className="space-y-0.5 pt-1 max-h-48 overflow-y-auto pr-0.5">
               {periodOptions.map(opt => {
-                const termKey = layoutType === 'semester'
+                const isSem = layoutType === 'semester' || opt.period === 1 || opt.period === 2;
+                const termKey = isSem
                   ? (opt.period === 1 ? 'Sem 1' : 'Sem 2')
                   : (opt.period === 3 ? 'Tri 1' : opt.period === 4 ? 'Tri 2' : 'Tri 3');
-                const isOfferedInTerm = dynamicOfferings.includes(termKey);
+                const allowedList = getDynamicOfferings(unit.code, isSem ? 'semester' : 'trimester');
+                const isOfferedInTerm = allowedList.includes(termKey);
 
                 return (
                   <button
@@ -248,13 +252,13 @@ export default function DraggablePaletteUnitCard({ unit, scheduledInfo, historyR
                     className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] transition-colors flex items-center justify-between ${
                       isOfferedInTerm
                         ? 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'
-                        : 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-normal'
+                        : 'text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-normal'
                     }`}
-                    title={isOfferedInTerm ? 'Matches unit offering schedule' : `Warning: Unit is only offered in ${dynamicOfferings.join(', ')}`}
+                    title={isOfferedInTerm ? 'Matches unit offering schedule' : `Offering Restriction: Unit is offered in ${allowedList.join(', ')}`}
                   >
                     <span>{opt.label}</span>
                     <span className="text-[10px] opacity-75 font-mono">
-                      {isOfferedInTerm ? '✓ Available' : '⚠️ Restricted'}
+                      {isOfferedInTerm ? '✓ Available' : '⚠️ Not Offered'}
                     </span>
                   </button>
                 );

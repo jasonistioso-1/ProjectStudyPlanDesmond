@@ -707,14 +707,27 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                        <span className="font-semibold">Teaching Periods:</span>
-                        <div className="flex gap-1">
-                          {getDynamicOfferings(unit.code, 'trimester').map((p, idx) => (
-                            <span key={idx} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700">
-                              {p}
-                            </span>
-                          ))}
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                          <span className="font-semibold text-[11px]">Semester:</span>
+                          <div className="flex gap-1 flex-wrap">
+                            {getDynamicOfferings(unit.code, 'semester').map((p, idx) => (
+                              <span key={idx} className="bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 font-bold px-2 py-0.5 rounded text-[10px] border border-purple-200 dark:border-purple-800 font-mono">
+                                {p}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                          <span className="font-semibold text-[11px]">Trimester:</span>
+                          <div className="flex gap-1 flex-wrap">
+                            {getDynamicOfferings(unit.code, 'trimester').map((p, idx) => (
+                              <span key={idx} className="bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-bold px-1.5 py-0.5 rounded text-[10px] border border-blue-200 dark:border-blue-800 font-mono">
+                                {p}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>

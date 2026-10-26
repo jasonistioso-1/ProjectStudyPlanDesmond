@@ -391,11 +391,12 @@ export default function PlanBuilder({
     const isS1Only = unit.period_id === 1;
     const isS2Only = unit.period_id === 2;
 
-    // BR-01 Offering Check
-    const allowedOfferings = getDynamicOfferings(unit.code, layoutType);
+    // BR-01 Offering Check (Evaluates dynamically for both Semester and Trimester periods)
+    const isSemPeriod = unit.period_id === 1 || unit.period_id === 2;
+    const allowedOfferings = getDynamicOfferings(unit.code, isSemPeriod ? 'semester' : 'trimester');
     let currentTermKey = null;
     let currentTermName = '';
-    if (layoutType === 'semester') {
+    if (isSemPeriod) {
       currentTermKey = unit.period_id === 1 ? 'Sem 1' : 'Sem 2';
       currentTermName = unit.period_id === 1 ? 'Semester 1' : 'Semester 2';
     } else {
@@ -541,6 +542,60 @@ export default function PlanBuilder({
           valid: false,
           message: `General Elective Conflict: Student has ALREADY ${isOtherCompleted ? 'completed in history' : 'scheduled'} ${otherCode}. Only ONE General Elective (${unitCode} OR ${otherCode}) is required for degree completion.`
         };
+      }
+    }
+
+    // 0.2 Offering Availability Check (BR-01: Validates for both Semester and Trimester)
+    const isSemTarget = targetPeriod === 1 || targetPeriod === 2;
+    const allowedOfferings = getDynamicOfferings(unitCode, isSemTarget ? 'semester' : 'trimester');
+    let targetTermKey = null;
+    let targetTermName = '';
+    if (isSemTarget) {
+      targetTermKey = targetPeriod === 1 ? 'Sem 1' : 'Sem 2';
+      targetTermName = targetPeriod === 1 ? 'Semester 1' : 'Semester 2';
+    } else {
+      if (targetPeriod === 3) {
+        targetTermKey = 'Tri 1';
+        targetTermName = 'Trimester 1';
+      } else if (targetPeriod === 4) {
+        targetTermKey = 'Tri 2';
+        targetTermName = 'Trimester 2';
+      } else if (targetPeriod === 5) {
+        targetTermKey = 'Tri 3';
+        targetTermName = 'Trimester 3';
+      }
+    }
+
+    if (targetTermKey && !allowedOfferings.includes(targetTermKey)) {
+      const allowedStr = allowedOfferings.join(', ');
+      return {
+        valid: false,
+        message: `Offering Mismatch (BR-01): Unit ${unitCode} is offered ONLY in ${allowedStr} at Singapore Campus, and CANNOT be scheduled in Year ${targetYear} ${targetTermName}.`
+      };
+    }
+
+    // 0.3 Prerequisite Progression Check (BR-02: Prerequisite rules are identical for both Semester and Trimester)
+    const prereqCode = prereqMap[unitCode];
+    if (prereqCode) {
+      const isCompleted = completedUnitCodes.has(prereqCode);
+      const isWaived = waivedUnits && waivedUnits.has && waivedUnits.has(unitCode);
+      if (!isCompleted && !isWaived) {
+        const isScheduledPrior = currentUnits.some(other => {
+          if (other.code !== prereqCode || (activeDragCode && other.code === activeDragCode)) return false;
+          if (Number(other.year_level) < Number(targetYear)) return true;
+          if (Number(other.year_level) === Number(targetYear)) {
+            return Number(other.period_id) < Number(targetPeriod);
+          }
+          return false;
+        });
+
+        if (!isScheduledPrior) {
+          const pName = targetPeriod === 1 ? 'Semester 1' : targetPeriod === 2 ? 'Semester 2' : targetPeriod === 3 ? 'Trimester 1' : targetPeriod === 4 ? 'Trimester 2' : 'Trimester 3';
+          return {
+            valid: false,
+            message: `Prerequisite Unmet (BR-02): Unit ${unitCode} requires ${prereqCode} to be completed in academic history or scheduled in an earlier teaching period prior to Year ${targetYear} ${pName}.`
+          };
+        }
       }
     }
 
@@ -2598,8 +2653,8 @@ export default function PlanBuilder({
                 studentMajor={student?.major || 'Software Engineering'}
                 onAddUnit={handleAddUnitFromPalette}
                 onAddToSpecificSemester={handleAddToSpecificSemester}
-                layoutType={paletteLayoutMode}
-                setLayoutType={setPaletteLayoutMode}
+                layoutType={layoutType}
+                setLayoutType={setLayoutType}
               />
 
               {/* Box 2: Rule Engine Validation Console */}
