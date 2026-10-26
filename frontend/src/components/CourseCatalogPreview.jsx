@@ -129,7 +129,8 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
     { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, level: 300, prereqs: 'ICT285' }
   ];
 
-  const rawUnits = catalogUnits && catalogUnits.length > 0
+  const seenCatalogCodes = new Set();
+  const rawUnits = (catalogUnits && catalogUnits.length > 0
     ? catalogUnits.map(u => ({
         unit_id: u.unit_id,
         code: u.code,
@@ -140,20 +141,30 @@ export default function CourseCatalogPreview({ catalogUnits = [], onOpenImport, 
           ? u.prerequisites.map(p => p.prereq_code || p).join(', ')
           : (u.prereq_code || u.prereqs || 'None')
       }))
-    : defaultUnits;
+    : defaultUnits
+  ).filter(u => {
+    if (!u || !u.code) return false;
+    const code = u.code.trim().toUpperCase();
+    if (seenCatalogCodes.has(code)) return false;
+    seenCatalogCodes.add(code);
+    return true;
+  });
 
-  const unitsList = rawUnits.filter(u => u && !['MSP200', 'COM203'].includes(u.code));
+  const unitsList = rawUnits;
 
   const filteredUnits = unitsList.filter(u => {
-    const matchesQuery = searchQuery === '' ||
-      u.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = (searchQuery || '').trim().toLowerCase();
+    const matchesQuery = !q ||
+      u.code.toLowerCase().includes(q) ||
+      u.title.toLowerCase().includes(q) ||
+      (u.prereqs && u.prereqs.toLowerCase().includes(q));
     
+    const uLvl = Number(u.level || 100);
     const matchesLevel = levelFilter === 'ALL' ||
-      (levelFilter === '100' && u.level >= 100 && u.level < 200) ||
-      (levelFilter === '200' && u.level >= 200 && u.level < 300) ||
-      (levelFilter === '300' && u.level >= 300) ||
-      (levelFilter === 'ELECTIVE' && (['MSP200', 'COM203'].includes(u.code)));
+      (levelFilter === '100' && uLvl >= 100 && uLvl < 200) ||
+      (levelFilter === '200' && uLvl >= 200 && uLvl < 300) ||
+      (levelFilter === '300' && uLvl >= 300) ||
+      (levelFilter === 'ELECTIVE' && (['MSP200', 'COM203'].includes(u.code) || uLvl === 0 || !u.code.startsWith('ICT')));
 
     return matchesQuery && matchesLevel;
   });

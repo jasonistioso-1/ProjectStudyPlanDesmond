@@ -134,7 +134,21 @@ export async function validateStudyPlan({ studentId, locationId, planUnits, waiv
             'COM203': ['S1', 'S2']
         };
 
+        const seenPlanUnitCodes = new Set();
         for (const unit of planUnits) {
+            if (!unit || !unit.code) continue;
+
+            if (seenPlanUnitCodes.has(unit.code)) {
+                warnings.push({
+                    type: 'DUPLICATE_UNIT_DETECTED',
+                    severity: 'error',
+                    unitCode: unit.code,
+                    message: `Duplicate Unit: Unit ${unit.code} (${unit.title || unit.code}) appears multiple times in the study plan.`
+                });
+            } else {
+                seenPlanUnitCodes.add(unit.code);
+            }
+
             const period = periodMap.get(unit.period_id);
             const periodCode = period ? period.code : `Period #${unit.period_id}`;
             const key = `${unit.year_level}_${unit.period_id}`;

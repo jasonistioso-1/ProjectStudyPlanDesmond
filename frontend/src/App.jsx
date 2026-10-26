@@ -1066,6 +1066,7 @@ export default function App() {
 
     // STEP 1: Prescribed Core Units Placement from Major Preset
     for (const year of yearsToFill) {
+      if (passedYears.has(Number(year))) continue;
       for (const periodId of requestedPeriods) {
         const pKey = `y${Number(year)}_p${Number(periodId)}`;
         periodLoads[pKey] = periodLoads[pKey] || 0;
@@ -1074,7 +1075,7 @@ export default function App() {
         if (presetBlock && presetBlock.cores) {
           for (const coreCode of presetBlock.cores) {
             if (scheduledCodes.has(coreCode)) continue;
-            if (completedCodes.has(coreCode) && !isAllYears) continue;
+            if (completedCodes.has(coreCode)) continue;
             if (!isOfferingValid(coreCode, periodId)) continue;
 
             const unit = (catalogUnits || []).find(u => u.code === coreCode) || {
@@ -1138,6 +1139,7 @@ export default function App() {
     const poolCatalog = (catalogUnits && catalogUnits.length > 0) ? catalogUnits : masterFallbackUnits;
 
     for (const year of yearsToFill) {
+      if (passedYears.has(Number(year))) continue;
       for (const periodId of requestedPeriods) {
         const pKey = `y${Number(year)}_p${Number(periodId)}`;
         const targetCapacity = getTargetPeriodCP(periodId);
@@ -1145,7 +1147,7 @@ export default function App() {
         while ((periodLoads[pKey] || 0) < targetCapacity) {
           const candidate = poolCatalog.find(u => {
             if (scheduledCodes.has(u.code)) return false;
-            if (completedCodes.has(u.code) && !isAllYears) return false;
+            if (completedCodes.has(u.code)) return false;
             const uLvl = Number(u.level || 100);
             const yrNum = Number(year);
             if (yrNum === 1 && uLvl > 199) return false;
@@ -1176,10 +1178,20 @@ export default function App() {
       }
     }
 
-    const totalGeneratedCP = scheduledUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+    // Deduplicate scheduledUnits by code as final safety
+    const uniqueScheduledUnits = [];
+    const finalSeenCodes = new Set();
+    for (const u of scheduledUnits) {
+      if (!u || !u.code) continue;
+      if (finalSeenCodes.has(u.code)) continue;
+      finalSeenCodes.add(u.code);
+      uniqueScheduledUnits.push(u);
+    }
 
-    handleSetPlanUnits(scheduledUnits);
-    runValidation(targetStudent.student_id, targetStudent.location_id, scheduledUnits);
+    const totalGeneratedCP = uniqueScheduledUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+
+    handleSetPlanUnits(uniqueScheduledUnits);
+    runValidation(targetStudent.student_id, targetStudent.location_id, uniqueScheduledUnits);
 
     // Revert status to 'draft' if plan was previously approved/agreed
     const wasApproved = currentPlan?.status === 'approved' || currentPlan?.status === 'agreed' || currentPlan?.status === 'stored';

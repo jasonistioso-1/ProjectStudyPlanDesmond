@@ -96,7 +96,7 @@ export default function PlanBuilder({
   const [viewMode, setViewMode] = useState('single'); // 'single' = Single Year Focus Slide, 'all' = All Years Grid
   const [agreedConfirmed, setAgreedConfirmed] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState(null);
-  const [showAllCatalogUnits, setShowAllCatalogUnits] = useState(false);
+  const [showAllCatalogUnits, setShowAllCatalogUnits] = useState(true);
   const [showWorkflowGuide, setShowWorkflowGuide] = useState(false);
   const [activeRequestModal, setActiveRequestModal] = useState(null);
   const [requestCommentInput, setRequestCommentInput] = useState('');
@@ -512,7 +512,26 @@ export default function PlanBuilder({
 
   // Validate prerequisite, general elective rule, and max 12 CP capacity limit for unit placement
   const validatePlacement = (unitCode, targetYear, targetPeriod, currentUnits, activeDragCode = null) => {
-    // 0. General Elective Mutual Exclusion Check (Only ONE of MSP200 or COM203 can be selected)
+    // 0. Duplicate Unit Prevention: Check if unit was already passed in student history
+    if (completedUnitCodes && completedUnitCodes.has(unitCode)) {
+      return {
+        valid: false,
+        message: `Duplicate Course Prevented: Unit ${unitCode} has ALREADY been completed in student official academic history.`
+      };
+    }
+
+    // Duplicate Unit Prevention: Check if unit is already placed elsewhere on the study plan canvas
+    const alreadyScheduled = currentUnits.find(u => u.code === unitCode && (!activeDragCode || u.code !== activeDragCode));
+    if (alreadyScheduled) {
+      const p = alreadyScheduled.period_id;
+      const pName = p === 1 ? 'Semester 1' : p === 2 ? 'Semester 2' : p === 3 ? 'Trimester 1' : p === 4 ? 'Trimester 2' : 'Trimester 3';
+      return {
+        valid: false,
+        message: `Duplicate Course Prevented: Unit ${unitCode} is ALREADY scheduled in Year ${alreadyScheduled.year_level} ${pName}.`
+      };
+    }
+
+    // 0.1 General Elective Mutual Exclusion Check (Only ONE of MSP200 or COM203 can be selected)
     if (unitCode === 'MSP200' || unitCode === 'COM203') {
       const otherCode = unitCode === 'MSP200' ? 'COM203' : 'MSP200';
       const isOtherCompleted = completedUnitCodes.has(otherCode);
@@ -600,12 +619,18 @@ export default function PlanBuilder({
         unit = active.data.current.unit;
       }
       if (unit) {
+        if (completedUnitCodes && completedUnitCodes.has(unit.code)) {
+          setDragWarningToast(`Duplicate Unit Prevented: Unit ${unit.code} is ALREADY COMPLETED in student official academic history.`);
+          setTimeout(() => setDragWarningToast(null), 4500);
+          return;
+        }
+
         const existingInPlan = planUnits.find(u => u.code === unit.code);
         if (existingInPlan) {
           const y = existingInPlan.year_level;
           const p = existingInPlan.period_id;
           const pName = p === 1 ? 'Semester 1' : p === 2 ? 'Semester 2' : p === 3 ? 'Trimester 1' : p === 4 ? 'Trimester 2' : 'Trimester 3';
-          setDragWarningToast(`Unit ${unit.code} (${unit.title}) is ALREADY scheduled in Year ${y} ${pName}!`);
+          setDragWarningToast(`Duplicate Unit Prevented: Unit ${unit.code} (${unit.title}) is ALREADY scheduled in Year ${y} ${pName}!`);
           setTimeout(() => setDragWarningToast(null), 4500);
           return;
         }
@@ -686,10 +711,16 @@ export default function PlanBuilder({
       return;
     }
 
+    if (completedUnitCodes && completedUnitCodes.has(unit.code)) {
+      setDragWarningToast(`Duplicate Unit Prevented: Unit ${unit.code} is ALREADY COMPLETED in student official academic history.`);
+      setTimeout(() => setDragWarningToast(null), 4500);
+      return;
+    }
+
     const existing = planUnits.find(u => u.code === unit.code);
     if (existing) {
       const info = getTermName(existing.year_level, existing.period_id);
-      setDragWarningToast(`Unit ${unit.code} (${unit.title}) is ALREADY scheduled in ${info}.`);
+      setDragWarningToast(`Duplicate Unit Prevented: Unit ${unit.code} (${unit.title}) is ALREADY scheduled in ${info}.`);
       setTimeout(() => setDragWarningToast(null), 4500);
       return;
     }
@@ -731,10 +762,16 @@ export default function PlanBuilder({
       return;
     }
 
+    if (completedUnitCodes && completedUnitCodes.has(unit.code)) {
+      setDragWarningToast(`Duplicate Unit Prevented: Unit ${unit.code} is ALREADY COMPLETED in student official academic history.`);
+      setTimeout(() => setDragWarningToast(null), 4500);
+      return;
+    }
+
     const existing = planUnits.find(u => u.code === unit.code);
     if (existing) {
       const info = getTermName(existing.year_level, existing.period_id);
-      setDragWarningToast(`Unit ${unit.code} (${unit.title}) is ALREADY scheduled in ${info}.`);
+      setDragWarningToast(`Duplicate Unit Prevented: Unit ${unit.code} (${unit.title}) is ALREADY scheduled in ${info}.`);
       setTimeout(() => setDragWarningToast(null), 4500);
       return;
     }
@@ -949,31 +986,45 @@ export default function PlanBuilder({
   const filteredOfferings = useMemo(() => {
     if (!effectiveCatalog || !Array.isArray(effectiveCatalog)) return [];
 
+    const hasSearch = Boolean(unitFilter && typeof unitFilter === 'string' && unitFilter.trim().length > 0);
+
     const list = effectiveCatalog.filter(unit => {
       if (!unit) return false;
       const unitCode = (unit.code || unit.unit_code || '').trim().toUpperCase();
       const isAlreadyScheduled = scheduledCodesSet && scheduledCodesSet.has ? scheduledCodesSet.has(unitCode) : false;
-      if (!showAllCatalogUnits && isAlreadyScheduled) return false;
+
+      // When user is explicitly searching, never hide matching units so search is 100% visible
+      if (!showAllCatalogUnits && !hasSearch && isAlreadyScheduled) {
+        return false;
+      }
 
       if (selectedLevel === 'ELECTIVE') {
         if (!['MSP200', 'COM203'].includes(unitCode)) return false;
       } else if (selectedLevel === 'CORE') {
         if (['MSP200', 'COM203'].includes(unitCode)) return false;
-      } else if (selectedLevel !== 'ALL') {
-        const targetLvl = parseInt(selectedLevel, 10);
-        const unitLvl = parseInt(unit.level, 10);
-        const normTarget = targetLvl >= 100 ? targetLvl : targetLvl * 100;
-        const normUnit = unitLvl >= 100 ? unitLvl : unitLvl * 100;
-        if (normTarget !== normUnit) {
-          return false;
+      } else if (selectedLevel && selectedLevel !== 'ALL') {
+        const cleanLvlStr = String(selectedLevel).toLowerCase().replace(/[^0-9]/g, '');
+        const targetLvl = parseInt(cleanLvlStr, 10);
+        const normTarget = targetLvl < 10 ? targetLvl * 100 : targetLvl;
+
+        const unitDigits = unitCode.replace(/[^0-9]/g, '');
+        const derivedUnitLvl = unitDigits.length > 0 ? parseInt(unitDigits.charAt(0) + '00', 10) : 100;
+        const rawUnitLvl = parseInt(unit.level || derivedUnitLvl, 10);
+        const normUnit = rawUnitLvl < 10 ? rawUnitLvl * 100 : rawUnitLvl;
+
+        if (normTarget >= 100 && normTarget <= 300) {
+          if (normTarget !== normUnit) {
+            return false;
+          }
         }
       }
 
-      if (unitFilter && typeof unitFilter === 'string' && unitFilter.trim()) {
+      if (hasSearch) {
         const query = unitFilter.toLowerCase().trim();
         const code = unitCode.toLowerCase();
         const title = (unit.title || '').toLowerCase();
-        if (!code.includes(query) && !title.includes(query)) {
+        const prereq = (unit.prereqs || unit.prereq_code || '').toLowerCase();
+        if (!code.includes(query) && !title.includes(query) && !prereq.includes(query)) {
           return false;
         }
       }
@@ -1084,12 +1135,21 @@ export default function PlanBuilder({
       }
     }
 
-    return planUnits.filter(u => {
+    const termUnits = planUnits.filter(u => {
       const uY = Number(u.year_level);
       if (uY !== yL) return false;
 
       const uP = Number(u.period_id);
       return uP === pI;
+    });
+
+    // Ensure no duplicate unit codes can ever be rendered in the same semester slot
+    const seenUnitCodes = new Set();
+    return termUnits.filter(u => {
+      const c = (u.code || '').trim().toUpperCase();
+      if (!c || seenUnitCodes.has(c)) return false;
+      seenUnitCodes.add(c);
+      return true;
     });
   };
 
