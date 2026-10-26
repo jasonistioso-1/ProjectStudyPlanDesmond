@@ -198,6 +198,14 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setShowStudentSelectModal(false);
+    setShowImportModal(false);
+    setShowAddUnitModal(false);
+    setShowAddStudentModal(false);
+    setShowAuditModal(false);
+    setShowDocumentModal(false);
+    setShowGuideModal(false);
+    setActiveCertificate(null);
     localStorage.removeItem('spr_logged_user');
     showToast('You have signed out of PT3 Solutions SPR.');
   };
@@ -508,6 +516,54 @@ export default function App() {
       localStorage.setItem('spr_notifications_list', JSON.stringify(notifications));
     } catch (e) {}
   }, [notifications]);
+
+  // Synchronized Stored Plans List: Automatically reflects student disagreement / revision requests
+  const effectiveStoredPlansList = useMemo(() => {
+    return (storedPlansList || []).map(plan => {
+      const sId = plan.student_id;
+      const cached = allStudentPlansMap[sId] || allStudentPlansMap[Number(sId)] || allStudentPlansMap[String(sId)];
+
+      // Look for active disagreement notification
+      const disagreementNotif = (notifications || []).find(n =>
+        (Number(n.studentId) === Number(sId) || String(n.studentId) === String(sId)) &&
+        (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected'))
+      );
+
+      const comment = disagreementNotif?.rejectionComment ||
+                      disagreementNotif?.comment ||
+                      (disagreementNotif?.message?.match(/"([^"]+)"/)?.[1]) ||
+                      cached?.plan?.rejectionComment ||
+                      cached?.plan?.rejection_comment ||
+                      (selectedStudent?.student_id === sId && currentPlan?.rejectionComment) ||
+                      plan.rejectionComment;
+
+      const hasDisagreement = Boolean(disagreementNotif || cached?.plan?.status === 'rejected' || (selectedStudent?.student_id === sId && currentPlan?.status === 'rejected') || comment);
+
+      const isCurrentlyAmending = Boolean(plan.isAmending || (selectedStudent && Number(selectedStudent.student_id) === Number(sId) && currentPlan?.isAmending));
+
+      if (hasDisagreement && plan.status !== 'approved_new' && !isCurrentlyAmending) {
+        return {
+          ...plan,
+          status: 'rejected',
+          rejectionComment: comment || 'Student requested changes on study plan',
+          rejection_comment: comment || 'Student requested changes on study plan'
+        };
+      }
+
+      // If this student currently has an active plan in memory, sync status if changed
+      if (selectedStudent && Number(selectedStudent.student_id) === Number(sId) && currentPlan?.status) {
+        return {
+          ...plan,
+          status: currentPlan.status,
+          version_number: currentPlan.version_number || plan.version_number,
+          updated_at: currentPlan.updated_at || plan.updated_at,
+          rejectionComment: currentPlan.rejectionComment || plan.rejectionComment
+        };
+      }
+
+      return plan;
+    });
+  }, [storedPlansList, notifications, allStudentPlansMap, selectedStudent, currentPlan]);
 
   // Academic Chair Prerequisite Waiver Notification Handler
   const handleWaiverChange = (unitCode, isGranted) => {
@@ -2140,54 +2196,6 @@ export default function App() {
       />
     );
   }
-
-  // Synchronized Stored Plans List: Automatically reflects student disagreement / revision requests
-  const effectiveStoredPlansList = useMemo(() => {
-    return (storedPlansList || []).map(plan => {
-      const sId = plan.student_id;
-      const cached = allStudentPlansMap[sId] || allStudentPlansMap[Number(sId)] || allStudentPlansMap[String(sId)];
-      
-      // Look for active disagreement notification
-      const disagreementNotif = (notifications || []).find(n =>
-        (Number(n.studentId) === Number(sId) || String(n.studentId) === String(sId)) &&
-        (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected'))
-      );
-      
-      const comment = disagreementNotif?.rejectionComment ||
-                      disagreementNotif?.comment ||
-                      (disagreementNotif?.message?.match(/"([^"]+)"/)?.[1]) ||
-                      cached?.plan?.rejectionComment ||
-                      cached?.plan?.rejection_comment ||
-                      (selectedStudent?.student_id === sId && currentPlan?.rejectionComment) ||
-                      plan.rejectionComment;
-
-      const hasDisagreement = Boolean(disagreementNotif || cached?.plan?.status === 'rejected' || (selectedStudent?.student_id === sId && currentPlan?.status === 'rejected') || comment);
-
-      const isCurrentlyAmending = Boolean(plan.isAmending || (selectedStudent && Number(selectedStudent.student_id) === Number(sId) && currentPlan?.isAmending));
-
-      if (hasDisagreement && plan.status !== 'approved_new' && !isCurrentlyAmending) {
-        return {
-          ...plan,
-          status: 'rejected',
-          rejectionComment: comment || 'Student requested changes on study plan',
-          rejection_comment: comment || 'Student requested changes on study plan'
-        };
-      }
-
-      // If this student currently has an active plan in memory, sync status if changed
-      if (selectedStudent && Number(selectedStudent.student_id) === Number(sId) && currentPlan?.status) {
-        return {
-          ...plan,
-          status: currentPlan.status,
-          version_number: currentPlan.version_number || plan.version_number,
-          updated_at: currentPlan.updated_at || plan.updated_at,
-          rejectionComment: currentPlan.rejectionComment || plan.rejectionComment
-        };
-      }
-
-      return plan;
-    });
-  }, [storedPlansList, notifications, allStudentPlansMap, selectedStudent, currentPlan]);
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased flex flex-col justify-between transition-colors duration-200">
