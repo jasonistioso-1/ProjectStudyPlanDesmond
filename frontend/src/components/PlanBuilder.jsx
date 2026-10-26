@@ -413,11 +413,20 @@ export default function PlanBuilder({
     }
 
     if (currentTermKey && !allowedOfferings.includes(currentTermKey)) {
+      const isWaived = waivedUnits.has(unit.code);
       const allowedStr = allowedOfferings.join(', ');
-      const msg = `Unit ${unit.code} (${unit.title || unit.code}) is offered ONLY in ${allowedStr} at Singapore Campus, but is scheduled in Year ${unit.year_level} ${currentTermName}.`;
-      appendUnitWarning(unit.code, msg);
+      const msg = isWaived
+        ? `[Chair Waiver Approved] Offering period mismatch waived by Academic Chair for ${unit.code}.`
+        : `Unit ${unit.code} (${unit.title || unit.code}) is offered ONLY in ${allowedStr} at Singapore Campus, but is scheduled in Year ${unit.year_level} ${currentTermName}.`;
+      if (!isWaived) appendUnitWarning(unit.code, msg);
       if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
-        warningsList.push({ type: 'BR-01_OFFERING_MISMATCH', severity: 'error', unitCode: unit.code, message: msg });
+        warningsList.push({
+          type: 'BR-01_OFFERING_MISMATCH',
+          severity: isWaived ? 'waived' : 'error',
+          unitCode: unit.code,
+          message: msg,
+          isWaived
+        });
       }
     }
 
@@ -566,12 +575,11 @@ export default function PlanBuilder({
       }
     }
 
+    let warningNotice = null;
+
     if (targetTermKey && !allowedOfferings.includes(targetTermKey)) {
       const allowedStr = allowedOfferings.join(', ');
-      return {
-        valid: false,
-        message: `Offering Mismatch (BR-01): Unit ${unitCode} is offered ONLY in ${allowedStr} at Singapore Campus, and CANNOT be scheduled in Year ${targetYear} ${targetTermName}.`
-      };
+      warningNotice = `Offering Notice (BR-01): Unit ${unitCode} is offered ONLY in ${allowedStr} at Singapore Campus. Placed on canvas with offering mismatch flagged in Rule Engine.`;
     }
 
     // 0.3 Prerequisite Progression Check (BR-02: Prerequisite rules are identical for both Semester and Trimester)
@@ -591,10 +599,7 @@ export default function PlanBuilder({
 
         if (!isScheduledPrior) {
           const pName = targetPeriod === 1 ? 'Semester 1' : targetPeriod === 2 ? 'Semester 2' : targetPeriod === 3 ? 'Trimester 1' : targetPeriod === 4 ? 'Trimester 2' : 'Trimester 3';
-          return {
-            valid: false,
-            message: `Prerequisite Unmet (BR-02): Unit ${unitCode} requires ${prereqCode} to be completed in academic history or scheduled in an earlier teaching period prior to Year ${targetYear} ${pName}.`
-          };
+          warningNotice = `Prerequisite Notice (BR-02): Unit ${unitCode} requires ${prereqCode}. Placed on canvas for Academic Chair Waiver review.`;
         }
       }
     }
@@ -617,7 +622,7 @@ export default function PlanBuilder({
       };
     }
 
-    return { valid: true };
+    return { valid: true, warning: warningNotice };
   };
 
   // Handle Drag End
@@ -697,6 +702,11 @@ export default function PlanBuilder({
           return;
         }
 
+        if (check.warning) {
+          setDragWarningToast(check.warning);
+          setTimeout(() => setDragWarningToast(null), 4500);
+        }
+
         const updated = [
           ...planUnits,
           {
@@ -724,6 +734,11 @@ export default function PlanBuilder({
           setDragWarningToast(check.message);
           setTimeout(() => setDragWarningToast(null), 5000);
           return;
+        }
+
+        if (check.warning) {
+          setDragWarningToast(check.warning);
+          setTimeout(() => setDragWarningToast(null), 4500);
         }
 
         const updated = planUnits.map(u =>
@@ -788,6 +803,11 @@ export default function PlanBuilder({
       return;
     }
 
+    if (check.warning) {
+      setDragWarningToast(check.warning);
+      setTimeout(() => setDragWarningToast(null), 4500);
+    }
+
     const newPlanUnit = {
       unit_id: unit.unit_id,
       code: unit.code,
@@ -836,6 +856,11 @@ export default function PlanBuilder({
       setDragWarningToast(check.message);
       setTimeout(() => setDragWarningToast(null), 5000);
       return;
+    }
+
+    if (check.warning) {
+      setDragWarningToast(check.warning);
+      setTimeout(() => setDragWarningToast(null), 4500);
     }
 
     const newPlanUnit = {
@@ -2677,6 +2702,7 @@ export default function PlanBuilder({
                       .filter((w, index, self) => index === self.findIndex(t => t.message === w.message))
                       .map((w, idx) => {
                         const isPrereqWarning = w.type?.includes('PREREQUISITE') || Boolean(w.prereqCode);
+                        const isOfferingWarning = w.type === 'BR-01_OFFERING_MISMATCH';
                         const isUnitWaived = w.unitCode && waivedUnits.has(w.unitCode);
 
                         return (
@@ -2696,11 +2722,11 @@ export default function PlanBuilder({
                               )}
                               <div className="break-words">
                                 <span className="font-bold">{w.unitCode ? `${w.unitCode}: ` : ''}</span>
-                                {isUnitWaived ? `[Chair Waiver Approved] Prerequisite for ${w.unitCode} waived by Academic Chair.` : w.message}
+                                {isUnitWaived ? `[Chair Waiver Approved] Exception for ${w.unitCode} waived by Academic Chair.` : w.message}
                               </div>
                             </div>
 
-                            {isChair && isPrereqWarning && w.unitCode && (
+                            {isChair && (isPrereqWarning || isOfferingWarning) && w.unitCode && (
                               <button
                                 type="button"
                                 onClick={() => handleToggleWaiver(w.unitCode)}

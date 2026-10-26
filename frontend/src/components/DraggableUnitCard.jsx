@@ -233,7 +233,7 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
               See Validation
             </span>
           </div>
-          {isChair && onToggleWaiver && hasPreIssue && (
+          {isChair && onToggleWaiver && (hasPreIssue || hasOffIssue) && (
             <button
               type="button"
               onClick={() => onToggleWaiver(unit.code)}
@@ -241,7 +241,7 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
               title={`Grant official Academic Chair waiver for ${unit.code}`}
             >
               <ShieldCheck className="w-3.5 h-3.5 text-purple-200" />
-              <span>Grant Chair Prereq Waiver</span>
+              <span>{hasPreIssue ? 'Grant Chair Prereq Waiver' : 'Grant Chair Offering Waiver'}</span>
             </button>
           )}
         </div>
