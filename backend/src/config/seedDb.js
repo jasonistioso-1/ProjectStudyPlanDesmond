@@ -153,9 +153,9 @@ export async function seedDatabase() {
         const initialStudentPlans = [
             {
                 student_id: 1,
-                title: 'PT3-BSIT Software Engineering Plan 2026',
+                title: 'PT3-BSIT Artificial Intelligence Plan 2026',
                 status: 'approved',
-                total_credit_points: 72,
+                total_credit_points: 36,
                 units: [
                     // Y1 T1
                     { code: 'ICT100', year_level: 1, period_id: 3, sequence_order: 1 },
@@ -171,29 +171,7 @@ export async function seedDatabase() {
                     { code: 'ICT169', year_level: 1, period_id: 5, sequence_order: 1 },
                     { code: 'ICT284', year_level: 1, period_id: 5, sequence_order: 2 },
                     { code: 'ICT285', year_level: 1, period_id: 5, sequence_order: 3 },
-                    { code: 'ICT202', year_level: 1, period_id: 5, sequence_order: 4 },
-                    // Y2 T1
-                    { code: 'ICT201', year_level: 2, period_id: 3, sequence_order: 1 },
-                    { code: 'ICT283', year_level: 2, period_id: 3, sequence_order: 2 },
-                    { code: 'MAS183', year_level: 2, period_id: 3, sequence_order: 3 },
-                    // Y2 T2
-                    { code: 'ICT206', year_level: 2, period_id: 4, sequence_order: 1 },
-                    { code: 'ICT393', year_level: 2, period_id: 4, sequence_order: 2 },
-                    { code: 'ICT303', year_level: 2, period_id: 4, sequence_order: 3 },
-                    // Y2 T3
-                    { code: 'BSC203', year_level: 2, period_id: 5, sequence_order: 1 },
-                    { code: 'ICT292', year_level: 2, period_id: 5, sequence_order: 2 },
-                    // Y3 T1
-                    { code: 'ICT203', year_level: 3, period_id: 3, sequence_order: 1 },
-                    { code: 'ICT302', year_level: 3, period_id: 3, sequence_order: 2 },
-                    { code: 'ICT373', year_level: 3, period_id: 3, sequence_order: 3 },
-                    // Y3 T2
-                    { code: 'ICT374', year_level: 3, period_id: 4, sequence_order: 1 },
-                    { code: 'ICT301', year_level: 3, period_id: 4, sequence_order: 2 },
-                    { code: 'ICT394', year_level: 3, period_id: 4, sequence_order: 3 },
-                    // Y3 T3
-                    { code: 'ICT304', year_level: 3, period_id: 5, sequence_order: 1 },
-                    { code: 'ICT305', year_level: 3, period_id: 5, sequence_order: 2 }
+                    { code: 'ICT202', year_level: 1, period_id: 5, sequence_order: 4 }
                 ]
             },
             {

@@ -239,7 +239,7 @@ export async function fetchTeachingPeriods() {
 
 export const mockClientStudentPlans = {
     1: {
-        plan: { plan_id: 1, student_id: 1, title: 'PT3-BSIT Software Engineering Plan 2026', status: 'approved', total_credit_points: 72 },
+        plan: { plan_id: 1, student_id: 1, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'approved', total_credit_points: 36, layoutType: 'trimester' },
         units: [
             // Year 1 Trimester 1 (period_id: 3) - 12 CP
             { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 1 },
@@ -257,35 +257,7 @@ export const mockClientStudentPlans = {
             { unit_id: 5, code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, year_level: 1, period_id: 5, sequence_order: 1 },
             { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, year_level: 1, period_id: 5, sequence_order: 2 },
             { unit_id: 14, code: 'ICT285', title: 'Databases', credit_points: 3, year_level: 1, period_id: 5, sequence_order: 3 },
-            { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, year_level: 1, period_id: 5, sequence_order: 4 },
-
-            // Year 2 Trimester 1 (period_id: 3) - 9 CP
-            { unit_id: 8, code: 'ICT201', title: 'IT Project Management', credit_points: 3, year_level: 2, period_id: 3, sequence_order: 1 },
-            { unit_id: 12, code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, year_level: 2, period_id: 3, sequence_order: 2 },
-            { unit_id: 19, code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, year_level: 2, period_id: 3, sequence_order: 3 },
-
-            // Year 2 Trimester 2 (period_id: 4) - 9 CP
-            { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, year_level: 2, period_id: 4, sequence_order: 1 },
-            { unit_id: 27, code: 'ICT393', title: 'Advanced Business Intelligence', credit_points: 3, year_level: 2, period_id: 4, sequence_order: 2 },
-            { unit_id: 22, code: 'ICT303', title: 'Advanced Machine Learning', credit_points: 3, year_level: 2, period_id: 4, sequence_order: 3 },
-
-            // Year 2 Trimester 3 (period_id: 5) - 6 CP
-            { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, year_level: 2, period_id: 5, sequence_order: 1 },
-            { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, year_level: 2, period_id: 5, sequence_order: 2 },
-
-            // Year 3 Trimester 1 (period_id: 3) - 9 CP
-            { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, year_level: 3, period_id: 3, sequence_order: 1 },
-            { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice', credit_points: 3, year_level: 3, period_id: 3, sequence_order: 2 },
-            { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, year_level: 3, period_id: 3, sequence_order: 3 },
-
-            // Year 3 Trimester 2 (period_id: 4) - 9 CP
-            { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, year_level: 3, period_id: 4, sequence_order: 1 },
-            { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, year_level: 3, period_id: 4, sequence_order: 2 },
-            { unit_id: 28, code: 'ICT394', title: 'Business Intelligence & Analytics', credit_points: 3, year_level: 3, period_id: 4, sequence_order: 3 },
-
-            // Year 3 Trimester 3 (period_id: 5) - 6 CP
-            { unit_id: 23, code: 'ICT304', title: 'AI System Design', credit_points: 3, year_level: 3, period_id: 5, sequence_order: 1 },
-            { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, year_level: 3, period_id: 5, sequence_order: 2 }
+            { unit_id: 9, code: 'ICT202', title: 'Machine Learning', credit_points: 3, year_level: 1, period_id: 5, sequence_order: 4 }
         ]
     },
     2: {
