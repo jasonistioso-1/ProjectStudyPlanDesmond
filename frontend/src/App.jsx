@@ -169,7 +169,64 @@ export default function App() {
     return initialSampleStudents[0];
   });
 
+  const resolveStudentAutoPlanOptions = (studentId) => {
+    try {
+      const sIdNum = Number(studentId);
+      if (!sIdNum) return null;
+      let notifList = [];
+      const saved = localStorage.getItem('spr_notifications_list');
+      if (saved) notifList = JSON.parse(saved);
 
+      const studentNotif = (notifList || []).find(n => 
+        (Number(n.studentId) === sIdNum || String(n.studentId) === String(sIdNum)) &&
+        (n.title?.includes('Recommended') || n.title?.includes('Approved') || n.title?.includes('Plan') || n.title?.includes('Change Requested') || n.title?.includes('Disagreed'))
+      );
+
+      const singleKey = `spr_student_${sIdNum}_plan`;
+      const single = localStorage.getItem(singleKey);
+      let storedPlanData = single ? JSON.parse(single) : null;
+      if (!storedPlanData) {
+        const cachedAll = localStorage.getItem('spr_student_plans_cache');
+        if (cachedAll) {
+          const parsed = JSON.parse(cachedAll);
+          storedPlanData = parsed[sIdNum] || parsed[String(sIdNum)];
+        }
+      }
+
+      const isRecommended = studentNotif?.title?.includes('Recommended') || studentNotif?.actionLabel?.includes('Recommended') || storedPlanData?.plan?.status === 'recommended';
+      const isDisagreed = studentNotif?.title?.includes('Disagreed') || studentNotif?.title?.includes('Change Requested') || studentNotif?.title?.includes('Rejected') || storedPlanData?.plan?.status === 'rejected';
+      const isApproved = studentNotif?.title?.includes('Approved') || storedPlanData?.plan?.status === 'approved';
+      const isRequested = studentNotif?.title?.includes('Plan Request') || studentNotif?.title?.includes('Replan Request') || storedPlanData?.plan?.status === 'request_submitted';
+
+      let targetYr = storedPlanData?.plan?.targetYearLevel || studentNotif?.targetYear;
+      if (!targetYr) {
+        const matchYr = studentNotif?.message?.match(/202[6-9]/);
+        if (matchYr) {
+          const yr = Number(matchYr[0]);
+          targetYr = yr === 2027 ? 2 : yr === 2028 ? 3 : 1;
+        }
+      }
+      if (!targetYr) {
+        // For existing students (Alex: 1, Sarah: 2), Year 1 is passed so target Year 2
+        targetYr = (sIdNum === 1 || sIdNum === 2) ? 2 : 1;
+      }
+
+      const effectiveStatus = isApproved ? 'approved' : (isRecommended ? 'recommended' : (isDisagreed ? 'rejected' : (isRequested ? 'request_submitted' : (storedPlanData?.plan?.status || 'draft'))));
+      const layout = storedPlanData?.plan?.layoutType || studentNotif?.layoutType || 'trimester';
+
+      return {
+        targetYearLevel: targetYr,
+        requestYear: targetYr === 2 ? 2027 : targetYr === 3 ? 2028 : 2026,
+        requestPeriods: storedPlanData?.plan?.requestPeriods || (layout === 'semester' ? [1, 2] : [3, 4, 5]),
+        layoutType: layout,
+        forceScrollTrigger: Date.now(),
+        status: effectiveStatus,
+        rejectionComment: studentNotif?.rejectionComment || studentNotif?.comment || storedPlanData?.plan?.rejectionComment
+      };
+    } catch (e) {
+      return null;
+    }
+  };
 
   const handleLoginSuccess = useCallback((user) => {
     setCurrentUser(user);
@@ -195,7 +252,8 @@ export default function App() {
         study_status: 'active',
         account_category: user.account_category
       };
-      handleSelectStudent(target, 'student');
+      const autoOpts = resolveStudentAutoPlanOptions(user.student_id);
+      handleSelectStudent(target, 'student', autoOpts);
     }
     setActiveTab('STUDY_PLAN');
     showToast(`Welcome back, ${user.first_name} ${user.last_name}! (${user.roleLabel})`);
@@ -1823,7 +1881,8 @@ export default function App() {
         const savedUser = currentUser;
         if (savedUser && savedUser.role === 'student') {
           const target = loadedStudents.find(s => s.student_id === savedUser.student_id || s.student_number === savedUser.student_number) || loadedStudents[1] || loadedStudents[0];
-          handleSelectStudent(target, 'student');
+          const autoOpts = resolveStudentAutoPlanOptions(savedUser.student_id);
+          handleSelectStudent(target, 'student', autoOpts);
         } else if (savedUser && savedUser.role === 'chair') {
           const target = loadedStudents.find(s => s.student_id === 1) || loadedStudents[1] || loadedStudents[0];
           handleSelectStudent(target, 'chair');
@@ -1930,6 +1989,8 @@ export default function App() {
   };
 
   const handleSelectStudent = async (student, roleOverride = null, planOptions = null) => {
+    const resolvedPlanOptions = planOptions || resolveStudentAutoPlanOptions(student?.student_id);
+
     // 1. Preserve active working draft ONLY when switching away from a different student
     if (selectedStudent && student && Number(selectedStudent.student_id) !== Number(student.student_id) && planUnits && planUnits.length > 0) {
       const sId = selectedStudent.student_id;
@@ -2013,7 +2074,7 @@ export default function App() {
                          (disagreementNotif?.message?.match(/"([^"]+)"/)?.[1]) || 
                          null;
 
-    const effectiveRejectionComment = planOptions?.rejectionComment || 
+    const effectiveRejectionComment = resolvedPlanOptions?.rejectionComment || 
                                       notifComment || 
                                       cached?.plan?.rejectionComment || 
                                       cached?.plan?.rejection_comment || 
@@ -2021,7 +2082,7 @@ export default function App() {
 
     const isStudentDisagreed = Boolean(effectiveRejectionComment) || 
                                Boolean(disagreementNotif) || 
-                               planOptions?.status === 'rejected' || 
+                               resolvedPlanOptions?.status === 'rejected' || 
                                cached?.plan?.status === 'rejected';
 
     // Check for active recommendation notification from chair for this student
@@ -2043,8 +2104,8 @@ export default function App() {
 
     // Resolve the true latest lifecycle status for this student:
     let resolvedStatus = 'draft';
-    if (planOptions?.status) {
-      resolvedStatus = planOptions.status;
+    if (resolvedPlanOptions?.status) {
+      resolvedStatus = resolvedPlanOptions.status;
     } else if (isStudentDisagreed) {
       resolvedStatus = 'rejected';
     } else if (recommendedNotif) {
@@ -2130,11 +2191,11 @@ export default function App() {
     if (cached && (cached.units?.length > 0 || isNewStudent)) {
       const planToSet = {
         ...cached.plan,
-        targetYearLevel: planOptions?.targetYearLevel || cached.plan?.targetYearLevel || 1,
-        requestYear: planOptions?.requestYear || cached.plan?.requestYear,
-        requestPeriods: planOptions?.requestPeriods || cached.plan?.requestPeriods,
-        layoutType: planOptions?.layoutType || cached.plan?.layoutType || 'trimester',
-        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now(),
+        targetYearLevel: resolvedPlanOptions?.targetYearLevel || cached.plan?.targetYearLevel || (isExistingStudent ? 2 : 1),
+        requestYear: resolvedPlanOptions?.requestYear || cached.plan?.requestYear,
+        requestPeriods: resolvedPlanOptions?.requestPeriods || cached.plan?.requestPeriods,
+        layoutType: resolvedPlanOptions?.layoutType || cached.plan?.layoutType || 'trimester',
+        forceScrollTrigger: resolvedPlanOptions?.forceScrollTrigger || Date.now(),
         status: resolvedStatus,
         rejectionComment: effectiveRejectionComment,
         rejection_comment: effectiveRejectionComment
@@ -2197,11 +2258,11 @@ export default function App() {
         ...planData.plan,
         status: resolvedStatus,
         total_credit_points: (planData.plan?.total_credit_points > 0 ? planData.plan.total_credit_points : (fallbackPlanObj?.plan?.total_credit_points || (initialUnits.length * 3))),
-        targetYearLevel: planOptions?.targetYearLevel || planData.plan?.targetYearLevel || 1,
-        requestYear: planOptions?.requestYear || planData.plan?.requestYear,
-        requestPeriods: planOptions?.requestPeriods || planData.plan?.requestPeriods,
-        layoutType: planOptions?.layoutType || planData.plan?.layoutType || fallbackPlanObj?.plan?.layoutType || 'trimester',
-        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now(),
+        targetYearLevel: resolvedPlanOptions?.targetYearLevel || planData.plan?.targetYearLevel || (isExistingStudent ? 2 : 1),
+        requestYear: resolvedPlanOptions?.requestYear || planData.plan?.requestYear,
+        requestPeriods: resolvedPlanOptions?.requestPeriods || planData.plan?.requestPeriods,
+        layoutType: resolvedPlanOptions?.layoutType || planData.plan?.layoutType || fallbackPlanObj?.plan?.layoutType || 'trimester',
+        forceScrollTrigger: resolvedPlanOptions?.forceScrollTrigger || Date.now(),
         rejectionComment: effectiveRejectionComment || planData.plan?.rejectionComment,
         rejection_comment: effectiveRejectionComment || planData.plan?.rejection_comment
       } : {
@@ -2212,11 +2273,11 @@ export default function App() {
         rejectionComment: effectiveRejectionComment,
         rejection_comment: effectiveRejectionComment,
         total_credit_points: fallbackPlanObj?.plan?.total_credit_points || (initialUnits.length * 3),
-        targetYearLevel: planOptions?.targetYearLevel || 1,
-        requestYear: planOptions?.requestYear,
-        requestPeriods: planOptions?.requestPeriods,
-        layoutType: planOptions?.layoutType || fallbackPlanObj?.plan?.layoutType || 'trimester',
-        forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now()
+        targetYearLevel: resolvedPlanOptions?.targetYearLevel || (isExistingStudent ? 2 : 1),
+        requestYear: resolvedPlanOptions?.requestYear,
+        requestPeriods: resolvedPlanOptions?.requestPeriods,
+        layoutType: resolvedPlanOptions?.layoutType || fallbackPlanObj?.plan?.layoutType || 'trimester',
+        forceScrollTrigger: resolvedPlanOptions?.forceScrollTrigger || Date.now()
       };
 
       setCurrentPlan(initialPlan);
