@@ -233,6 +233,7 @@ export default function PlanBuilder({
       if (currentPlan?.layoutType) {
         setLayoutType(currentPlan.layoutType);
         setModalLayoutType(currentPlan.layoutType);
+        setStudentLayoutMode(currentPlan.layoutType);
       }
 
       const scrollToTarget = () => {
@@ -254,7 +255,14 @@ export default function PlanBuilder({
         clearTimeout(t3);
       };
     }
-  }, [currentPlan?.targetYearLevel, currentPlan?.status, currentPlan?.updated_at, currentPlan?.forceScrollTrigger]);
+  }, [currentPlan?.targetYearLevel, currentPlan?.status, currentPlan?.updated_at, currentPlan?.forceScrollTrigger, currentPlan?.layoutType]);
+
+  // Keep studentLayoutMode synced whenever currentPlan layoutType changes
+  useEffect(() => {
+    if (currentPlan?.layoutType) {
+      setStudentLayoutMode(currentPlan.layoutType);
+    }
+  }, [currentPlan?.layoutType]);
 
   const handleOpenAutoGenModal = () => {
     if (!isChair && isPlanLocked) {
@@ -1608,8 +1616,13 @@ export default function PlanBuilder({
                       // If plan is officially approved or recommended, all periods in plan are unlocked
                       const isPlanApprovedOrRecommended = planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved';
 
-                      // Period is unlocked if already undertaken, OR a request has been submitted, OR plan is recommended/approved
-                      const isPeriodUnlocked = isUndertakenPeriod || hasSubmittedPeriodRequest || isPlanApprovedOrRecommended;
+                      // Period is unlocked if it has scheduled units, OR already undertaken, OR a request has been submitted, OR plan is recommended/approved
+                      const isPeriodUnlocked = Boolean(
+                        (sUnits && sUnits.length > 0) ||
+                        isUndertakenPeriod ||
+                        hasSubmittedPeriodRequest ||
+                        isPlanApprovedOrRecommended
+                      );
 
                       if (!isPeriodUnlocked) {
                         return (

@@ -1583,11 +1583,18 @@ export default function App() {
           plan: updatedPlan,
           units: uniqueScheduledUnits
         },
+        [Number(targetStudent.student_id)]: {
+          plan: updatedPlan,
+          units: uniqueScheduledUnits
+        },
         [String(targetStudent.student_id)]: {
           plan: updatedPlan,
           units: uniqueScheduledUnits
         }
       };
+      try {
+        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+      } catch (e) {}
       return nextMap;
     });
 
@@ -1802,17 +1809,33 @@ export default function App() {
     setPlanUnits(prevUnits => {
       const updatedUnits = typeof newUnitsOrUpdater === 'function' ? newUnitsOrUpdater(prevUnits) : newUnitsOrUpdater;
       if (selectedStudent) {
+        const sId = selectedStudent.student_id;
         setAllStudentPlansMap(prevMap => {
-          const currentEntry = prevMap[selectedStudent.student_id] || {};
+          const currentEntry = prevMap[sId] || prevMap[Number(sId)] || {};
           const nextMap = {
             ...prevMap,
-            [selectedStudent.student_id]: {
+            [sId]: {
+              plan: currentPlan || currentEntry.plan,
+              units: updatedUnits
+            },
+            [Number(sId)]: {
+              plan: currentPlan || currentEntry.plan,
+              units: updatedUnits
+            },
+            [String(sId)]: {
               plan: currentPlan || currentEntry.plan,
               units: updatedUnits
             }
           };
+          try {
+            localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+          } catch (e) {}
           return nextMap;
         });
+        if (mockClientStudentPlans[Number(sId)]) {
+          mockClientStudentPlans[Number(sId)].units = updatedUnits;
+          if (currentPlan) mockClientStudentPlans[Number(sId)].plan = currentPlan;
+        }
       }
       return updatedUnits;
     });
@@ -1856,15 +1879,29 @@ export default function App() {
   };
 
   const handleSelectStudent = async (student, roleOverride = null, planOptions = null) => {
-    // 1. Preserve previous student's working draft in cache map before switching
-    if (selectedStudent && currentPlan && Number(selectedStudent.student_id) !== Number(student.student_id)) {
-      setAllStudentPlansMap(prev => ({
-        ...prev,
-        [selectedStudent.student_id]: {
-          plan: currentPlan,
-          units: planUnits
-        }
-      }));
+    // 1. Preserve active working draft in cache map and localStorage
+    if (selectedStudent && currentPlan) {
+      const sId = selectedStudent.student_id;
+      const currentDraft = {
+        plan: currentPlan,
+        units: planUnits
+      };
+      setAllStudentPlansMap(prev => {
+        const nextMap = {
+          ...prev,
+          [sId]: currentDraft,
+          [Number(sId)]: currentDraft,
+          [String(sId)]: currentDraft
+        };
+        try {
+          localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+        } catch (e) {}
+        return nextMap;
+      });
+      if (mockClientStudentPlans[Number(sId)]) {
+        mockClientStudentPlans[Number(sId)].plan = currentPlan;
+        mockClientStudentPlans[Number(sId)].units = planUnits;
+      }
     }
 
     setSelectedStudent(student);
@@ -1886,7 +1923,10 @@ export default function App() {
     showToast(`Loaded profile for ${student.first_name} ${student.last_name}${categoryTag}`);
 
     // 2. If student ALREADY has a working draft in memory, load it directly to prevent wiping data!
-    let cached = allStudentPlansMap[student.student_id] || allStudentPlansMap[Number(student.student_id)] || allStudentPlansMap[String(student.student_id)];
+    const isSameStudentActive = selectedStudent && Number(selectedStudent.student_id) === Number(student.student_id);
+    let cached = (isSameStudentActive && planUnits && planUnits.length > 0)
+      ? { plan: currentPlan, units: planUnits }
+      : (allStudentPlansMap[student.student_id] || allStudentPlansMap[Number(student.student_id)] || allStudentPlansMap[String(student.student_id)]);
 
     // Check if there is an active disagreement / revision request from notifications
     const disagreementNotif = (notifications || []).find(n => 
@@ -2272,6 +2312,9 @@ export default function App() {
           units: planUnits
         }
       };
+      try {
+        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+      } catch (e) {}
       return nextMap;
     });
 
