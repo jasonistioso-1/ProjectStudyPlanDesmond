@@ -408,6 +408,10 @@ export default function App() {
   const auditDatesWithLogs = useMemo(() => {
     const map = new Map();
     auditLogsList.forEach(log => {
+      // Exclude session / profile switch events
+      if (log.version_number === 'LOG' || log.plan_status === 'logged_in' || (log.amendment_reason && log.amendment_reason.startsWith('Account Profile Switch'))) {
+        return;
+      }
       if (activeRole === 'student') {
         const matchesCurrentStudent = selectedStudent ? (
           (log.student_number && log.student_number === selectedStudent.student_number) ||
@@ -482,6 +486,11 @@ export default function App() {
   // Filtered audit logs respecting Role, Calendar Date (Daily Reset), and Search Query
   const filteredAuditLogs = useMemo(() => {
     return auditLogsList.filter(log => {
+      // Exclude session / profile switch events
+      if (log.version_number === 'LOG' || log.plan_status === 'logged_in' || (log.amendment_reason && log.amendment_reason.startsWith('Account Profile Switch'))) {
+        return false;
+      }
+
       // 1. Role filter (Student View mode)
       if (activeRole === 'student') {
         const matchesCurrentStudent = selectedStudent ? (
@@ -1792,23 +1801,6 @@ export default function App() {
       ? `Student: ${student.first_name} ${student.last_name}`
       : 'Academic Chair';
 
-    // Record login / account switch event into Audit Log
-    setAuditLogsList(prev => [
-      {
-        version_id: `evt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        version_number: 'LOG',
-        student_number: student.student_number || '31234561',
-        first_name: student.first_name,
-        last_name: student.last_name,
-        student_name: `${student.first_name} ${student.last_name}`,
-        plan_title: `${student.course_code || 'PT3-BSIT'} Account Session`,
-        amendment_reason: `Account Profile Switch: Loaded profile for ${student.first_name} ${student.last_name}${student.account_category === 'admin' || student.student_id === 0 ? '' : ` (${(student.account_category || 'STUDENT').replace('_', ' ').toUpperCase()})`}`,
-        created_by: authorName,
-        created_at: new Date().toISOString(),
-        plan_status: 'logged_in'
-      },
-      ...prev
-    ]);
     
     // Do NOT auto-switch activeRole when a student profile is selected.
     // If the Academic Chair selects a student, they stay in Academic Chair view to manage that student's plan.
@@ -2657,356 +2649,362 @@ export default function App() {
 
       {/* Audit Log / Change Log Modal */}
       {showAuditModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-          <div className="bg-white dark:bg-slate-900 border-t-4 border-t-red-600 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-2xl w-full shadow-2xl relative text-slate-900 dark:text-slate-100 transition-colors">
-            <button
-              onClick={() => setShowAuditModal(false)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 pr-12">
-              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shadow-2xs shrink-0">
-                <Clock className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
-                    Study Plan Change Log
-                  </h3>
-                  <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${
-                    activeRole === 'student'
-                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                      : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
-                  }`}>
-                    {activeRole === 'student' ? 'Student View (My Actions Only)' : 'Academic Chair (Full Audit Log)'}
-                  </span>
+        <div className="fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 font-sans overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 border-t-4 border-t-red-600 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl relative text-slate-900 dark:text-slate-100 transition-colors overflow-hidden">
+            
+            {/* Modal Header (Fixed at top) */}
+            <div className="flex items-center justify-between gap-3 p-4 sm:p-5 pb-3.5 border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 z-10">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shadow-2xs shrink-0">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
+                      Study Plan Change Log
+                    </h3>
+                    <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${
+                      activeRole === 'student'
+                        ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                        : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
+                    }`}>
+                      {activeRole === 'student' ? 'Student View (My Actions Only)' : 'Academic Chair (Full Audit Log)'}
+                    </span>
+                  </div>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowAuditModal(false)}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                title="Close Change Log"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Calendar & Date Filter Bar */}
-            <div className="mb-3 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80 flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xs">
-                  <Calendar className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                  <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">
-                    {formatSelectedDateDisplay(auditSelectedDate)}
-                  </span>
-                  {auditSelectedDate !== 'all' && (
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
-                      (auditDatesWithLogs.get(auditSelectedDate) || 0) > 0
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                    }`}>
-                      {auditDatesWithLogs.get(auditSelectedDate) || 0} logs
+            {/* Modal Scrollable Body */}
+            <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-3.5">
+              {/* Calendar & Date Filter Bar */}
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80 flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xs">
+                    <Calendar className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                    <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">
+                      {formatSelectedDateDisplay(auditSelectedDate)}
+                    </span>
+                    {auditSelectedDate !== 'all' && (
+                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+                        (auditDatesWithLogs.get(auditSelectedDate) || 0) > 0
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                      }`}>
+                        {auditDatesWithLogs.get(auditSelectedDate) || 0} logs
+                      </span>
+                    )}
+                  </div>
+
+                  {auditSelectedDate === getTodayKey() && (
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 hidden sm:inline-block">
+                      Daily Fresh Log
                     </span>
                   )}
                 </div>
 
-                {auditSelectedDate === getTodayKey() && (
-                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 hidden sm:inline-block">
-                    Daily Fresh Log
-                  </span>
-                )}
+                {/* Navigation Stepper & Calendar Toggle */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => handleStepAuditDay(-1)}
+                    className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                    title="Previous Day"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuditSelectedDate(getTodayKey());
+                      setAuditCalendarMonth(new Date());
+                    }}
+                    className={`px-2.5 py-1 text-[11px] font-extrabold rounded-lg border transition-all cursor-pointer ${
+                      auditSelectedDate === getTodayKey()
+                        ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-100'
+                    }`}
+                    title="Reset to Today"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleStepAuditDay(1)}
+                    className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                    title="Next Day"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+
+                  <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAuditCalendar(prev => !prev)}
+                    className={`px-2.5 py-1 text-[11px] font-extrabold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
+                      showAuditCalendar
+                        ? 'bg-red-600 text-white border-red-600'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-100'
+                    }`}
+                    title="Toggle Calendar Grid"
+                  >
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    <span>{showAuditCalendar ? 'Hide Calendar' : 'Calendar View'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAuditSelectedDate(prev => prev === 'all' ? getTodayKey() : 'all')}
+                    className={`px-2 py-1 text-[11px] font-extrabold rounded-lg border transition-all cursor-pointer ${
+                      auditSelectedDate === 'all'
+                        ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900'
+                        : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-100'
+                    }`}
+                    title="Toggle between Daily View and All History"
+                  >
+                    {auditSelectedDate === 'all' ? 'Daily View' : 'All History'}
+                  </button>
+                </div>
               </div>
 
-              {/* Navigation Stepper & Calendar Toggle */}
-              <div className="flex items-center gap-1 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => handleStepAuditDay(-1)}
-                  className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-                  title="Previous Day"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuditSelectedDate(getTodayKey());
-                    setAuditCalendarMonth(new Date());
-                  }}
-                  className={`px-2.5 py-1 text-[11px] font-extrabold rounded-lg border transition-all cursor-pointer ${
-                    auditSelectedDate === getTodayKey()
-                      ? 'bg-red-600 text-white border-red-600 shadow-2xs'
-                      : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-100'
-                  }`}
-                  title="Reset to Today"
-                >
-                  Today
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleStepAuditDay(1)}
-                  className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-                  title="Next Day"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-
-                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
-
-                <button
-                  type="button"
-                  onClick={() => setShowAuditCalendar(prev => !prev)}
-                  className={`px-2.5 py-1 text-[11px] font-extrabold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
-                    showAuditCalendar
-                      ? 'bg-red-600 text-white border-red-600'
-                      : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-100'
-                  }`}
-                  title="Toggle Calendar Grid"
-                >
-                  <CalendarDays className="w-3.5 h-3.5" />
-                  <span>{showAuditCalendar ? 'Hide Calendar' : 'Calendar View'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setAuditSelectedDate(prev => prev === 'all' ? getTodayKey() : 'all')}
-                  className={`px-2 py-1 text-[11px] font-extrabold rounded-lg border transition-all cursor-pointer ${
-                    auditSelectedDate === 'all'
-                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900'
-                      : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-100'
-                  }`}
-                  title="Toggle between Daily View and All History"
-                >
-                  {auditSelectedDate === 'all' ? 'Daily View' : 'All History'}
-                </button>
-              </div>
-            </div>
-
-            {/* Expandable Visual Calendar Drawer */}
-            {showAuditCalendar && (
-              <div className="mb-3.5 p-3.5 bg-slate-50 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700">
-                <div className="flex items-center justify-between mb-2.5 px-1">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4 text-red-600" />
-                    <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">
-                      {auditCalendarMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setAuditCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-                      className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-                      title="Previous Month"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const today = new Date();
-                        setAuditCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1));
-                        setAuditSelectedDate(getTodayKey());
-                      }}
-                      className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                    >
-                      Current Month
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAuditCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-                      className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-                      title="Next Month"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-7 gap-1 text-center font-mono font-bold text-[10px] text-slate-400 mb-1">
-                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                    <div key={day} className="py-0.5">{day}</div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-7 gap-1 text-center">
-                  {auditCalendarGridDays.map((cell, idx) => {
-                    const count = auditDatesWithLogs.get(cell.dateKey) || 0;
-                    const isSelected = auditSelectedDate === cell.dateKey;
-                    const isToday = cell.dateKey === getTodayKey();
-
-                    return (
+              {/* Expandable Visual Calendar Drawer */}
+              {showAuditCalendar && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-red-600" />
+                      <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">
+                        {auditCalendarMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
                       <button
-                        key={cell.dateKey + idx}
+                        type="button"
+                        onClick={() => setAuditCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                        className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                        title="Previous Month"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
                         type="button"
                         onClick={() => {
-                          setAuditSelectedDate(cell.dateKey);
+                          const today = new Date();
+                          setAuditCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+                          setAuditSelectedDate(getTodayKey());
                         }}
-                        className={`py-1 px-0.5 rounded-lg text-xs font-mono transition-all flex flex-col items-center justify-center relative cursor-pointer min-h-[32px] ${
-                          !cell.isCurrentMonth
-                            ? 'text-slate-300 dark:text-slate-600 hover:bg-slate-100/50 dark:hover:bg-slate-700/30'
-                            : isSelected
-                            ? 'bg-red-600 text-white font-black shadow-xs'
-                            : isToday
-                            ? 'border border-red-500 font-extrabold text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30'
-                            : count > 0
-                            ? 'font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-700/60 hover:bg-red-50 dark:hover:bg-red-950/50 border border-slate-200 dark:border-slate-700'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50'
-                        }`}
+                        className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       >
-                        <span>{cell.dayNumber}</span>
-                        {count > 0 && (
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
-                              isSelected ? 'bg-white' : 'bg-red-600 dark:bg-red-400'
-                            }`}
-                            title={`${count} changes recorded`}
-                          />
-                        )}
+                        Current Month
                       </button>
-                    );
-                  })}
-                </div>
+                      <button
+                        type="button"
+                        onClick={() => setAuditCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                        className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                        title="Next Month"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
 
-                {activeMonthDatesWithLogs.length > 0 && (
-                  <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-700/80 flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                      Dates with changes:
-                    </span>
-                    {activeMonthDatesWithLogs.map(([dateKey, count]) => {
-                      const isSelected = auditSelectedDate === dateKey;
-                      const [, m, d] = dateKey.split('-');
+                  <div className="grid grid-cols-7 gap-1 text-center font-mono font-bold text-[10px] text-slate-400 mb-1">
+                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                      <div key={day} className="py-0.5">{day}</div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-1 text-center">
+                    {auditCalendarGridDays.map((cell, idx) => {
+                      const count = auditDatesWithLogs.get(cell.dateKey) || 0;
+                      const isSelected = auditSelectedDate === cell.dateKey;
+                      const isToday = cell.dateKey === getTodayKey();
+
                       return (
                         <button
-                          key={dateKey}
+                          key={cell.dateKey + idx}
                           type="button"
-                          onClick={() => setAuditSelectedDate(dateKey)}
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition-all border cursor-pointer ${
-                            isSelected
-                              ? 'bg-red-600 text-white border-red-600 shadow-2xs'
-                              : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-red-400'
+                          onClick={() => {
+                            setAuditSelectedDate(cell.dateKey);
+                          }}
+                          className={`py-1 px-0.5 rounded-lg text-xs font-mono transition-all flex flex-col items-center justify-center relative cursor-pointer h-7 sm:h-8 ${
+                            !cell.isCurrentMonth
+                              ? 'text-slate-300 dark:text-slate-600 hover:bg-slate-100/50 dark:hover:bg-slate-700/30'
+                              : isSelected
+                              ? 'bg-red-600 text-white font-black shadow-xs'
+                              : isToday
+                              ? 'border border-red-500 font-extrabold text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30'
+                              : count > 0
+                              ? 'font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-700/60 hover:bg-red-50 dark:hover:bg-red-950/50 border border-slate-200 dark:border-slate-700'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50'
                           }`}
                         >
-                          {d}/{m} ({count})
+                          <span className="leading-none">{cell.dayNumber}</span>
+                          {count > 0 && (
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
+                                isSelected ? 'bg-white' : 'bg-red-600 dark:bg-red-400'
+                              }`}
+                              title={`${count} changes recorded`}
+                            />
+                          )}
                         </button>
                       );
                     })}
                   </div>
-                )}
+
+                  {activeMonthDatesWithLogs.length > 0 && (
+                    <div className="mt-2 pt-1.5 border-t border-slate-200 dark:border-slate-700/80 flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                        Dates with changes:
+                      </span>
+                      {activeMonthDatesWithLogs.map(([dateKey, count]) => {
+                        const isSelected = auditSelectedDate === dateKey;
+                        const [, m, d] = dateKey.split('-');
+                        return (
+                          <button
+                            key={dateKey}
+                            type="button"
+                            onClick={() => setAuditSelectedDate(dateKey)}
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition-all border cursor-pointer ${
+                              isSelected
+                                ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+                                : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-red-400'
+                            }`}
+                          >
+                            {d}/{m} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Search & Filter Bar */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search audit trail by student name, ID, status, or keyword..."
+                  value={auditSearchQuery}
+                  onChange={(e) => setAuditSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-red-500/50"
+                />
               </div>
-            )}
 
-            {/* Search & Filter Bar */}
-            <div className="relative mb-3.5">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search audit trail by student name, ID, status, or keyword..."
-                value={auditSearchQuery}
-                onChange={(e) => setAuditSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-red-500/50"
-              />
-            </div>
-
-            {/* Change Log Entries - Data Audit Trail (NFR-07) */}
-            <div className="space-y-3 max-h-72 overflow-y-auto text-xs font-sans pr-1">
-              {filteredAuditLogs.length === 0 ? (
-                <div className="text-center py-8 px-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 space-y-2">
-                  <div className="w-10 h-10 mx-auto rounded-full bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center text-slate-400">
-                    <Calendar className="w-5 h-5 text-red-500/80" />
-                  </div>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {auditSearchQuery
-                      ? 'No audit entries matching your search query.'
-                      : auditSelectedDate === getTodayKey()
-                      ? 'No Change Logs Recorded Yet Today'
-                      : `No Logs on ${formatSelectedDateDisplay(auditSelectedDate)}`}
-                  </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                    {auditSearchQuery
-                      ? 'Try clearing your search query or switching date filters.'
-                      : 'Change logs reset daily so records do not pile up in one place. Actions taken today will appear here fresh.'}
-                  </p>
-                  <div className="pt-2 flex items-center justify-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => setAuditSelectedDate('all')}
-                      className="px-3 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
-                    >
-                      View All Historical Logs ({auditLogsList.length})
-                    </button>
-                    {auditDatesWithLogs.size > 0 && (
+              {/* Change Log Entries - Data Audit Trail (NFR-07) */}
+              <div className="space-y-3 text-xs font-sans">
+                {filteredAuditLogs.length === 0 ? (
+                  <div className="text-center py-8 px-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="w-10 h-10 mx-auto rounded-full bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center text-slate-400">
+                      <Calendar className="w-5 h-5 text-red-500/80" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      {auditSearchQuery
+                        ? 'No audit entries matching your search query.'
+                        : auditSelectedDate === getTodayKey()
+                        ? 'No Change Logs Recorded Yet Today'
+                        : `No Logs on ${formatSelectedDateDisplay(auditSelectedDate)}`}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                      {auditSearchQuery
+                        ? 'Try clearing your search query or switching date filters.'
+                        : 'Change logs reset daily so records do not pile up in one place. Actions taken today will appear here fresh.'}
+                    </p>
+                    <div className="pt-2 flex items-center justify-center gap-2 flex-wrap">
                       <button
                         type="button"
-                        onClick={() => setShowAuditCalendar(true)}
-                        className="px-3 py-1 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                        onClick={() => setAuditSelectedDate('all')}
+                        className="px-3 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
                       >
-                        Pick Active Date from Calendar
+                        View All Historical Logs ({auditLogsList.length})
                       </button>
-                    )}
+                      {auditDatesWithLogs.size > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAuditCalendar(true)}
+                          className="px-3 py-1 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                        >
+                          Pick Active Date from Calendar
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                filteredAuditLogs.map((log, idx) => {
-                  const studentName = log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : (selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student Profile'));
-                  const studentNum = log.student_number || selectedStudent?.student_number || '31234561';
+                ) : (
+                  filteredAuditLogs.map((log, idx) => {
+                    const studentName = log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : (selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student Profile'));
+                    const studentNum = log.student_number || selectedStudent?.student_number || '31234561';
 
-                  const logAuthorDisplay = activeRole === 'student'
-                    ? (log.created_by && log.created_by.toLowerCase().includes('student')
-                        ? log.created_by
-                        : `Student: ${studentName}`)
-                    : (log.created_by || 'Academic Chair');
+                    const logAuthorDisplay = activeRole === 'student'
+                      ? (log.created_by && log.created_by.toLowerCase().includes('student')
+                          ? log.created_by
+                          : `Student: ${studentName}`)
+                      : (log.created_by || 'Academic Chair');
 
-                  return (
-                    <div key={log.version_id || idx} className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs">
-                      <div className="flex items-center justify-between font-mono text-[10px] font-bold gap-2">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="bg-red-700 text-white px-2.5 py-0.5 rounded-md font-mono shadow-2xs shrink-0">
-                            {new Date(log.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                          <span className="bg-slate-900 text-white dark:bg-slate-700 px-2.5 py-0.5 rounded-md font-mono font-black text-[10px] shadow-2xs shrink-0 border border-slate-700 dark:border-slate-600">
-                            v{(log.version_number || 1)}.0
+                    return (
+                      <div key={log.version_id || idx} className="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 shadow-2xs">
+                        <div className="flex items-center justify-between font-mono text-[10px] font-bold gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="bg-red-700 text-white px-2.5 py-0.5 rounded-md font-mono shadow-2xs shrink-0">
+                              {new Date(log.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <span className={`px-2.5 py-0.5 rounded-md uppercase font-extrabold text-[9px] font-mono border text-right shrink-0 ${
+                            log.plan_status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' :
+                            log.plan_status === 'agreed' ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' :
+                            log.plan_status === 'recommended' ? 'bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' :
+                            log.plan_status === 'request_submitted' || log.plan_status === 'request' ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800' :
+                            log.plan_status === 'rejected' ? 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800' :
+                            log.plan_status === 'logged_in' ? 'bg-purple-50 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800' :
+                            'bg-cyan-50 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800'
+                          }`}>
+                            {log.plan_status === 'logged_in' ? 'LOGIN / ACCOUNT SWITCH' :
+                             log.plan_status === 'request_submitted' ? 'STUDENT REQUEST SUBMITTED' :
+                             log.plan_status === 'rejected' ? 'CHANGE REQUESTED' :
+                             log.plan_status === 'recommended' ? 'RECOMMENDED BY CHAIR' :
+                             log.plan_status === 'agreed' ? 'AGREED BY STUDENT' :
+                             log.plan_status === 'approved' ? 'APPROVED & FINALIZED' :
+                             (log.plan_status || 'STATUS CHANGED').toUpperCase()}
                           </span>
                         </div>
-                        <span className={`px-2.5 py-0.5 rounded-md uppercase font-extrabold text-[9px] font-mono border text-right shrink-0 ${
-                          log.plan_status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' :
-                          log.plan_status === 'agreed' ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' :
-                          log.plan_status === 'recommended' ? 'bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' :
-                          log.plan_status === 'request_submitted' || log.plan_status === 'request' ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800' :
-                          log.plan_status === 'rejected' ? 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800' :
-                          log.plan_status === 'logged_in' ? 'bg-purple-50 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800' :
-                          'bg-cyan-50 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800'
-                        }`}>
-                          {log.plan_status === 'logged_in' ? 'LOGIN / ACCOUNT SWITCH' :
-                           log.plan_status === 'request_submitted' ? 'STUDENT REQUEST SUBMITTED' :
-                           log.plan_status === 'rejected' ? 'CHANGE REQUESTED' :
-                           log.plan_status === 'recommended' ? 'RECOMMENDED BY CHAIR' :
-                           log.plan_status === 'agreed' ? 'AGREED BY STUDENT' :
-                           log.plan_status === 'approved' ? 'APPROVED & FINALIZED' :
-                           (log.plan_status || 'STATUS CHANGED').toUpperCase()}
-                        </span>
-                      </div>
 
-                      <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
-                        <span>Student: {studentName} <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">({studentNum})</span></span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium">By: <strong className="text-slate-800 dark:text-slate-200 font-bold">{logAuthorDisplay}</strong></span>
-                      </div>
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
+                          <span>Student: {studentName} <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">({studentNum})</span></span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium">By: <strong className="text-slate-800 dark:text-slate-200 font-bold">{logAuthorDisplay}</strong></span>
+                        </div>
 
-                      <p className="text-xs text-slate-600 dark:text-slate-300 font-medium pt-0.5">
-                        {log.amendment_reason || 'Study plan status update'}
-                      </p>
-                    </div>
-                  );
-                })
-              )}
+                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium pt-0.5">
+                          {log.amendment_reason || 'Study plan status update'}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+            {/* Modal Footer (Fixed at bottom) */}
+            <div className="p-4 sm:px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900 shrink-0 flex items-center justify-between gap-3">
               <button
                 onClick={handleDownloadAuditPDF}
-                className="px-4.5 py-2.5 bg-red-700 hover:bg-red-800 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer font-heading active:scale-95"
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer font-heading active:scale-95"
               >
                 <Download className="w-4 h-4" />
                 <span>Download Change Log PDF</span>
               </button>
               <button
                 onClick={() => setShowAuditModal(false)}
-                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-extrabold rounded-xl transition-all cursor-pointer"
+                className="px-4.5 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-extrabold rounded-xl transition-all cursor-pointer"
               >
                 Close Audit Log
               </button>

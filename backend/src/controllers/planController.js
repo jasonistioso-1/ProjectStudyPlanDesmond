@@ -174,23 +174,25 @@ export async function savePlan(req, res) {
             );
         }
 
-        // Version audit log
-        const [versionRows] = await connection.query(
-            `SELECT COUNT(*) AS count FROM StudyPlanVersion WHERE plan_id = ?`,
-            [plan_id]
-        );
-        const nextVersion = (versionRows[0].count || 0) + 1;
+        // Version audit log - record when amendment_reason is provided or upon initial creation
+        if (amendment_reason || isNew) {
+            const [versionRows] = await connection.query(
+                `SELECT COUNT(*) AS count FROM StudyPlanVersion WHERE plan_id = ?`,
+                [plan_id]
+            );
+            const nextVersion = (versionRows[0].count || 0) + 1;
 
-        await connection.query(
-            `INSERT INTO StudyPlanVersion (plan_id, version_number, amendment_reason, snapshot_json, created_by) VALUES (?, ?, ?, ?, ?)`,
-            [
-                plan_id,
-                nextVersion,
-                amendment_reason || (isNew ? 'Initial plan creation' : 'Updated study plan structure'),
-                JSON.stringify({ plan_id, student_id, total_credit_points, unitCount: units.length, status }),
-                created_by || 'Academic Chair'
-            ]
-        );
+            await connection.query(
+                `INSERT INTO StudyPlanVersion (plan_id, version_number, amendment_reason, snapshot_json, created_by) VALUES (?, ?, ?, ?, ?)`,
+                [
+                    plan_id,
+                    nextVersion,
+                    amendment_reason || (isNew ? 'Initial plan creation' : 'Updated study plan structure'),
+                    JSON.stringify({ plan_id, student_id, total_credit_points, unitCount: units.length, status }),
+                    created_by || 'Academic Chair'
+                ]
+            );
+        }
 
         await connection.commit();
 

@@ -527,19 +527,6 @@ export async function fetchAuditLog() {
         console.warn('API fetchAuditLog fallback activated:', err.message);
         return [
             {
-                version_id: 106,
-                plan_id: 2,
-                version_number: 'LOG',
-                student_number: '31234562',
-                first_name: 'Sarah',
-                last_name: 'Jenkins',
-                plan_title: 'PT3-BSIT-CS02 Account Session',
-                amendment_reason: 'Account Profile Switch: Loaded profile for Sarah Jenkins (EXISTING STUDENT)',
-                created_by: 'Academic Chair',
-                created_at: '2026-09-17T12:00:00.000Z',
-                plan_status: 'logged_in'
-            },
-            {
                 version_id: 105,
                 plan_id: 1,
                 version_number: 5,
