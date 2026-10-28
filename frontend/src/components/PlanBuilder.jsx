@@ -84,7 +84,8 @@ export default function PlanBuilder({
   onAutoGeneratePlan,
   onWaiverChange,
   notifications = [],
-  onUnlockForAmendment
+  onUnlockForAmendment,
+  onResetPlan
 }) {
   const isChair = activeRole === 'chair';
   const [unitFilter, setUnitFilter] = useState('');
@@ -933,13 +934,18 @@ export default function PlanBuilder({
 
   // Clear all units from plan (Reset to 0 CP)
   const handleClearPlan = () => {
-    if (isPlanLocked) {
-      setDragWarningToast(`This Study Plan is currently ${planStatus.toUpperCase()} and locked from canvas edits. Click 'Retrieve & Amend' in Stored Repository to make modifications.`);
+    if (!isChair && isPlanLocked) {
+      setDragWarningToast(`This Study Plan is currently ${planStatus.toUpperCase()} and locked from canvas edits.`);
       setTimeout(() => setDragWarningToast(null), 5000);
+      return;
+    }
+    if (onResetPlan) {
+      onResetPlan();
       return;
     }
     setPlanUnits([]);
     if (onValidate) onValidate([]);
+    setDragWarningToast(null);
   };
 
   // Remove unit from Plan
@@ -1105,78 +1111,65 @@ export default function PlanBuilder({
     const yL = Number(yearLevel);
     const pI = Number(periodId);
 
-    // If this year is a passed year in student academic history (e.g. Year 1)
-    if (passedYears.has(yL)) {
+    // 1. Check student academic history for completed units in this year and period
+    const completedHistory = (history || []).filter(h => h.status === 'completed');
+    const yearHistory = completedHistory.filter(h => {
+      const yTaken = Number(h.year_taken || 2026);
+      const calcLvl = yTaken === 2026 ? 1 : yTaken === 2027 ? 2 : 3;
+      return calcLvl === yL;
+    });
+
+    let historyUnitsForSlot = [];
+    if (yearHistory.length > 0) {
       if (activeLayout === 'semester') {
-        const completedHistory = (history || []).filter(h => h.status === 'completed');
-        const yearHistory = completedHistory.filter(h => {
-          const yTaken = Number(h.year_taken || 2026);
-          const calcLvl = yTaken === 2026 ? 1 : yTaken === 2027 ? 2 : 3;
-          return calcLvl === yL;
-        });
-
-        const itemsWithPeriod = yearHistory.filter(h => Number(h.period_id) === pI || (pI === 1 && (h.period_code === 'S1' || h.period_id === 1)) || (pI === 2 && (h.period_code === 'S2' || h.period_id === 2)));
-        let targetHistoryUnits = [];
+        const itemsWithPeriod = yearHistory.filter(h => 
+          Number(h.period_id) === pI || 
+          (pI === 1 && (h.period_code === 'S1' || h.period_id === 1)) || 
+          (pI === 2 && (h.period_code === 'S2' || h.period_id === 2))
+        );
         if (itemsWithPeriod.length > 0) {
-          targetHistoryUnits = itemsWithPeriod;
-        } else if (yearHistory.length > 0) {
+          historyUnitsForSlot = itemsWithPeriod;
+        } else if (passedYears.has(yL)) {
           const semIdx = pI === 1 ? 0 : 1;
-          targetHistoryUnits = yearHistory.slice(semIdx * 6, (semIdx + 1) * 6);
+          historyUnitsForSlot = yearHistory.slice(semIdx * 6, (semIdx + 1) * 6);
         }
-
-        return targetHistoryUnits.map(h => {
-          const uCode = h.unit_code || h.code;
-          const catUnit = catalogUnits.find(c => c.code === uCode);
-          return {
-            ...(catUnit || {}),
-            code: uCode,
-            title: h.title || catUnit?.title || uCode,
-            credit_points: Number(h.credit_points || catUnit?.credit_points || 3),
-            year_level: yL,
-            period_id: pI,
-            status: 'completed',
-            isCompleted: true,
-            isLocked: true
-          };
-        });
-      }
-
-      const completedHistory = (history || []).filter(h => h.status === 'completed');
-      const yearHistory = completedHistory.filter(h => {
-        const yTaken = Number(h.year_taken || 2026);
-        const calcLvl = yTaken === 2026 ? 1 : yTaken === 2027 ? 2 : 3;
-        return calcLvl === yL;
-      });
-
-      const itemsWithPeriod = yearHistory.filter(h => Number(h.period_id) === pI || (pI === 3 && h.period_code === 'T1') || (pI === 4 && h.period_code === 'T2') || (pI === 5 && h.period_code === 'T3'));
-
-      let targetHistoryUnits = [];
-      if (itemsWithPeriod.length > 0) {
-        targetHistoryUnits = itemsWithPeriod;
-      } else if (yearHistory.length > 0) {
-        const termIdx = pI === 3 ? 0 : pI === 4 ? 1 : 2;
-        targetHistoryUnits = yearHistory.slice(termIdx * 4, (termIdx + 1) * 4);
-      }
-
-      if (targetHistoryUnits.length > 0) {
-        return targetHistoryUnits.map(h => {
-          const uCode = h.unit_code || h.code;
-          const catUnit = catalogUnits.find(c => c.code === uCode);
-          return {
-            ...(catUnit || {}),
-            code: uCode,
-            title: h.title || catUnit?.title || uCode,
-            credit_points: Number(h.credit_points || catUnit?.credit_points || 3),
-            year_level: yL,
-            period_id: pI,
-            status: 'completed',
-            isCompleted: true,
-            isLocked: true
-          };
-        });
+      } else {
+        const itemsWithPeriod = yearHistory.filter(h => 
+          Number(h.period_id) === pI || 
+          (pI === 3 && (h.period_code === 'T1' || h.period_id === 3)) || 
+          (pI === 4 && (h.period_code === 'T2' || h.period_id === 4)) || 
+          (pI === 5 && (h.period_code === 'T3' || h.period_id === 5))
+        );
+        if (itemsWithPeriod.length > 0) {
+          historyUnitsForSlot = itemsWithPeriod;
+        } else if (passedYears.has(yL)) {
+          const termIdx = pI === 3 ? 0 : pI === 4 ? 1 : 2;
+          historyUnitsForSlot = yearHistory.slice(termIdx * 4, (termIdx + 1) * 4);
+        }
       }
     }
 
+    if (historyUnitsForSlot.length > 0) {
+      return historyUnitsForSlot.map(h => {
+        const uCode = h.unit_code || h.code;
+        const catUnit = catalogUnits.find(c => c.code === uCode);
+        return {
+          ...(catUnit || {}),
+          code: uCode,
+          title: h.title || catUnit?.title || uCode,
+          credit_points: Number(h.credit_points || catUnit?.credit_points || 3),
+          year_level: yL,
+          period_id: pI,
+          status: 'completed',
+          grade: h.grade || 'P',
+          mark: h.mark || 75,
+          isCompleted: true,
+          isLocked: true
+        };
+      });
+    }
+
+    // 2. Otherwise return planned units on canvas for this year and period
     const termUnits = planUnits.filter(u => {
       const uY = Number(u.year_level);
       if (uY !== yL) return false;
@@ -1185,11 +1178,11 @@ export default function PlanBuilder({
       return uP === pI;
     });
 
-    // Ensure no duplicate unit codes can ever be rendered in the same semester slot
+    // Ensure no duplicate unit codes or already-completed unit codes can be rendered
     const seenUnitCodes = new Set();
     return termUnits.filter(u => {
       const c = (u.code || '').trim().toUpperCase();
-      if (!c || seenUnitCodes.has(c)) return false;
+      if (!c || seenUnitCodes.has(c) || completedCodesSet.has(c)) return false;
       seenUnitCodes.add(c);
       return true;
     });

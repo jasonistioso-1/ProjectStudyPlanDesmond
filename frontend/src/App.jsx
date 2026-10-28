@@ -984,25 +984,27 @@ export default function App() {
       : (targetYearLvl !== 'all' && !isNaN(Number(targetYearLvl)) ? Number(targetYearLvl) : null);
 
     const isAllYears = !targetLvlNum || targetYearLvl === 'all';
-    let yearsToFill = (targetLvlNum && !passedYears.has(Number(targetLvlNum)))
-      ? [Number(targetLvlNum)]
-      : [1, 2, 3].filter(y => !passedYears.has(y));
 
-    if (yearsToFill.length === 0) {
-      yearsToFill = [1, 2, 3].filter(y => !passedYears.has(y));
-    }
-    if (yearsToFill.length === 0) {
-      yearsToFill = [2, 3];
+    // Total degree target is 72 CP.
+    // Calculate how many CP are completed in academic history
+    const targetDegreeCP = 72;
+    const currentCompletedCP = completedHistory.reduce((sum, h) => sum + Number(h.credit_points || 3), 0);
+    const neededCanvasCP = Math.max(0, targetDegreeCP - currentCompletedCP);
+
+    // Identify all open uncompleted years
+    let uncompletedYears = [1, 2, 3].filter(y => !passedYears.has(y));
+    if (uncompletedYears.length === 0) uncompletedYears = [2, 3];
+
+    // Order years so target/requested year is prioritized first, followed by other open years
+    let yearsToFill = uncompletedYears;
+    if (targetLvlNum && !passedYears.has(targetLvlNum)) {
+      yearsToFill = [targetLvlNum, ...uncompletedYears.filter(y => y !== targetLvlNum)];
     }
 
     // Determine exact target slots (year_level, period_id) being auto-filled
     const isTargetSlot = (yearLevel, periodId) => {
       const matchesYear = yearsToFill.map(Number).includes(Number(yearLevel));
-      if (matchesYear) return true;
-      const isPeriodInLayout = layoutType === 'semester'
-        ? (Number(periodId) === 1 || Number(periodId) === 2)
-        : (Number(periodId) >= 3 && Number(periodId) <= 5);
-      return !isPeriodInLayout;
+      return matchesYear;
     };
 
     const scheduledUnits = [];
@@ -1237,6 +1239,7 @@ export default function App() {
           for (const coreCode of presetBlock.cores) {
             if (scheduledCodes.has(coreCode)) continue;
             if (completedCodes.has(coreCode)) continue;
+            if (scheduledUnits.length * 3 >= neededCanvasCP) break;
             if (!isOfferingValid(coreCode, periodId)) continue;
 
             const unit = (catalogUnits || []).find(u => u.code === coreCode) || {
@@ -1248,7 +1251,8 @@ export default function App() {
             if (!isPrereqSatisfied(unit, year, periodId, scheduledUnits, true)) continue;
 
             const unitCP = Number(unit.credit_points || 3);
-            if ((periodLoads[pKey] || 0) + unitCP <= 12) {
+            const targetCap = layoutType === 'semester' ? 12 : (Number(periodId) === 5 ? 6 : 9);
+            if ((periodLoads[pKey] || 0) + unitCP <= targetCap) {
               scheduledUnits.push({
                 ...unit,
                 unit_id: unit.unit_id || Math.floor(Math.random() * 100000),
@@ -1305,36 +1309,29 @@ export default function App() {
         const pKey = `y${Number(year)}_p${Number(periodId)}`;
         const targetCapacity = getTargetPeriodCP(periodId);
 
-        while ((periodLoads[pKey] || 0) < targetCapacity) {
+        while ((periodLoads[pKey] || 0) < targetCapacity && scheduledUnits.length * 3 < neededCanvasCP) {
           const candidate = poolCatalog.find(u => {
             if (scheduledCodes.has(u.code)) return false;
             if (completedCodes.has(u.code)) return false;
             const uLvl = Number(u.level || 100);
             const yrNum = Number(year);
             if (yrNum === 1 && uLvl > 199) return false;
-            if (yrNum === 2 && (uLvl < 200 || uLvl > 299)) return false;
-            if (yrNum === 3 && uLvl < 200) return false;
-            if (!isOfferingValid(u.code, periodId)) return false;
-            return isPrereqSatisfied(u, yrNum, periodId, scheduledUnits, false);
+            return true;
           });
 
           if (!candidate) break;
 
           const unitCP = Number(candidate.credit_points || 3);
-          if ((periodLoads[pKey] || 0) + unitCP <= 12) {
-            scheduledUnits.push({
-              ...candidate,
-              unit_id: candidate.unit_id || Math.floor(Math.random() * 100000),
-              year_level: Number(year),
-              period_id: Number(periodId),
-              credit_points: unitCP,
-              sequence_order: scheduledUnits.length + 1
-            });
-            scheduledCodes.add(candidate.code);
-            periodLoads[pKey] = (periodLoads[pKey] || 0) + unitCP;
-          } else {
-            break;
-          }
+          scheduledUnits.push({
+            ...candidate,
+            unit_id: candidate.unit_id || Math.floor(Math.random() * 100000),
+            year_level: Number(year),
+            period_id: Number(periodId),
+            credit_points: unitCP,
+            sequence_order: scheduledUnits.length + 1
+          });
+          scheduledCodes.add(candidate.code);
+          periodLoads[pKey] = (periodLoads[pKey] || 0) + unitCP;
         }
       }
     }
@@ -1349,7 +1346,7 @@ export default function App() {
       uniqueScheduledUnits.push(u);
     }
 
-    const totalGeneratedCP = uniqueScheduledUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+    const totalGeneratedCP = currentCompletedCP + (uniqueScheduledUnits.length * 3);
 
     handleSetPlanUnits(uniqueScheduledUnits);
     runValidation(targetStudent.student_id, targetStudent.location_id, uniqueScheduledUnits);
@@ -1638,6 +1635,49 @@ export default function App() {
     });
   };
 
+  // Dedicated Study Plan Reset Handler (Clears canvas units, restores baseline academic history, sets status to draft)
+  const handleResetPlan = () => {
+    if (!selectedStudent) return;
+    const sId = selectedStudent.student_id;
+
+    const completedHistory = (history || []).filter(h => h.status === 'completed');
+    const histCP = completedHistory.reduce((sum, h) => sum + Number(h.credit_points || 3), 0);
+
+    const updatedPlan = {
+      ...(currentPlan || {}),
+      status: 'draft',
+      total_credit_points: histCP,
+      studentSignature: null,
+      signature: null,
+      isAmending: true,
+      manuallyReset: true,
+      updated_at: formatCurrentDateTime()
+    };
+
+    setCurrentPlan(updatedPlan);
+    handleSetPlanUnits([]);
+    runValidation(sId, selectedStudent.location_id, []);
+
+    setAllStudentPlansMap(prev => {
+      const nextMap = {
+        ...prev,
+        [sId]: { plan: updatedPlan, units: [] },
+        [String(sId)]: { plan: updatedPlan, units: [] }
+      };
+      try {
+        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+      } catch (e) {}
+      return nextMap;
+    });
+
+    if (mockClientStudentPlans[Number(sId)]) {
+      mockClientStudentPlans[Number(sId)].plan = updatedPlan;
+      mockClientStudentPlans[Number(sId)].units = [];
+    }
+
+    showToast(`Study plan reset to Draft. Canvas cleared (${histCP} CP academic history preserved).`);
+  };
+
   const handleSelectStudent = async (student, roleOverride = null, planOptions = null) => {
     // 1. Preserve previous student's working draft in cache map before switching
     if (selectedStudent && currentPlan && Number(selectedStudent.student_id) !== Number(student.student_id)) {
@@ -1751,9 +1791,9 @@ export default function App() {
       };
     }
 
-    // For existing students (Alex: 1, Sarah: 2), if cached has empty units or missing plan, fall back to mockClientStudentPlans!
+    // For existing students (Alex: 1, Sarah: 2), if cached has empty units or missing plan, fall back to mockClientStudentPlans unless manually reset
     const isExistingStudent = [1, 2].includes(Number(student.student_id)) || ['31234561', '31234562'].includes(student.student_number);
-    if (isExistingStudent && (!cached || !cached.units || cached.units.length === 0)) {
+    if (isExistingStudent && (!cached || !cached.units || (cached.units.length === 0 && !cached.plan?.manuallyReset))) {
       const fallback = mockClientStudentPlans[Number(student.student_id)];
       if (fallback && fallback.units && fallback.units.length > 0) {
         cached = {
@@ -2466,6 +2506,7 @@ export default function App() {
               onWaiverChange={handleWaiverChange}
               notifications={notifications}
               onUnlockForAmendment={handleUnlockForAmendment}
+              onResetPlan={handleResetPlan}
             />
           )}
 
