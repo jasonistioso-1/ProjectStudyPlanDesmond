@@ -219,119 +219,23 @@ export default function App() {
   const [catalogUnits, setCatalogUnits] = useState([]);
   const [periods, setPeriods] = useState([]);
   const [currentPlan, setCurrentPlan] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('spr_logged_user');
-      if (savedUser) {
-        const u = JSON.parse(savedUser);
-        const sId = Number(u.student_id);
-        if (sId && mockClientStudentPlans[sId]) {
-          const raw = localStorage.getItem('spr_student_plans_cache');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed[sId] && parsed[sId].plan) {
-              return parsed[sId].plan;
-            }
-          }
-          if (mockClientStudentPlans[sId]) {
-            return mockClientStudentPlans[sId].plan;
-          }
-        }
-      }
-    } catch (e) {}
     return mockClientStudentPlans[1].plan;
   });
   const [planUnits, setPlanUnits] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('spr_logged_user');
-      if (savedUser) {
-        const u = JSON.parse(savedUser);
-        const sId = Number(u.student_id);
-        if (sId) {
-          const raw = localStorage.getItem('spr_student_plans_cache');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed[sId] && Array.isArray(parsed[sId].units)) {
-              return parsed[sId].units;
-            }
-          }
-          if (mockClientStudentPlans[sId] && Array.isArray(mockClientStudentPlans[sId].units)) {
-            return mockClientStudentPlans[sId].units;
-          }
-        }
-      }
-    } catch (e) {}
     return mockClientStudentPlans[1].units;
   });
   const [allStudentPlansMap, setAllStudentPlansMap] = useState(() => {
-    try {
-      const saved = localStorage.getItem('spr_student_plans_cache');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const validStatuses = ['approved', 'recommended', 'request_submitted', 'rejected', 'agreed', 'draft'];
-        // Student 1 (Alex Mercer - Existing Student): Preserve dynamic active plan if valid
-        if (!parsed[1] || !parsed[1].units || parsed[1].units.length === 0 || !validStatuses.includes(parsed[1].plan?.status)) {
-          parsed[1] = { plan: mockClientStudentPlans[1].plan, units: mockClientStudentPlans[1].units };
-        }
-        if (parsed['1'] && (!parsed['1'].units || parsed['1'].units.length === 0 || !validStatuses.includes(parsed['1'].plan?.status))) {
-          parsed['1'] = parsed[1];
-        }
-
-        // Student 2 (Sarah Jenkins - Existing Student): Preserve dynamic active plan if valid
-        if (!parsed[2] || !parsed[2].units || parsed[2].units.length === 0 || !validStatuses.includes(parsed[2].plan?.status)) {
-          parsed[2] = { plan: mockClientStudentPlans[2].plan, units: mockClientStudentPlans[2].units };
-        }
-        if (parsed['2'] && (!parsed['2'].units || parsed['2'].units.length === 0 || !validStatuses.includes(parsed['2'].plan?.status))) {
-          parsed['2'] = parsed[2];
-        }
-
-        // For New Students (Michael Chang [3] & Emily Watson [4]), preserve plan if active (recommended/requested/agreed)
-        const isSt3Active = parsed[3]?.plan?.status === 'recommended' || 
-                            parsed[3]?.plan?.status === 'request_submitted' || 
-                            parsed[3]?.plan?.status === 'agreed' || 
-                            parsed[3]?.plan?.status === 'approved' || 
-                            parsed[3]?.plan?.status === 'rejected' ||
-                            (parsed[3]?.units && parsed[3].units.length > 0 && parsed[3].plan?.status !== 'draft');
-        if (!parsed[3] || (!isSt3Active && (parsed[3].plan?.total_credit_points === 72 || !parsed[3].plan))) {
-          parsed[3] = {
-            plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-10-24 11:02', version_number: 1 },
-            units: []
-          };
-          parsed['3'] = parsed[3];
-        }
-
-        const isSt4Active = parsed[4]?.plan?.status === 'recommended' || 
-                            parsed[4]?.plan?.status === 'request_submitted' || 
-                            parsed[4]?.plan?.status === 'agreed' || 
-                            parsed[4]?.plan?.status === 'approved' || 
-                            parsed[4]?.plan?.status === 'rejected' ||
-                            (parsed[4]?.units && parsed[4].units.length > 0 && parsed[4].plan?.status !== 'draft');
-        if (!parsed[4] || (!isSt4Active && (parsed[4].plan?.total_credit_points === 72 || !parsed[4].plan))) {
-          parsed[4] = {
-            plan: { plan_id: 4, student_id: 4, title: 'PT3-BSIT Artificial Intelligence Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-09-13 14:10', version_number: 1 },
-            units: []
-          };
-          parsed['4'] = parsed[4];
-        }
-
-        try {
-          localStorage.setItem('spr_student_plans_cache', JSON.stringify(parsed));
-        } catch (e) {}
-
-        return parsed;
-      }
-    } catch (e) {}
     return {
-      1: { plan: mockClientStudentPlans[1].plan, units: mockClientStudentPlans[1].units },
-      2: { plan: mockClientStudentPlans[2].plan, units: mockClientStudentPlans[2].units },
-      3: { plan: mockClientStudentPlans[3].plan, units: mockClientStudentPlans[3].units },
-      4: { plan: mockClientStudentPlans[4].plan, units: mockClientStudentPlans[4].units }
+      1: { plan: { ...mockClientStudentPlans[1].plan }, units: [...mockClientStudentPlans[1].units] },
+      2: { plan: { ...mockClientStudentPlans[2].plan }, units: [...mockClientStudentPlans[2].units] },
+      3: { plan: { ...mockClientStudentPlans[3].plan }, units: [...mockClientStudentPlans[3].units] },
+      4: { plan: { ...mockClientStudentPlans[4].plan }, units: [...mockClientStudentPlans[4].units] }
     };
   });
 
-  // Sync allStudentPlansMap to localStorage and in-memory mock cache whenever it updates
+  // Sync allStudentPlansMap to in-memory mock cache whenever it updates (pure in-memory, no localStorage)
   useEffect(() => {
     try {
-      localStorage.setItem('spr_student_plans_cache', JSON.stringify(allStudentPlansMap));
       Object.entries(allStudentPlansMap).forEach(([sId, data]) => {
         if (mockClientStudentPlans[Number(sId)]) {
           mockClientStudentPlans[Number(sId)].plan = data.plan;
@@ -341,26 +245,11 @@ export default function App() {
     } catch (e) {}
   }, [allStudentPlansMap]);
 
-  // On application mount, sanitize legacy 72 CP draft bugs while keeping active recommendations intact
+  // Purge any lingering localStorage cache on mount so browser uses default data
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('spr_student_plans_cache');
-      if (raw) {
-        const cacheMap = JSON.parse(raw);
-        let changed = false;
-        if (cacheMap[3]?.plan?.total_credit_points === 72 && cacheMap[3]?.plan?.status === 'draft') {
-          cacheMap[3] = {
-            plan: { plan_id: 3, student_id: 3, title: 'PT3-BSIT Business Info Systems Plan 2026', status: 'draft', total_credit_points: 0, updated_at: '2026-10-24 11:02', version_number: 1 },
-            units: []
-          };
-          cacheMap['3'] = cacheMap[3];
-          changed = true;
-        }
-        if (changed) {
-          localStorage.setItem('spr_student_plans_cache', JSON.stringify(cacheMap));
-          setAllStudentPlansMap(cacheMap);
-        }
-      }
+      localStorage.removeItem('spr_student_plans_cache');
+      localStorage.removeItem('spr_notifications_list');
     } catch (e) {}
   }, []);
 
@@ -633,68 +522,53 @@ export default function App() {
     });
   };
 
-  // Notifications Drawer State (with LocalStorage Sync so alerts persist across profile switches and reload)
-  const [notifications, setNotifications] = useState(() => {
-    try {
-      const saved = localStorage.getItem('spr_notifications_list');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return [
-      {
-        id: 'n-0',
-        role: 'chair',
-        studentId: 2,
-        targetYear: 3,
-        requestYear: 2028,
-        requestPeriods: [1, 2],
-        layoutType: 'semester',
-        title: 'Replan Request from Sarah Jenkins (Existing Student)',
-        message: 'Sarah Jenkins requested a semester study plan for Semester 1 (S1), Semester 2 (S2) 2028.',
-        timestamp: formatNotificationTimestamp(Date.now() - 1800000),
-        createdTimeMs: Date.now() - 1800000,
-        read: false,
-        actionType: 'AUTO_GENERATE',
-        actionLabel: 'Review & Auto-Generate'
-      },
-      {
-        id: 'n-1',
-        role: 'chair',
-        studentId: 1,
-        targetYear: 2,
-        requestYear: 2027,
-        requestPeriods: [3, 4, 5],
-        layoutType: 'trimester',
-        title: 'Existing Student Plan Request from Alex Mercer',
-        message: 'Alex Mercer submitted a study plan request for Trimesters 1, 2, 3 (2027).',
-        timestamp: formatNotificationTimestamp(Date.now() - 3600000),
-        createdTimeMs: Date.now() - 3600000,
-        read: false,
-        actionType: 'AUTO_GENERATE',
-        actionLabel: 'Review & Auto-Generate'
-      },
-      {
-        id: 'n-2',
-        role: 'student',
-        studentId: 2,
-        title: 'Study Plan Signed and Agreed',
-        message: 'You have agreed and signed your 72 CP Study Plan for Computer Science (PT3-BSIT-CS02).',
-        timestamp: formatNotificationTimestamp(Date.now() - 900000),
-        createdTimeMs: Date.now() - 900000,
-        read: false,
-        actionType: 'REVIEW',
-        actionLabel: 'View Agreed Plan'
-      }
-    ];
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('spr_notifications_list', JSON.stringify(notifications));
-    } catch (e) {}
-  }, [notifications]);
+  // Notifications Drawer State (pure in-memory, no localStorage cache)
+  const [notifications, setNotifications] = useState(() => [
+    {
+      id: 'n-0',
+      role: 'chair',
+      studentId: 2,
+      targetYear: 3,
+      requestYear: 2028,
+      requestPeriods: [1, 2],
+      layoutType: 'semester',
+      title: 'Replan Request from Sarah Jenkins (Existing Student)',
+      message: 'Sarah Jenkins requested a semester study plan for Semester 1 (S1), Semester 2 (S2) 2028.',
+      timestamp: formatNotificationTimestamp(Date.now() - 1800000),
+      createdTimeMs: Date.now() - 1800000,
+      read: false,
+      actionType: 'AUTO_GENERATE',
+      actionLabel: 'Review & Auto-Generate'
+    },
+    {
+      id: 'n-1',
+      role: 'chair',
+      studentId: 1,
+      targetYear: 2,
+      requestYear: 2027,
+      requestPeriods: [3, 4, 5],
+      layoutType: 'trimester',
+      title: 'Existing Student Plan Request from Alex Mercer',
+      message: 'Alex Mercer submitted a study plan request for Trimesters 1, 2, 3 (2027).',
+      timestamp: formatNotificationTimestamp(Date.now() - 3600000),
+      createdTimeMs: Date.now() - 3600000,
+      read: false,
+      actionType: 'AUTO_GENERATE',
+      actionLabel: 'Review & Auto-Generate'
+    },
+    {
+      id: 'n-2',
+      role: 'student',
+      studentId: 2,
+      title: 'Study Plan Signed and Agreed',
+      message: 'You have agreed and signed your 72 CP Study Plan for Computer Science (PT3-BSIT-CS02).',
+      timestamp: formatNotificationTimestamp(Date.now() - 900000),
+      createdTimeMs: Date.now() - 900000,
+      read: false,
+      actionType: 'REVIEW',
+      actionLabel: 'View Agreed Plan'
+    }
+  ]);
 
   // Synchronized Stored Plans List: Automatically reflects student disagreement / revision requests
   const effectiveStoredPlansList = useMemo(() => {
@@ -1067,7 +941,6 @@ export default function App() {
             units: planUnits
           }
         };
-        try { localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap)); } catch (e) {}
         return nextMap;
       });
 
@@ -1610,9 +1483,6 @@ export default function App() {
           units: uniqueScheduledUnits
         }
       };
-      try {
-        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
-      } catch (e) {}
       return nextMap;
     });
 
@@ -1836,9 +1706,6 @@ export default function App() {
               units: updatedUnits
             }
           };
-          try {
-            localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
-          } catch (e) {}
           return nextMap;
         });
       }
@@ -1869,17 +1736,11 @@ export default function App() {
     handleSetPlanUnits([]);
     runValidation(sId, selectedStudent.location_id, []);
 
-    setAllStudentPlansMap(prev => {
-      const nextMap = {
-        ...prev,
-        [sId]: { plan: updatedPlan, units: [] },
-        [String(sId)]: { plan: updatedPlan, units: [] }
-      };
-      try {
-        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
-      } catch (e) {}
-      return nextMap;
-    });
+    setAllStudentPlansMap(prev => ({
+      ...prev,
+      [sId]: { plan: updatedPlan, units: [] },
+      [String(sId)]: { plan: updatedPlan, units: [] }
+    }));
 
     if (mockClientStudentPlans[Number(sId)]) {
       mockClientStudentPlans[Number(sId)].plan = updatedPlan;
@@ -1892,19 +1753,13 @@ export default function App() {
   const handleSelectStudent = async (student, roleOverride = null, planOptions = null) => {
     // 1. Preserve previous student's working draft in cache map before switching
     if (selectedStudent && currentPlan && Number(selectedStudent.student_id) !== Number(student.student_id)) {
-      setAllStudentPlansMap(prev => {
-        const nextMap = {
-          ...prev,
-          [selectedStudent.student_id]: {
-            plan: currentPlan,
-            units: planUnits
-          }
-        };
-        try {
-          localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
-        } catch (e) {}
-        return nextMap;
-      });
+      setAllStudentPlansMap(prev => ({
+        ...prev,
+        [selectedStudent.student_id]: {
+          plan: currentPlan,
+          units: planUnits
+        }
+      }));
     }
 
     setSelectedStudent(student);
@@ -1942,17 +1797,8 @@ export default function App() {
     const categoryTag = student.account_category === 'admin' || student.student_id === 0 ? '' : ` (${student.account_category === 'new_student' ? 'New Student' : 'Existing Student'})`;
     showToast(`Loaded profile for ${student.first_name} ${student.last_name}${categoryTag}`);
 
-    // 2. If student ALREADY has a working draft in memory or localStorage, load it directly to prevent wiping data!
+    // 2. If student ALREADY has a working draft in memory, load it directly to prevent wiping data!
     let cached = allStudentPlansMap[student.student_id] || allStudentPlansMap[Number(student.student_id)] || allStudentPlansMap[String(student.student_id)];
-    if (!cached) {
-      try {
-        const saved = localStorage.getItem('spr_student_plans_cache');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          cached = parsed[student.student_id] || parsed[Number(student.student_id)] || parsed[String(student.student_id)];
-        }
-      } catch (e) {}
-    }
 
     // Check if there is an active disagreement / revision request from notifications
     const disagreementNotif = (notifications || []).find(n => 
@@ -2225,9 +2071,6 @@ export default function App() {
           units: planUnits
         }
       };
-      try {
-        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
-      } catch (e) {}
       return nextMap;
     });
 
@@ -2320,9 +2163,6 @@ export default function App() {
           units: planUnits
         }
       };
-      try {
-        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
-      } catch (e) {}
       return nextMap;
     });
 
@@ -2402,9 +2242,6 @@ export default function App() {
       }
     };
     setAllStudentPlansMap(nextMap);
-    try {
-      localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
-    } catch (e) {}
 
     if (mockClientStudentPlans[Number(selectedStudent.student_id)]) {
       mockClientStudentPlans[Number(selectedStudent.student_id)].plan = updatedPlan;
