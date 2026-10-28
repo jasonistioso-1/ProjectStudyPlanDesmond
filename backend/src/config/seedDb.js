@@ -196,14 +196,14 @@ export async function seedDatabase() {
                     { code: 'ICT284', year_level: 2, period_id: 3, sequence_order: 2 },
                     { code: 'ICT292', year_level: 2, period_id: 3, sequence_order: 3 },
                     { code: 'BSC203', year_level: 2, period_id: 3, sequence_order: 4 },
-                    { code: 'ICT206', year_level: 2, period_id: 4, sequence_order: 1 },
-                    { code: 'MAS183', year_level: 2, period_id: 4, sequence_order: 2 },
-                    { code: 'ICT374', year_level: 2, period_id: 4, sequence_order: 3 },
-                    { code: 'ICT301', year_level: 2, period_id: 4, sequence_order: 4 },
-                    { code: 'ICT203', year_level: 2, period_id: 5, sequence_order: 1 },
-                    { code: 'ICT305', year_level: 2, period_id: 5, sequence_order: 2 },
-                    { code: 'ICT373', year_level: 2, period_id: 5, sequence_order: 3 },
-                    { code: 'ICT302', year_level: 2, period_id: 5, sequence_order: 4 }
+                    { code: 'ICT203', year_level: 3, period_id: 3, sequence_order: 1 },
+                    { code: 'ICT302', year_level: 3, period_id: 3, sequence_order: 2 },
+                    { code: 'MAS183', year_level: 3, period_id: 3, sequence_order: 3 },
+                    { code: 'ICT206', year_level: 3, period_id: 4, sequence_order: 1 },
+                    { code: 'ICT374', year_level: 3, period_id: 4, sequence_order: 2 },
+                    { code: 'ICT301', year_level: 3, period_id: 4, sequence_order: 3 },
+                    { code: 'ICT373', year_level: 3, period_id: 5, sequence_order: 1 },
+                    { code: 'ICT305', year_level: 3, period_id: 5, sequence_order: 2 }
                 ]
             },
             {

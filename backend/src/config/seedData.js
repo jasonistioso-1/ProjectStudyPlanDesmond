@@ -254,14 +254,15 @@ export const mockStudentPlans = {
             { unit_id: 13, code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, year_level: 2, period_id: 3, sequence_order: 2 },
             { unit_id: 15, code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, year_level: 2, period_id: 3, sequence_order: 3 },
             { unit_id: 16, code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, year_level: 2, period_id: 3, sequence_order: 4 },
-            { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, year_level: 2, period_id: 4, sequence_order: 1 },
-            { unit_id: 19, code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, year_level: 2, period_id: 4, sequence_order: 2 },
-            { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, year_level: 2, period_id: 4, sequence_order: 3 },
-            { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, year_level: 2, period_id: 4, sequence_order: 4 },
-            { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, year_level: 2, period_id: 5, sequence_order: 1 },
-            { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, year_level: 2, period_id: 5, sequence_order: 2 },
-            { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, year_level: 2, period_id: 5, sequence_order: 3 },
-            { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice', credit_points: 3, year_level: 2, period_id: 5, sequence_order: 4 }
+            // Year 3 (2028) Planned Units - 24 CP
+            { unit_id: 10, code: 'ICT203', title: 'Artificial Intelligence', credit_points: 3, year_level: 3, period_id: 3, sequence_order: 1 },
+            { unit_id: 21, code: 'ICT302', title: 'IT Professional Practice', credit_points: 3, year_level: 3, period_id: 3, sequence_order: 2 },
+            { unit_id: 19, code: 'MAS183', title: 'Statistical Data Analysis', credit_points: 3, year_level: 3, period_id: 3, sequence_order: 3 },
+            { unit_id: 11, code: 'ICT206', title: 'Intelligent Systems', credit_points: 3, year_level: 3, period_id: 4, sequence_order: 1 },
+            { unit_id: 26, code: 'ICT374', title: 'Operating Systems', credit_points: 3, year_level: 3, period_id: 4, sequence_order: 2 },
+            { unit_id: 20, code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, year_level: 3, period_id: 4, sequence_order: 3 },
+            { unit_id: 25, code: 'ICT373', title: 'Software Architecture', credit_points: 3, year_level: 3, period_id: 5, sequence_order: 1 },
+            { unit_id: 24, code: 'ICT305', title: 'Data Visualisation', credit_points: 3, year_level: 3, period_id: 5, sequence_order: 2 }
         ]
     },
     3: {

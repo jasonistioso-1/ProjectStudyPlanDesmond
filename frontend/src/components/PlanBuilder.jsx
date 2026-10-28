@@ -1178,23 +1178,27 @@ export default function PlanBuilder({
     // 2. Otherwise return planned units on canvas for this year and period
     const termUnits = planUnits.filter(u => {
       const uY = Number(u.year_level);
-      if (uY !== yL) return false;
-
       const uP = Number(u.period_id);
-      if (uP === pI) return true;
 
-      // Cross-layout fallback matching:
-      if (activeLayout === 'semester') {
-        if (uP >= 3) {
-          if (uY === 2 && uP === 4) return yL === 2 && pI === 2;
-          if (uY === 2 && uP === 5) return yL === 3 && pI === 1;
+      // Same year matching:
+      if (uY === yL) {
+        if (uP === pI) return true;
+
+        // Cross-layout fallback matching within the same year:
+        if (activeLayout === 'semester') {
+          if (pI === 1 && (uP === 3 || (uP === 4 && (u.sequence_order || 0) <= 2))) return true;
+          if (pI === 2 && (uP === 5 || (uP === 4 && (u.sequence_order || 0) > 2))) return true;
+        } else {
+          if (pI === 3 && uP === 1 && (u.sequence_order || 0) <= 2) return true;
+          if (pI === 4 && ((uP === 1 && (u.sequence_order || 0) > 2) || (uP === 2 && (u.sequence_order || 0) <= 2))) return true;
+          if (pI === 5 && uP === 2 && (u.sequence_order || 0) > 2) return true;
         }
-        if (pI === 1 && (uP === 3 || (uP === 4 && (u.sequence_order || 0) <= 2))) return true;
-        if (pI === 2 && (uP === 5 || (uP === 4 && (u.sequence_order || 0) > 2))) return true;
-      } else {
-        if (pI === 3 && uP === 1 && (u.sequence_order || 0) <= 2) return true;
-        if (pI === 4 && ((uP === 1 && (u.sequence_order || 0) > 2) || (uP === 2 && (u.sequence_order || 0) <= 2))) return true;
-        if (pI === 5 && uP === 2 && (u.sequence_order || 0) > 2) return true;
+      }
+
+      // Cross-year fallback: if legacy plan stored year 2 trimester 4/5 units for an advanced student
+      if (activeLayout === 'semester') {
+        if (uY === 2 && uP === 4 && yL === 2 && pI === 2) return true;
+        if (uY === 2 && uP === 5 && yL === 3 && pI === 1) return true;
       }
       return false;
     });

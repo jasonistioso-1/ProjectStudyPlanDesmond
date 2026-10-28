@@ -1037,12 +1037,15 @@ export default function App() {
 
     // Order years so target/requested year is prioritized first, followed by other open years
     let yearsToFill = uncompletedYears;
+    const reqYearLevel = reqYear === 2028 ? 3 : (reqYear === 2027 ? 2 : 1);
     if (targetLvlNum && !passedYears.has(targetLvlNum)) {
       if (options.isStudentRequest || !isAllYears) {
         yearsToFill = [targetLvlNum];
       } else {
         yearsToFill = [targetLvlNum, ...uncompletedYears.filter(y => y !== targetLvlNum)];
       }
+    } else if (reqYearLevel && !passedYears.has(reqYearLevel)) {
+      yearsToFill = [reqYearLevel, ...uncompletedYears.filter(y => y !== reqYearLevel)];
     }
 
     // Determine exact target slots (year_level, period_id) being auto-filled:
@@ -1057,13 +1060,27 @@ export default function App() {
     const scheduledCodes = new Set();
     const periodLoads = {};
 
-    // Preserve any existing draft units whose slot is NOT in the target auto-fill scope
+    // Initialize periodLoads with completed units from student history
+    for (const h of completedHistory) {
+      const hYear = Number(h.year_taken === 2026 ? 1 : h.year_taken === 2027 ? 2 : h.year_taken === 2028 ? 3 : (h.academic_year === 2026 ? 1 : h.academic_year === 2027 ? 2 : 1));
+      const hPeriod = Number(h.period_id);
+      if (hYear && hPeriod) {
+        const pKey = `y${hYear}_p${hPeriod}`;
+        periodLoads[pKey] = (periodLoads[pKey] || 0) + Number(h.credit_points || 3);
+      }
+    }
+
+    // Preserve any existing draft units whose slot is NOT in the target auto-fill scope,
+    // excluding units already completed in history or belonging to passed years
     const existingDraftUnits = (studentExistingUnits || studentCurrentPlan?.plan_units || []);
     for (const u of existingDraftUnits) {
-      if (!isTargetSlot(u.year_level, u.period_id)) {
+      const uYear = Number(u.year_level);
+      const isCompleted = completedCodes.has(u.code);
+      const isPassedYear = passedYears.has(uYear);
+      if (!isTargetSlot(uYear, u.period_id) && !isCompleted && !isPassedYear) {
         scheduledUnits.push(u);
         scheduledCodes.add(u.code);
-        const pKey = `y${Number(u.year_level)}_p${Number(u.period_id)}`;
+        const pKey = `y${uYear}_p${Number(u.period_id)}`;
         periodLoads[pKey] = (periodLoads[pKey] || 0) + Number(u.credit_points || 3);
       }
     }
@@ -1109,7 +1126,7 @@ export default function App() {
           { year: 2, period_id: 4, cores: ['ICT283', 'ICT285', 'ICT201'] },
           { year: 2, period_id: 5, cores: ['ICT202', 'ICT292'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 3, cores: ['BSC203', 'ICT203', 'ICT302'] },
+          { year: 3, period_id: 3, cores: ['BSC203', 'ICT203', 'ICT302', 'MAS183'] },
           { year: 3, period_id: 4, cores: ['ICT206', 'ICT374', 'ICT301'] },
           { year: 3, period_id: 5, cores: ['ICT373', 'ICT305'] }
         ],
@@ -1121,8 +1138,8 @@ export default function App() {
           { year: 2, period_id: 1, cores: ['ICT145', 'ICT167', 'ICT285', 'ICT202'] },
           { year: 2, period_id: 2, cores: ['ICT283', 'ICT284', 'ICT201', 'ICT305'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 1, cores: ['ICT292', 'ICT206', 'BSC203', 'ICT203'] },
-          { year: 3, period_id: 2, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT301'] }
+          { year: 3, period_id: 1, cores: ['ICT292', 'ICT206', 'BSC203', 'ICT203', 'MAS183'] },
+          { year: 3, period_id: 2, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT301', 'ICT305'] }
         ]
       },
       bis: {
@@ -1273,6 +1290,9 @@ export default function App() {
       return 9; // Trimesters 1 & 2: 3 units × 3 CP = 9 CP
     };
 
+    // Helper to calculate newly scheduled plan CP (excluding units already completed in history)
+    const getPlannedCP = () => scheduledUnits.filter(u => !completedCodes.has(u.code)).length * 3;
+
     // STEP 1: Prescribed Core Units Placement from Major Preset
     for (const year of yearsToFill) {
       if (passedYears.has(Number(year))) continue;
@@ -1285,7 +1305,7 @@ export default function App() {
           for (const coreCode of presetBlock.cores) {
             if (scheduledCodes.has(coreCode)) continue;
             if (completedCodes.has(coreCode)) continue;
-            if (scheduledUnits.length * 3 >= neededCanvasCP) break;
+            if (getPlannedCP() >= neededCanvasCP) break;
             if (!isOfferingValid(coreCode, periodId)) continue;
 
             const unit = (catalogUnits || []).find(u => u.code === coreCode) || {
@@ -1381,7 +1401,7 @@ export default function App() {
           return (a.code || '').localeCompare(b.code || '');
         });
 
-        while ((periodLoads[pKey] || 0) < targetCapacity && scheduledUnits.length * 3 < neededCanvasCP) {
+        while ((periodLoads[pKey] || 0) < targetCapacity && getPlannedCP() < neededCanvasCP) {
           const candidate = sortedPool.find(u => {
             if (scheduledCodes.has(u.code)) return false;
             if (completedCodes.has(u.code)) return false;
@@ -1430,7 +1450,7 @@ export default function App() {
       uniqueScheduledUnits.push(u);
     }
 
-    const totalGeneratedCP = currentCompletedCP + (uniqueScheduledUnits.length * 3);
+    const totalGeneratedCP = currentCompletedCP + (uniqueScheduledUnits.filter(u => !completedCodes.has(u.code)).length * 3);
 
     handleSetPlanUnits(uniqueScheduledUnits);
     runValidation(targetStudent.student_id, targetStudent.location_id, uniqueScheduledUnits);
