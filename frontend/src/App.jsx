@@ -1281,14 +1281,12 @@ export default function App() {
         return true;
       }
 
-      // For fallback candidate fill when filling a specific year in isolation:
-      if (!isAllYears) {
-        const prereqUnit = (catalogUnits || []).find(p => p.code === prereq);
-        const prereqLvl = prereqUnit ? Number(prereqUnit.level || 100) : 100;
-        const prereqYear = prereqLvl >= 300 ? 3 : (prereqLvl >= 200 ? 2 : 1);
-        if (prereqYear < Number(year) && !yearsToFill.map(Number).includes(prereqYear)) {
-          return true;
-        }
+      // For fallback candidate fill when filling a specific year in isolation or when earlier year is completed/not in scope:
+      const prereqUnit = (catalogUnits || []).find(p => p.code === prereq);
+      const prereqLvl = prereqUnit ? Number(prereqUnit.level || 100) : 100;
+      const prereqYear = prereqLvl >= 300 ? 3 : (prereqLvl >= 200 ? 2 : 1);
+      if (prereqYear < Number(year) && (!yearsToFill.map(Number).includes(prereqYear) || passedYears.has(prereqYear))) {
+        return true;
       }
 
       return false;
@@ -1388,7 +1386,7 @@ export default function App() {
       if (yr === 2) {
         if (cLvl >= 200 && cLvl <= 299) return 1; // Year 2: prefer 200-level
         if (cLvl <= 199) return 2; // fallback to 100-level elective
-        return 99; // 300-level not allowed in Year 2
+        return 3; // allow 300-level advanced unit if earlier levels are already exhausted
       }
       if (yr === 3) {
         if (cLvl >= 300) return 1; // Year 3: prefer 300-level

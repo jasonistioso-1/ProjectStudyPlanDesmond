@@ -253,8 +253,8 @@ export default function PlanBuilder({
   }, [currentPlan?.targetYearLevel, currentPlan?.status, currentPlan?.updated_at, currentPlan?.forceScrollTrigger]);
 
   const handleOpenAutoGenModal = () => {
-    if (isPlanLocked) {
-      setDragWarningToast(`This Study Plan is currently ${planStatus.toUpperCase()} and locked from canvas edits. Click 'Retrieve & Amend' in Stored Repository to make modifications.`);
+    if (!isChair && isPlanLocked) {
+      setDragWarningToast(`This Study Plan is currently ${planStatus.toUpperCase()} and locked from canvas edits.`);
       setTimeout(() => setDragWarningToast(null), 5000);
       return;
     }
@@ -917,8 +917,8 @@ export default function PlanBuilder({
 
   // Preset Plan Generation - Delegated to unified onAutoGeneratePlan with official degree presets
   const handleGeneratePresetPlan = () => {
-    if (isPlanLocked) {
-      setDragWarningToast(`This Study Plan is currently ${planStatus.toUpperCase()} and locked from canvas edits. Click 'Retrieve & Amend' in Stored Repository to make modifications.`);
+    if (!isChair && isPlanLocked) {
+      setDragWarningToast(`This Study Plan is currently ${planStatus.toUpperCase()} and locked from canvas edits.`);
       setTimeout(() => setDragWarningToast(null), 5000);
       return;
     }
