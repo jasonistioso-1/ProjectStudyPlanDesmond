@@ -88,6 +88,7 @@ export async function getStudentHistory(req, res) {
                 sh.grade,
                 sh.mark,
                 sh.year_taken,
+                sh.period_id,
                 tp.code AS period_code,
                 tp.name AS period_name
             FROM StudentUnitHistory sh

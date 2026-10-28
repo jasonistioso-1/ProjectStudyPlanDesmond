@@ -1129,9 +1129,15 @@ export default function PlanBuilder({
         );
         if (itemsWithPeriod.length > 0) {
           historyUnitsForSlot = itemsWithPeriod;
-        } else if (passedYears.has(yL)) {
-          const semIdx = pI === 1 ? 0 : 1;
-          historyUnitsForSlot = yearHistory.slice(semIdx * 6, (semIdx + 1) * 6);
+        } else {
+          // Trimester history mapped to semester layout slots
+          if (pI === 1) {
+            const s1Matches = yearHistory.filter(h => h.period_code === 'T1' || Number(h.period_id) === 3);
+            historyUnitsForSlot = s1Matches.length > 0 ? s1Matches : yearHistory.slice(0, 6);
+          } else if (pI === 2) {
+            const s2Matches = yearHistory.filter(h => h.period_code === 'T2' || h.period_code === 'T3' || Number(h.period_id) === 4 || Number(h.period_id) === 5);
+            historyUnitsForSlot = s2Matches.length > 0 ? s2Matches : yearHistory.slice(6, 12);
+          }
         }
       } else {
         const itemsWithPeriod = yearHistory.filter(h => 
@@ -1142,7 +1148,7 @@ export default function PlanBuilder({
         );
         if (itemsWithPeriod.length > 0) {
           historyUnitsForSlot = itemsWithPeriod;
-        } else if (passedYears.has(yL)) {
+        } else {
           const termIdx = pI === 3 ? 0 : pI === 4 ? 1 : 2;
           historyUnitsForSlot = yearHistory.slice(termIdx * 4, (termIdx + 1) * 4);
         }
@@ -1175,7 +1181,18 @@ export default function PlanBuilder({
       if (uY !== yL) return false;
 
       const uP = Number(u.period_id);
-      return uP === pI;
+      if (uP === pI) return true;
+
+      // Cross-layout fallback matching:
+      if (activeLayout === 'semester') {
+        if (pI === 1 && (uP === 3 || (uP === 4 && (u.sequence_order || 0) <= 2))) return true;
+        if (pI === 2 && (uP === 5 || (uP === 4 && (u.sequence_order || 0) > 2))) return true;
+      } else {
+        if (pI === 3 && uP === 1 && (u.sequence_order || 0) <= 2) return true;
+        if (pI === 4 && ((uP === 1 && (u.sequence_order || 0) > 2) || (uP === 2 && (u.sequence_order || 0) <= 2))) return true;
+        if (pI === 5 && uP === 2 && (u.sequence_order || 0) > 2) return true;
+      }
+      return false;
     });
 
     // Ensure no duplicate unit codes or already-completed unit codes can be rendered
@@ -1219,8 +1236,15 @@ export default function PlanBuilder({
       .reduce((sum, u) => sum + (u.credit_points || 3), 0);
   }, [planUnits, completedCodesSet, isNewStudentInitial]);
 
-  // Total CP = Completed History CP + Planned Canvas CP (Cumulative across ALL 3 years)
-  const totalCP = isNewStudentInitial ? 0 : (completedHistoryCP + plannedCanvasCP);
+  // Total CP: strictly equal to the sum of credit points rendered across all 3 years on canvas
+  const totalCP = useMemo(() => {
+    if (isNewStudentInitial) return 0;
+    const canvasSum = years.reduce((sum, y) => {
+      const yearUnits = defaultPeriodList.flatMap(p => getSemesterUnits(y.level, p.period_id));
+      return sum + yearUnits.reduce((ySum, u) => ySum + Number(u.credit_points || 3), 0);
+    }, 0);
+    return Math.max(canvasSum, completedHistoryCP + plannedCanvasCP);
+  }, [years, defaultPeriodList, layoutType, planUnits, history, isNewStudentInitial, completedHistoryCP, plannedCanvasCP]);
 
   // Governance Workflow Stepper Steps
   const workflowSteps = [
