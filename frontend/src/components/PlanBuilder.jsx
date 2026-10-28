@@ -450,19 +450,16 @@ export default function PlanBuilder({
     }
 
     if (currentTermKey && !allowedOfferings.includes(currentTermKey)) {
-      const isWaived = waivedUnits.has(unit.code);
       const allowedStr = allowedOfferings.join(', ');
-      const msg = isWaived
-        ? `[Chair Waiver Approved] Offering period mismatch waived by Academic Chair for ${unit.code}.`
-        : `Unit ${unit.code} (${unit.title || unit.code}) is offered ONLY in ${allowedStr} at Singapore Campus, but is scheduled in Year ${unit.year_level} ${currentTermName}.`;
-      if (!isWaived) appendUnitWarning(unit.code, msg);
+      const msg = `Unit ${unit.code} (${unit.title || unit.code}) is offered ONLY in ${allowedStr} at Singapore Campus, but is scheduled in Year ${unit.year_level} ${currentTermName}.`;
+      appendUnitWarning(unit.code, msg);
       if (!warningsList.some(w => w.unitCode === unit.code && w.type === 'BR-01_OFFERING_MISMATCH')) {
         warningsList.push({
           type: 'BR-01_OFFERING_MISMATCH',
-          severity: isWaived ? 'waived' : 'error',
+          severity: 'error',
           unitCode: unit.code,
           message: msg,
-          isWaived
+          isWaived: false
         });
       }
     }
@@ -1734,7 +1731,7 @@ export default function PlanBuilder({
                                           )}
                                           {waivedUnits?.has(u.code) && (
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-purple-50 dark:bg-purple-950/70 text-purple-900 dark:text-purple-200 border-2 border-purple-500 dark:border-purple-600 shadow-2xs" title="Prerequisite waived by Academic Chair">
-                                              <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" /> Chair Waiver
+                                              <ShieldCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" /> Prereq Waived
                                             </span>
                                           )}
                                         </div>
@@ -1745,11 +1742,13 @@ export default function PlanBuilder({
                                       </div>
 
                                       {/* Student View Warning Notice (VAL-05 / VAL-06 / VAL-07) */}
-                                      {warningsByUnit[u.code] && !isCompleted && !waivedUnits?.has(u.code) && (() => {
+                                      {warningsByUnit[u.code] && !isCompleted && (() => {
                                         const wMsg = warningsByUnit[u.code] || '';
+                                        const isPrereqWaived = waivedUnits?.has(u.code);
                                         const hasOff = wMsg.includes('NOT offered') || wMsg.includes('offered ONLY') || wMsg.includes('Offering') || wMsg.includes('offering');
                                         const hasPre = wMsg.includes('FAILED') || wMsg.includes('requires prerequisite') || wMsg.includes('prerequisite') || wMsg.includes('Prerequisite');
-                                        const badgeLabel = (hasOff && hasPre) ? 'Offering & Prereq Issue' : hasOff ? 'Offering Mismatch' : wMsg.includes('FAILED') ? 'Prerequisite Failed' : 'Prerequisite Unmet';
+                                        if (!hasOff && hasPre && isPrereqWaived) return null;
+                                        const badgeLabel = hasOff ? 'Offering Mismatch (Must Reschedule)' : wMsg.includes('FAILED') ? 'Prerequisite Failed' : 'Prerequisite Unmet';
                                         return (
                                           <div 
                                             className="mt-1 flex items-center justify-between gap-1.5 text-[10px] font-semibold text-rose-800 dark:text-rose-200 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-lg px-2 py-1 leading-snug"
@@ -2715,8 +2714,8 @@ export default function PlanBuilder({
                       .filter((w, index, self) => index === self.findIndex(t => t.message === w.message))
                       .map((w, idx) => {
                         const isPrereqWarning = w.type?.includes('PREREQUISITE') || Boolean(w.prereqCode);
-                        const isOfferingWarning = w.type === 'BR-01_OFFERING_MISMATCH';
-                        const isUnitWaived = w.unitCode && waivedUnits.has(w.unitCode);
+                        const isOfferingWarning = w.type === 'BR-01_OFFERING_MISMATCH' || (w.message && w.message.includes('offered ONLY'));
+                        const isUnitWaived = isPrereqWarning && Boolean(w.unitCode && waivedUnits.has(w.unitCode));
 
                         return (
                           <div
@@ -2735,11 +2734,17 @@ export default function PlanBuilder({
                               )}
                               <div className="break-words">
                                 <span className="font-bold">{w.unitCode ? `${w.unitCode}: ` : ''}</span>
-                                {isUnitWaived ? `[Chair Waiver Approved] Exception for ${w.unitCode} waived by Academic Chair.` : w.message}
+                                {isUnitWaived ? `[Chair Prereq Waiver Approved] Prerequisite requirement for ${w.unitCode} waived by Academic Chair.` : w.message}
                               </div>
                             </div>
 
-                            {isChair && (isPrereqWarning || isOfferingWarning) && w.unitCode && (
+                            {isOfferingWarning && (
+                              <span className="px-2 py-1 rounded-md text-[10px] font-bold shrink-0 bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-700 font-sans" title="Offering period mismatch cannot be waived. Move unit to an offered teaching period before recommending.">
+                                Reschedule (Non-Waivable)
+                              </span>
+                            )}
+
+                            {isChair && isPrereqWarning && w.unitCode && (
                               <button
                                 type="button"
                                 onClick={() => handleToggleWaiver(w.unitCode)}
@@ -2748,10 +2753,10 @@ export default function PlanBuilder({
                                     ? 'bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600'
                                     : 'bg-purple-700 hover:bg-purple-800 text-white border border-purple-800'
                                 }`}
-                                title={isUnitWaived ? 'Revoke Chair Waiver' : 'Grant Academic Chair Waiver Override'}
+                                title={isUnitWaived ? 'Revoke Chair Prerequisite Waiver' : 'Grant Academic Chair Prerequisite Waiver'}
                               >
                                 <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>{isUnitWaived ? 'Revoke Waiver' : 'Grant Waiver'}</span>
+                                <span>{isUnitWaived ? 'Revoke Prereq Waiver' : 'Grant Prereq Waiver'}</span>
                               </button>
                             )}
                           </div>
@@ -3144,42 +3149,67 @@ export default function PlanBuilder({
 
                     {isChair ? (
                       <>
-                        {(planStatus === 'draft' || planStatus === 'request_submitted' || planStatus === 'recommended' || planStatus === 'rejected') && (
-                          <button
-                            onClick={() => {
-                              // Check for unresolved critical validation errors (REC-01 / M06:R104)
-                              const unresolvedCritical = warningsList.filter(w => {
-                                if (w.unitCode && waivedUnits.has(w.unitCode) && (w.type?.includes('PREREQUISITE') || w.prereqCode)) {
-                                  return false;
+                        {(planStatus === 'draft' || planStatus === 'request_submitted' || planStatus === 'recommended' || planStatus === 'rejected') && (() => {
+                          const offeringErrors = (warningsList || []).filter(w => 
+                            w.type === 'BR-01_OFFERING_MISMATCH' || (w.message && w.message.includes('offered ONLY'))
+                          );
+                          const hasOfferingErrors = offeringErrors.length > 0;
+
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                // 1. Check for wrong teaching period errors (BR-01) - strictly non-waivable
+                                if (hasOfferingErrors) {
+                                  const firstOff = offeringErrors[0];
+                                  const unitPrefix = firstOff.unitCode ? `[${firstOff.unitCode}] ` : '';
+                                  setDragWarningToast(`⛔ Recommendation Blocked: Unit ${unitPrefix}is scheduled in the wrong teaching period. Teaching period offering rules cannot be waived and units must be moved to their offered periods before recommending.`);
+                                  setTimeout(() => setDragWarningToast(null), 8000);
+                                  return;
                                 }
-                                return (
-                                  w.type === 'BR-01_OFFERING_MISMATCH' ||
-                                  w.type === 'BR-02_PREREQUISITE_FAILED' ||
-                                  w.type === 'BR-02_PREREQUISITE_UNMET' ||
-                                  w.type === 'BR-04_CREDIT_LOAD_EXCEEDED' ||
-                                  w.severity === 'error'
-                                );
-                              });
 
-                              if (unresolvedCritical.length > 0) {
-                                const firstErr = unresolvedCritical[0];
-                                const unitPrefix = firstErr.unitCode ? `[${firstErr.unitCode}] ` : '';
-                                setDragWarningToast(`Recommendation Blocked: Study plan contains unresolved critical issues (${unitPrefix}${firstErr.message}). Please resolve errors or grant an Academic Chair Waiver before recommending.`);
-                                setTimeout(() => setDragWarningToast(null), 8000);
-                                return;
-                              }
+                                // 2. Check for unresolved critical validation errors (REC-01 / M06:R104)
+                                const unresolvedCritical = warningsList.filter(w => {
+                                  if (w.unitCode && waivedUnits.has(w.unitCode) && (w.type?.includes('PREREQUISITE') || w.prereqCode)) {
+                                    return false;
+                                  }
+                                  return (
+                                    w.type === 'BR-02_PREREQUISITE_FAILED' ||
+                                    w.type === 'BR-02_PREREQUISITE_UNMET' ||
+                                    w.type === 'BR-04_CREDIT_LOAD_EXCEEDED' ||
+                                    w.severity === 'error'
+                                  );
+                                });
 
-                              if (onRecommendPlan) {
-                                onRecommendPlan(Array.from(waivedUnits));
+                                if (unresolvedCritical.length > 0) {
+                                  const firstErr = unresolvedCritical[0];
+                                  const unitPrefix = firstErr.unitCode ? `[${firstErr.unitCode}] ` : '';
+                                  setDragWarningToast(`Recommendation Blocked: Study plan contains unresolved critical issues (${unitPrefix}${firstErr.message}). Please resolve errors or grant an Academic Chair Prerequisite Waiver before recommending.`);
+                                  setTimeout(() => setDragWarningToast(null), 8000);
+                                  return;
+                                }
+
+                                if (onRecommendPlan) {
+                                  onRecommendPlan(Array.from(waivedUnits));
+                                }
+                              }}
+                              className={`px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 border font-sans ${
+                                hasOfferingErrors
+                                  ? 'bg-red-700/80 hover:bg-red-800 text-white border-red-800 ring-2 ring-rose-400/50'
+                                  : 'bg-red-700 hover:bg-red-800 text-white border-red-800'
+                              }`}
+                              title={
+                                hasOfferingErrors
+                                  ? 'Recommendation Blocked: One or more units are scheduled in the wrong teaching period (Non-waivable rule)'
+                                  : (planStatus === 'recommended' || planStatus === 'rejected' ? 'Update & Re-Recommend Study Plan' : 'Recommend Study Plan to Student')
                               }
-                            }}
-                            className="px-5 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl font-extrabold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-red-800 font-sans"
-                          >
-                            <Send className="w-4 h-4 text-white/90" />
-                            <span>{planStatus === 'recommended' || planStatus === 'rejected' ? 'Update & Re-Recommend' : 'Recommend Study Plan to Student'}</span>
-                            <ArrowRight className="w-4 h-4 text-white/90" />
-                          </button>
-                        )}
+                            >
+                              <Send className="w-4 h-4 text-white/90" />
+                              <span>{planStatus === 'recommended' || planStatus === 'rejected' ? 'Update & Re-Recommend' : 'Recommend Study Plan to Student'}</span>
+                              <ArrowRight className="w-4 h-4 text-white/90" />
+                            </button>
+                          );
+                        })()}
 
                         {planStatus !== 'approved' && (
                           <button

@@ -2064,6 +2064,40 @@ export default function App() {
       return;
     }
 
+    // Check for wrong teaching period (BR-01 offering mismatch)
+    // As per policy, Academic Chair waiver is ONLY permitted for prerequisites.
+    // Wrong teaching period offering errors CANNOT be waived and strictly block recommendation.
+    const invalidOfferingUnit = (planUnits || []).find(unit => {
+      if (!unit || !unit.period_id) return false;
+      const isSemPeriod = unit.period_id === 1 || unit.period_id === 2;
+      const allowedOfferings = getDynamicOfferings(unit.code, isSemPeriod ? 'semester' : 'trimester');
+      let currentTermKey = null;
+      if (isSemPeriod) {
+        currentTermKey = unit.period_id === 1 ? 'Sem 1' : 'Sem 2';
+      } else {
+        if (unit.period_id === 3) currentTermKey = 'Tri 1';
+        else if (unit.period_id === 4) currentTermKey = 'Tri 2';
+        else if (unit.period_id === 5) currentTermKey = 'Tri 3';
+      }
+      return currentTermKey && !allowedOfferings.includes(currentTermKey);
+    });
+
+    if (invalidOfferingUnit) {
+      const isSemPeriod = invalidOfferingUnit.period_id === 1 || invalidOfferingUnit.period_id === 2;
+      const allowedOfferings = getDynamicOfferings(invalidOfferingUnit.code, isSemPeriod ? 'semester' : 'trimester');
+      const allowedStr = allowedOfferings.join(', ');
+      let currentTermName = '';
+      if (isSemPeriod) {
+        currentTermName = invalidOfferingUnit.period_id === 1 ? 'Semester 1' : 'Semester 2';
+      } else {
+        if (invalidOfferingUnit.period_id === 3) currentTermName = 'Trimester 1';
+        else if (invalidOfferingUnit.period_id === 4) currentTermName = 'Trimester 2';
+        else if (invalidOfferingUnit.period_id === 5) currentTermName = 'Trimester 3';
+      }
+      showToast(`⛔ Recommendation Blocked: Unit [${invalidOfferingUnit.code}] is scheduled in the wrong teaching period (${currentTermName}). It is offered ONLY in ${allowedStr} at Singapore Campus. Offering period rules cannot be waived and the unit must be rescheduled before recommending.`);
+      return;
+    }
+
     const effectiveWaivers = Array.isArray(waivedList) ? waivedList : (currentPlan?.waivedUnits || []);
     const updatedPlan = { 
       ...currentPlan, 

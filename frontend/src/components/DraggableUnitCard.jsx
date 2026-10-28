@@ -26,7 +26,14 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
   const unitLevel = Number(unit.level || (unit.code ? unit.code.replace(/[^0-9]/g, '').charAt(0) + '00' : 100));
 
   const isLoadWarning = warning && (warning.includes('EXCEEDS') || warning.includes('exceeds') || warning.includes('CP limit'));
-  const effectiveWarning = (isCompleted || isLoadWarning || isWaived) ? null : warning;
+  const isOfferingIssue = warning && (
+    warning.includes('NOT offered') || 
+    warning.includes('offered ONLY') || 
+    warning.includes('Offering') || 
+    warning.includes('offering')
+  );
+  // Academic Chair waiver is ONLY for prerequisites; wrong teaching period offering errors can NEVER be waived
+  const effectiveWarning = (isCompleted || isLoadWarning) ? null : (isWaived && !isOfferingIssue) ? null : warning;
 
   let cardBorder = 'border-slate-200 dark:border-slate-800';
 
@@ -233,16 +240,21 @@ export default function DraggableUnitCard({ unit, onRemoveUnit, warning, isCompl
               See Validation
             </span>
           </div>
-          {isChair && onToggleWaiver && (hasPreIssue || hasOffIssue) && (
+          {isChair && onToggleWaiver && hasPreIssue && !isWaived && (
             <button
               type="button"
               onClick={() => onToggleWaiver(unit.code)}
               className="w-full py-1.5 px-2 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-[10px] font-bold tracking-tight transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer active:scale-95 border border-purple-800"
-              title={`Grant official Academic Chair waiver for ${unit.code}`}
+              title={`Grant official Academic Chair prerequisite waiver for ${unit.code}`}
             >
               <ShieldCheck className="w-3.5 h-3.5 text-purple-200" />
-              <span>{hasPreIssue ? 'Grant Chair Prereq Waiver' : 'Grant Chair Offering Waiver'}</span>
+              <span>Grant Chair Prereq Waiver</span>
             </button>
+          )}
+          {hasOffIssue && (
+            <div className="text-[10px] font-bold text-rose-700 dark:text-rose-300 bg-rose-100/80 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-900 p-1.5 rounded-lg text-center font-sans">
+              Wrong Teaching Period (Non-Waivable — Reschedule Period)
+            </div>
           )}
         </div>
       )}
