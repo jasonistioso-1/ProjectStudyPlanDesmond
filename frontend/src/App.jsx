@@ -2254,6 +2254,13 @@ export default function App() {
     // Wrong teaching period offering errors CANNOT be waived and strictly block recommendation.
     const invalidOfferingUnit = (planUnits || []).find(unit => {
       if (!unit || !unit.period_id) return false;
+      // Historical units already completed & passed by student do not block recommendation of new/future study plan
+      const isCompletedHistory = unit.isCompleted || (history || []).some(h => 
+        (h.status === 'completed' || h.status === 'passed') && 
+        ((h.unit_code && h.unit_code === unit.code) || (h.code && h.code === unit.code))
+      );
+      if (isCompletedHistory) return false;
+
       const isSemPeriod = unit.period_id === 1 || unit.period_id === 2;
       const allowedOfferings = getDynamicOfferings(unit.code, isSemPeriod ? 'semester' : 'trimester');
       let currentTermKey = null;

@@ -80,7 +80,7 @@ export async function validateStudyPlan({ studentId, locationId, planUnits, waiv
             'ICT202': ['T2', 'T3'],
             'ICT203': ['T1', 'T3'],
             'ICT206': ['T2', 'T3'],
-            'ICT283': ['T1', 'T2'],
+            'ICT283': ['T1', 'T2', 'T3'],
             'ICT284': ['T1', 'T2'],
             'ICT285': ['T1', 'T2', 'T3'],
             'ICT292': ['T1', 'T2', 'T3'],

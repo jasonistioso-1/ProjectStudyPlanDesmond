@@ -75,7 +75,7 @@ ICT303,Advanced Machine Learning,3,300,Artificial Intelligence (AI),ICT202,"Tri 
 ICT304,AI System Design,3,300,Artificial Intelligence (AI),ICT203,"Tri 1, Tri 3, Sem 2"
 ICT305,Data Visualisation,3,300,Artificial Intelligence (AI),ICT202,"Tri 2, Tri 3, Sem 2"
 ICT167,Principles of Computer Science,3,100,Computer Science (CS),ICT159,"Tri 1, Tri 2, Sem 1, Sem 2"
-ICT283,Data Structures & Algorithms,3,200,Computer Science (CS),ICT167,"Tri 1, Tri 2, Sem 1, Sem 2"
+ICT283,Data Structures & Algorithms,3,200,Computer Science (CS),ICT167,"Tri 1, Tri 2, Tri 3, Sem 1, Sem 2"
 MAS162,Discrete Mathematics,3,100,Computer Science (CS),None,"Tri 1, Tri 2, Tri 3, Sem 2"
 MAS164,Fundamentals of Mathematics,3,100,Computer Science (CS),None,"Tri 1, Tri 2, Tri 3, Sem 1"
 ICT373,Software Architecture,3,300,Computer Science (CS),ICT283,"Tri 1, Tri 3, Sem 2"

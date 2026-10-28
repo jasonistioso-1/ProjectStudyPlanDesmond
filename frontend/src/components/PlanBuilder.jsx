@@ -434,7 +434,7 @@ export default function PlanBuilder({
   // Real-time BR-01 Offering & BR-02 Prerequisite checks on planUnits
   planUnits.forEach(unit => {
     // If unit is already completed & passed in history, skip validation warnings for it
-    if (completedUnitCodes.has(unit.code)) return;
+    if (completedUnitCodes.has(unit.code) || (history || []).some(h => (h.status === 'completed' || h.status === 'passed') && (h.unit_code === unit.code || h.code === unit.code))) return;
 
     const isTri3 = unit.period_id === 5;
     const isS1Only = unit.period_id === 1;
@@ -3266,9 +3266,12 @@ export default function PlanBuilder({
                     {isChair ? (
                       <>
                         {(planStatus === 'draft' || planStatus === 'request_submitted' || planStatus === 'recommended' || planStatus === 'rejected') && (() => {
-                          const offeringErrors = (warningsList || []).filter(w => 
-                            w.type === 'BR-01_OFFERING_MISMATCH' || (w.message && w.message.includes('offered ONLY'))
-                          );
+                          const offeringErrors = (warningsList || []).filter(w => {
+                            if (w.unitCode && (completedUnitCodes.has(w.unitCode) || (history || []).some(h => (h.status === 'completed' || h.status === 'passed') && (h.unit_code === w.unitCode || h.code === w.unitCode)))) {
+                              return false;
+                            }
+                            return w.type === 'BR-01_OFFERING_MISMATCH' || (w.message && w.message.includes('offered ONLY'));
+                          });
                           const hasOfferingErrors = offeringErrors.length > 0;
 
                           return (

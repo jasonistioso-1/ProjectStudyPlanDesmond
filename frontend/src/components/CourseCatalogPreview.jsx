@@ -66,7 +66,7 @@ export function getDynamicOfferings(code, layoutType = 'trimester') {
       'ICT202': ['Tri 2', 'Tri 3'],
       'ICT203': ['Tri 1', 'Tri 3'],
       'ICT206': ['Tri 2', 'Tri 3'],
-      'ICT283': ['Tri 1', 'Tri 2'],
+      'ICT283': ['Tri 1', 'Tri 2', 'Tri 3'],
       'ICT284': ['Tri 1', 'Tri 2'],
       'ICT285': ['Tri 1', 'Tri 2', 'Tri 3'],
       'ICT292': ['Tri 1', 'Tri 2', 'Tri 3'],
