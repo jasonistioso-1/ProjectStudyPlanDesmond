@@ -50,10 +50,29 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
 
   // Merge student official passed history units with current planUnits for comprehensive degree reporting
   const allDocumentUnits = useMemo(() => {
-    const list = [...planUnits];
-    const existingCodes = new Set(planUnits.map(u => u.code || u.unit_code));
+    const historyMap = new Map();
+    (history || []).forEach(h => {
+      const code = h.unit_code || h.code;
+      if (code) historyMap.set(code, h);
+    });
 
-    // Convert completed history units to study plan unit representation
+    const list = planUnits.map(u => {
+      const code = u.code || u.unit_code;
+      const h = historyMap.get(code);
+      if (h && (h.status === 'completed' || h.status === 'enrolled')) {
+        return {
+          ...u,
+          isPassedHistory: h.status === 'completed',
+          isEnrolledHistory: h.status === 'enrolled',
+          grade: h.grade || (h.status === 'completed' ? 'Passed' : 'Enrolled')
+        };
+      }
+      return u;
+    });
+
+    const existingCodes = new Set(list.map(u => u.code || u.unit_code));
+
+    // Convert and add any completed history units not yet in planUnits
     (history || [])
       .filter(h => h.status === 'completed' || h.status === 'enrolled')
       .forEach((h, idx) => {
@@ -466,7 +485,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                       Scheduled Units
                     </div>
                     <div className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
-                      {planUnits.length} {planUnits.length === 1 ? 'Record' : 'Records'}
+                      {allDocumentUnits.length} {allDocumentUnits.length === 1 ? 'Record' : 'Records'}
                     </div>
                   </div>
                 </div>
@@ -480,7 +499,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                       Credit Load Total
                     </div>
                     <div className="text-base font-extrabold text-slate-900 dark:text-white font-mono">
-                      {planUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP
+                      {allDocumentUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP
                     </div>
                   </div>
                 </div>
@@ -508,7 +527,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                     Real-time CSV Data Table Grid Preview
                   </h4>
                   <span className="text-[10px] font-mono font-extrabold bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
-                    {planUnits.length} Active Rows
+                    {allDocumentUnits.length} Active Rows
                   </span>
                 </div>
 
@@ -520,18 +539,19 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                         <th className="p-3 border-b border-slate-200 dark:border-slate-800">Teaching Period</th>
                         <th className="p-3 border-b border-slate-200 dark:border-slate-800">Unit Code</th>
                         <th className="p-3 border-b border-slate-200 dark:border-slate-800">Unit Title</th>
+                        <th className="p-3 border-b border-slate-200 dark:border-slate-800">Status / Grade</th>
                         <th className="p-3 border-b border-slate-200 dark:border-slate-800">Credit Points</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                      {planUnits.length === 0 ? (
+                      {allDocumentUnits.length === 0 ? (
                         <tr>
-                          <td colSpan="5" className="p-10 text-center text-slate-400 dark:text-slate-500 italic font-medium">
+                          <td colSpan="6" className="p-10 text-center text-slate-400 dark:text-slate-500 italic font-medium">
                             Belum ada mata kuliah yang dipilih dalam rencana studi ini (0 Records)
                           </td>
                         </tr>
                       ) : (
-                        planUnits.map((u, i) => (
+                        allDocumentUnits.map((u, i) => (
                           <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                             <td className="p-3 font-bold font-mono text-slate-700 dark:text-slate-300">Year {u.year_level || 1}</td>
                             <td className="p-3 text-slate-600 dark:text-slate-400 font-semibold">{getPeriodName(u)}</td>
@@ -541,6 +561,17 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                               </span>
                             </td>
                             <td className="p-3 font-semibold text-slate-900 dark:text-white">{u.title || u.unit_title}</td>
+                            <td className="p-3 font-mono">
+                              {u.isCompleted ? (
+                                <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                                  Passed ({u.grade || 'P'})
+                                </span>
+                              ) : (
+                                <span className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2 py-0.5 rounded text-[10px] font-medium">
+                                  {u.status || 'Planned'}
+                                </span>
+                              )}
+                            </td>
                             <td className="p-3 font-mono">
                               <span className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/80 px-2.5 py-0.5 rounded-full text-[11px] font-bold">
                                 {u.credit_points || 3} CP
