@@ -206,12 +206,23 @@ export default function PlanBuilder({
   const passedYears = useMemo(() => {
     const completedHistory = (history || []).filter(h => h.status === 'completed');
     const set = new Set();
-    const yr1Count = completedHistory.filter(h => h.year_taken === 2026 || (h.period_id >= 3 && h.period_id <= 5 && (h.year_taken <= 2026 || !h.year_taken))).length;
+    const yr1Count = completedHistory.filter(h => (h.year_taken === 2026 || h.academic_year === 2026) || (h.period_id >= 3 && h.period_id <= 5 && ((h.year_taken && h.year_taken <= 2026) || (!h.year_taken && !h.academic_year)))).length;
     if (yr1Count >= 6) set.add(1);
-    const yr2Count = completedHistory.filter(h => h.year_taken === 2027).length;
+    const yr2Count = completedHistory.filter(h => (h.year_taken === 2027 || h.academic_year === 2027)).length;
     if (yr2Count >= 6) set.add(2);
     return set;
   }, [history]);
+
+  // Default reqYear to first non-completed year (e.g. 2027 if Year 1 is passed)
+  useEffect(() => {
+    const yrLvl = reqYear === 2027 ? 2 : reqYear === 2028 ? 3 : 1;
+    if (passedYears.has(yrLvl)) {
+      const nextAvailable = passedYears.has(1)
+        ? (passedYears.has(2) ? 2028 : 2027)
+        : 2026;
+      setReqYear(nextAvailable);
+    }
+  }, [passedYears, reqYear]);
 
   // Auto-scroll and align with target Year level block whenever reviewing a plan
   useEffect(() => {
@@ -247,13 +258,16 @@ export default function PlanBuilder({
       return;
     }
 
-    if (activeYearLevel && typeof activeYearLevel === 'number') {
-      setScopeYear(activeYearLevel);
-    } else if (currentPlan?.targetYearLevel) {
-      setScopeYear(Number(currentPlan.targetYearLevel));
-    } else if (currentPlan?.requestYear) {
-      setScopeYear(Number(currentPlan.requestYear) === 2027 ? 2 : Number(currentPlan.requestYear) === 2028 ? 3 : 1);
+    // Default to 'all' or next open year so that all remaining uncompleted years (e.g. Years 2 and 3) are populated
+    let defaultYear = 'all';
+    if (currentPlan?.requestYear) {
+      const reqY = Number(currentPlan.requestYear) === 2027 ? 2 : Number(currentPlan.requestYear) === 2028 ? 3 : 1;
+      if (!passedYears.has(reqY)) defaultYear = reqY;
+    } else if (activeYearLevel && typeof activeYearLevel === 'number' && !passedYears.has(activeYearLevel)) {
+      defaultYear = activeYearLevel;
     }
+    setScopeYear(defaultYear);
+
     if (currentPlan?.requestPeriods && currentPlan.requestPeriods.length > 0) {
       setScopePeriods(currentPlan.requestPeriods.map(Number));
     }
@@ -961,9 +975,11 @@ export default function PlanBuilder({
       });
     };
 
-    distributeToYear(level100, availableCatalog.slice(0, 12), 1);
-    distributeToYear(level200, availableCatalog.slice(12, 24), 2);
-    distributeToYear(level300, availableCatalog.slice(24, 36), 3);
+    if (!passedYears.has(1)) {
+      distributeToYear(level100, availableCatalog.slice(0, 12), 1);
+    }
+    distributeToYear(level200, availableCatalog.filter(u => getUnitLvl(u) >= 200 && getUnitLvl(u) <= 299), 2);
+    distributeToYear(level300, availableCatalog.filter(u => getUnitLvl(u) >= 300), 3);
 
     setPlanUnits(generated);
     if (onValidate) onValidate(generated);
@@ -1357,7 +1373,13 @@ export default function PlanBuilder({
               ) : (
                 <button
                   type="button"
-                  onClick={() => setShowSubmitPlanRequestModal(true)}
+                  onClick={() => {
+                    const defaultYear = passedYears.has(1)
+                      ? (passedYears.has(2) ? 2028 : 2027)
+                      : 2026;
+                    setReqYear(defaultYear);
+                    setShowSubmitPlanRequestModal(true);
+                  }}
                   className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-xl text-xs font-black transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 font-heading tracking-tight"
                   title="Submit study plan request for Academic Chair review"
                 >
@@ -1582,7 +1604,11 @@ export default function PlanBuilder({
                                     setTimeout(() => setDragWarningToast(null), 5000);
                                     return;
                                   }
-                                  setReqYear(academicYear);
+                                  const yrLvl = academicYear === 2027 ? 2 : academicYear === 2028 ? 3 : 1;
+                                  const defaultYear = passedYears.has(yrLvl)
+                                    ? (passedYears.has(1) ? (passedYears.has(2) ? 2028 : 2027) : 2026)
+                                    : academicYear;
+                                  setReqYear(defaultYear);
                                   if (p.period_id === 1 || p.period_id === 2) {
                                     setLayoutType('semester');
                                     setReqPeriods([p.period_id]);
@@ -1947,21 +1973,36 @@ export default function PlanBuilder({
                   1. Target Academic Year:
                 </label>
                 <div className="grid grid-cols-3 gap-3">
-                  {[2026, 2027, 2028].map(yr => (
-                    <button
-                      key={yr}
-                      type="button"
-                      onClick={() => setReqYear(yr)}
-                      className={`py-3.5 px-4 rounded-2xl text-xs md:text-sm font-black border transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                        reqYear === yr
-                          ? 'bg-slate-900 text-white border-slate-900 dark:bg-red-700 dark:border-red-600 shadow-md font-heading scale-[1.01]'
-                          : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-extrabold'
-                      }`}
-                    >
-                      <Calendar className="w-4 h-4 opacity-80" />
-                      <span>Year {yr}</span>
-                    </button>
-                  ))}
+                  {[2026, 2027, 2028].map(yr => {
+                    const yrLvl = yr === 2027 ? 2 : yr === 2028 ? 3 : 1;
+                    const isPassed = passedYears.has(yrLvl);
+                    return (
+                      <button
+                        key={yr}
+                        type="button"
+                        disabled={isPassed}
+                        onClick={() => {
+                          if (isPassed) {
+                            setDragWarningToast(`Year ${yr} units have already been completed in your academic history.`);
+                            setTimeout(() => setDragWarningToast(null), 4000);
+                            return;
+                          }
+                          setReqYear(yr);
+                        }}
+                        className={`py-3.5 px-4 rounded-2xl text-xs md:text-sm font-black border transition-all flex items-center justify-center gap-2 ${
+                          isPassed
+                            ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-800 cursor-not-allowed opacity-60'
+                            : reqYear === yr
+                              ? 'bg-slate-900 text-white border-slate-900 dark:bg-red-700 dark:border-red-600 shadow-md font-heading scale-[1.01] cursor-pointer'
+                              : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-extrabold cursor-pointer'
+                        }`}
+                        title={isPassed ? `Year ${yr} is completed in academic history` : `Select Year ${yr}`}
+                      >
+                        <Calendar className="w-4 h-4 opacity-80" />
+                        <span>Year {yr}{isPassed ? ' (Passed)' : ''}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

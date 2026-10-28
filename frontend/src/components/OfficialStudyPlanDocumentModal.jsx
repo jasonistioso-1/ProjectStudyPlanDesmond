@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Printer, Download, X, CheckCircle2, FileText, FileSpreadsheet, ShieldCheck, ExternalLink, Award, Sparkles, Layers, Eye } from 'lucide-react';
 
-export default function OfficialStudyPlanDocumentModal({ student, planUnits = [], currentPlan, onClose }) {
+export default function OfficialStudyPlanDocumentModal({ student, planUnits = [], history = [], currentPlan, onClose }) {
   const documentRef = useRef(null);
   const [activeTab, setActiveTab] = useState('pdf'); // 'pdf' | 'csv'
   const [isExporting, setIsExporting] = useState(false);
@@ -48,7 +48,42 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
     return 'Trimester 1';
   };
 
-  const isTrimester = planUnits.some(u => Number(u.period_id) >= 3 || String(u.period_code || '').toUpperCase().startsWith('T'));
+  // Merge student official passed history units with current planUnits for comprehensive degree reporting
+  const allDocumentUnits = useMemo(() => {
+    const list = [...planUnits];
+    const existingCodes = new Set(planUnits.map(u => u.code || u.unit_code));
+
+    // Convert completed history units to study plan unit representation
+    (history || [])
+      .filter(h => h.status === 'completed' || h.status === 'enrolled')
+      .forEach((h, idx) => {
+        const code = h.unit_code || h.code;
+        if (!existingCodes.has(code)) {
+          existingCodes.add(code);
+          const yTaken = Number(h.year_taken) || 2026;
+          const yLvl = yTaken === 2026 ? 1 : yTaken === 2027 ? 2 : 3;
+          list.push({
+            unit_id: h.unit_id || (5000 + idx),
+            code: code,
+            unit_code: code,
+            title: h.unit_title || h.title || code,
+            unit_title: h.unit_title || h.title || code,
+            credit_points: Number(h.credit_points || 3),
+            year_level: yLvl,
+            period_id: Number(h.period_id || 3),
+            period_code: h.period_code || (h.period_id === 1 ? 'S1' : h.period_id === 2 ? 'S2' : h.period_id === 4 ? 'T2' : h.period_id === 5 ? 'T3' : 'T1'),
+            isPassedHistory: h.status === 'completed',
+            isEnrolledHistory: h.status === 'enrolled',
+            grade: h.grade || (h.status === 'completed' ? 'Passed' : 'Enrolled'),
+            sequence_order: idx + 1
+          });
+        }
+      });
+
+    return list;
+  }, [planUnits, history]);
+
+  const isTrimester = allDocumentUnits.some(u => Number(u.period_id) >= 3 || String(u.period_code || '').toUpperCase().startsWith('T'));
   const activePeriods = isTrimester ? [
     { period_id: 3, label: 'Trimester 1 Units' },
     { period_id: 4, label: 'Trimester 2 Units' },
@@ -59,7 +94,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
   ];
 
   const getPeriodUnits = (yearLevel, targetPid) => {
-    return planUnits.filter(u => {
+    return allDocumentUnits.filter(u => {
       const uYear = Number(u.year_level || 1);
       const uPid = Number(u.period_id);
       if (uYear !== Number(yearLevel)) return false;
@@ -92,11 +127,11 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
     lines.push(`"Course Name","${cleanCourseName}"`);
     lines.push(`"Major Pathway","${majorName}"`);
     lines.push(`"Plan Status","${String(currentPlan?.status || 'approved').toUpperCase()}"`);
-    lines.push(`"Total Credit Load","${planUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP"`);
+    lines.push(`"Total Credit Load","${allDocumentUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP"`);
     lines.push('');
-    lines.push('"Year Level","Academic Year","Teaching Period","Sequence Order","Unit Code","Unit Title","Credit Points"');
+    lines.push('"Year Level","Academic Year","Teaching Period","Sequence Order","Unit Code","Unit Title","Credit Points","Status / Grade"');
 
-    const sorted = [...planUnits].sort((a, b) => {
+    const sorted = [...allDocumentUnits].sort((a, b) => {
       const yA = Number(a.year_level || 1);
       const yB = Number(b.year_level || 1);
       if (yA !== yB) return yA - yB;
@@ -107,7 +142,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
     });
 
     if (sorted.length === 0) {
-      lines.push('"Year 1","2026","Trimester 1","1","","No Units Scheduled","0 CP"');
+      lines.push('"Year 1","2026","Trimester 1","1","","No Units Scheduled","0 CP","Planned"');
     } else {
       sorted.forEach((u, idx) => {
         const pName = getPeriodName(u);
@@ -116,7 +151,8 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
         const yLvl = Number(u.year_level || 1);
         const acadYear = yLvl === 1 ? 2026 : yLvl === 2 ? 2027 : 2028;
         const seq = u.sequence_order || (idx + 1);
-        lines.push(`"Year ${yLvl}","${acadYear}","${pName}","${seq}","${unitCode}","${titleClean}","${u.credit_points || 3} CP"`);
+        const statusLabel = u.isPassedHistory ? `Passed (${u.grade || 'P'})` : (u.isEnrolledHistory ? 'Enrolled' : 'Planned');
+        lines.push(`"Year ${yLvl}","${acadYear}","${pName}","${seq}","${unitCode}","${titleClean}","${u.credit_points || 3} CP","${statusLabel}"`);
       });
     }
     return lines;
@@ -317,10 +353,15 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                                 ) : (
                                   units.map((u, i) => (
                                     <div key={i} className="flex justify-between items-start text-[11px] leading-tight font-medium">
-                                      <span>
-                                        <strong className="font-mono text-slate-900 mr-1.5 font-bold">{u.code || u.unit_code}</strong>
+                                      <div className="flex items-baseline gap-1 flex-wrap pr-1">
+                                        <strong className="font-mono text-slate-900 font-bold mr-0.5">{u.code || u.unit_code}</strong>
                                         <span className="text-slate-700">{u.title || u.unit_title}</span>
-                                      </span>
+                                        {u.isPassedHistory && (
+                                          <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1 py-0.5 rounded font-mono border border-emerald-300 shrink-0">
+                                            Passed ({u.grade || 'P'})
+                                          </span>
+                                        )}
+                                      </div>
                                       <span className="font-mono text-slate-900 font-bold ml-2 shrink-0">{u.credit_points || 3} CP</span>
                                     </div>
                                   ))
@@ -343,7 +384,7 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
                 <div className="flex justify-end mb-4">
                   <div className="bg-slate-200 border-2 border-slate-900 px-6 py-2 flex items-center gap-4 text-xs font-black">
                     <span className="uppercase tracking-wide font-heading">TOTAL CREDIT POINTS</span>
-                    <span className="font-mono text-base text-slate-900">{planUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP</span>
+                    <span className="font-mono text-base text-slate-900">{allDocumentUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0)} / 72 CP</span>
                   </div>
                 </div>
 

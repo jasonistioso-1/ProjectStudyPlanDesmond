@@ -262,20 +262,21 @@ export default function App() {
       const saved = localStorage.getItem('spr_student_plans_cache');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Student 1 (Alex Mercer - Existing Student): Must have approved 36 CP plan with 12 units
-        if (!parsed[1] || !parsed[1].units || parsed[1].units.length === 0 || (parsed[1].plan?.status !== 'approved' && parsed[1].plan?.status !== 'rejected' && parsed[1].plan?.status !== 'draft')) {
+        const validStatuses = ['approved', 'recommended', 'request_submitted', 'rejected', 'agreed', 'draft'];
+        // Student 1 (Alex Mercer - Existing Student): Preserve dynamic active plan if valid
+        if (!parsed[1] || !parsed[1].units || parsed[1].units.length === 0 || !validStatuses.includes(parsed[1].plan?.status)) {
           parsed[1] = { plan: mockClientStudentPlans[1].plan, units: mockClientStudentPlans[1].units };
         }
-        if (parsed['1'] && (!parsed['1'].units || parsed['1'].units.length === 0 || (parsed['1'].plan?.status !== 'approved' && parsed['1'].plan?.status !== 'rejected' && parsed['1'].plan?.status !== 'draft'))) {
-          parsed['1'] = { plan: mockClientStudentPlans[1].plan, units: mockClientStudentPlans[1].units };
+        if (parsed['1'] && (!parsed['1'].units || parsed['1'].units.length === 0 || !validStatuses.includes(parsed['1'].plan?.status))) {
+          parsed['1'] = parsed[1];
         }
 
-        // Student 2 (Sarah Jenkins - Existing Student): Must have agreed 72 CP plan with 24 units
-        if (!parsed[2] || !parsed[2].units || parsed[2].units.length < 24 || parsed[2].plan?.status !== 'agreed') {
+        // Student 2 (Sarah Jenkins - Existing Student): Preserve dynamic active plan if valid
+        if (!parsed[2] || !parsed[2].units || parsed[2].units.length === 0 || !validStatuses.includes(parsed[2].plan?.status)) {
           parsed[2] = { plan: mockClientStudentPlans[2].plan, units: mockClientStudentPlans[2].units };
         }
-        if (parsed['2'] && (!parsed['2'].units || parsed['2'].units.length < 24 || parsed['2'].plan?.status !== 'agreed')) {
-          parsed['2'] = { plan: mockClientStudentPlans[2].plan, units: mockClientStudentPlans[2].units };
+        if (parsed['2'] && (!parsed['2'].units || parsed['2'].units.length === 0 || !validStatuses.includes(parsed['2'].plan?.status))) {
+          parsed['2'] = parsed[2];
         }
 
         // For New Students (Michael Chang [3] & Emily Watson [4]), preserve plan if active (recommended/requested/agreed)
@@ -696,6 +697,7 @@ export default function App() {
                                 notif.title?.includes('Change Requested') || 
                                 notif.title?.includes('Rejected') ||
                                 notif.actionLabel?.includes('Review Student Feedback');
+    const isRecommendedNotif = notif.title?.includes('Recommended') || notif.actionLabel?.includes('Recommended');
 
     const extractedComment = notif.rejectionComment || 
                              notif.comment || 
@@ -706,7 +708,7 @@ export default function App() {
       targetYearLevel: targetYr,
       forceScrollTrigger: Date.now(),
       rejectionComment: isDisagreementNotif ? (extractedComment || 'Student requested changes') : undefined,
-      status: isDisagreementNotif ? 'rejected' : undefined
+      status: isDisagreementNotif ? 'rejected' : (isRecommendedNotif ? 'recommended' : undefined)
     };
 
     let targetStudentObj = null;
@@ -869,9 +871,9 @@ export default function App() {
 
     // Calculate passed years from history (e.g. 6+ completed units in Year 1 / 2026 means Year 1 is passed)
     const passedYears = new Set();
-    const yr1Count = completedHistory.filter(h => h.year_taken === 2026 || (h.period_id >= 3 && h.period_id <= 5 && (h.year_taken <= 2026 || !h.year_taken))).length;
+    const yr1Count = completedHistory.filter(h => (h.year_taken === 2026 || h.academic_year === 2026) || (h.period_id >= 3 && h.period_id <= 5 && ((h.year_taken && h.year_taken <= 2026) || (!h.year_taken && !h.academic_year)))).length;
     if (yr1Count >= 6) passedYears.add(1);
-    const yr2Count = completedHistory.filter(h => h.year_taken === 2027).length;
+    const yr2Count = completedHistory.filter(h => (h.year_taken === 2027 || h.academic_year === 2027)).length;
     if (yr2Count >= 6) passedYears.add(2);
 
     const reqYear = options.requestYear || currentPlan?.requestYear || 2026;
@@ -888,10 +890,17 @@ export default function App() {
       ? targetYearLvl
       : (targetYearLvl !== 'all' && !isNaN(Number(targetYearLvl)) ? Number(targetYearLvl) : null);
 
-    const isAllYears = !targetLvlNum;
-    const yearsToFill = targetLvlNum
-      ? [targetLvlNum]
-      : [1, 2, 3];
+    const isAllYears = !targetLvlNum || targetYearLvl === 'all';
+    let yearsToFill = (targetLvlNum && !passedYears.has(Number(targetLvlNum)))
+      ? [Number(targetLvlNum)]
+      : [1, 2, 3].filter(y => !passedYears.has(y));
+
+    if (yearsToFill.length === 0) {
+      yearsToFill = [1, 2, 3].filter(y => !passedYears.has(y));
+    }
+    if (yearsToFill.length === 0) {
+      yearsToFill = [2, 3];
+    }
 
     // Determine exact target slots (year_level, period_id) being auto-filled
     const isTargetSlot = (yearLevel, periodId) => {
@@ -1668,7 +1677,7 @@ export default function App() {
         ...cached.plan,
         targetYearLevel: planOptions?.targetYearLevel || cached.plan?.targetYearLevel || 1,
         forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now(),
-        status: isStudentDisagreed ? 'rejected' : (cached.plan?.status || 'draft'),
+        status: planOptions?.status || (isStudentDisagreed ? 'rejected' : (cached.plan?.status || 'draft')),
         rejectionComment: effectiveRejectionComment,
         rejection_comment: effectiveRejectionComment
       };
@@ -1692,14 +1701,14 @@ export default function App() {
         ...planData.plan,
         targetYearLevel: planOptions?.targetYearLevel || planData.plan?.targetYearLevel || 1,
         forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now(),
-        status: isStudentDisagreed ? 'rejected' : (planData.plan?.status || 'draft'),
+        status: planOptions?.status || (isStudentDisagreed ? 'rejected' : (planData.plan?.status || 'draft')),
         rejectionComment: effectiveRejectionComment || planData.plan?.rejectionComment,
         rejection_comment: effectiveRejectionComment || planData.plan?.rejection_comment
       } : {
         plan_id: student.student_id,
         student_id: student.student_id,
         title: `${student.course_code || 'PT3-BSIT'} Study Plan`,
-        status: isStudentDisagreed ? 'rejected' : 'draft',
+        status: planOptions?.status || (isStudentDisagreed ? 'rejected' : 'draft'),
         rejectionComment: effectiveRejectionComment,
         rejection_comment: effectiveRejectionComment,
         total_credit_points: 0,
@@ -1841,9 +1850,15 @@ export default function App() {
     };
     setCurrentPlan(updatedPlan);
     setAllStudentPlansMap(prev => {
+      const sIdNum = Number(selectedStudent.student_id);
+      const sIdStr = String(selectedStudent.student_id);
       const nextMap = {
         ...prev,
-        [selectedStudent.student_id]: {
+        [sIdNum]: {
+          plan: updatedPlan,
+          units: planUnits
+        },
+        [sIdStr]: {
           plan: updatedPlan,
           units: planUnits
         }
@@ -2574,6 +2589,7 @@ export default function App() {
         <OfficialStudyPlanDocumentModal
           student={selectedStudent}
           planUnits={planUnits}
+          history={history}
           currentPlan={currentPlan}
           onClose={() => setShowDocumentModal(false)}
         />
