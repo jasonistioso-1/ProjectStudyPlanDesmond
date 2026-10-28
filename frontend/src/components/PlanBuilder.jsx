@@ -192,7 +192,7 @@ export default function PlanBuilder({
 
   // Auto System Generation Scope Selection Modal State
   const [showAutoGenModal, setShowAutoGenModal] = useState(false);
-  const [scopeYear, setScopeYear] = useState('all');
+  const [scopeYears, setScopeYears] = useState([2, 3]);
   const [scopePeriods, setScopePeriods] = useState([3, 4, 5]);
   const [modalLayoutType, setModalLayoutType] = useState('trimester');
 
@@ -263,17 +263,18 @@ export default function PlanBuilder({
     const targetLayout = currentPlan?.layoutType || layoutType || 'trimester';
     setModalLayoutType(targetLayout);
 
-    // Default to target year from request or next open year so that target scope matches request
-    let defaultYear = 'all';
-    if (currentPlan?.targetYearLevel && currentPlan.targetYearLevel !== 'all' && !passedYears.has(Number(currentPlan.targetYearLevel))) {
-      defaultYear = Number(currentPlan.targetYearLevel);
-    } else if (currentPlan?.requestYear) {
+    // Default selected years to open/uncompleted years or current request year
+    let defaultYears = [1, 2, 3].filter(y => !passedYears.has(y));
+    if (currentPlan?.requestYear) {
       const reqY = Number(currentPlan.requestYear) === 2027 ? 2 : Number(currentPlan.requestYear) === 2028 ? 3 : 1;
-      if (!passedYears.has(reqY)) defaultYear = reqY;
+      if (!passedYears.has(reqY)) {
+        defaultYears = [reqY];
+      }
     } else if (activeYearLevel && typeof activeYearLevel === 'number' && !passedYears.has(activeYearLevel)) {
-      defaultYear = activeYearLevel;
+      defaultYears = [activeYearLevel];
     }
-    setScopeYear(defaultYear);
+    if (defaultYears.length === 0) defaultYears = [2, 3];
+    setScopeYears(defaultYears);
 
     // Synchronize periods based on layout
     if (targetLayout === 'semester') {
@@ -3553,31 +3554,44 @@ export default function PlanBuilder({
 
               {/* 2. Target Academic Year Scope */}
               <div className="space-y-2">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
-                  2. Target Academic Year Scope:
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
+                    2. Target Academic Year Scope:
+                  </label>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                    Centang tahun yang ingin diisi otomatis
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {[
-                    { id: 'all', label: 'All 3 Years (72 CP)' },
                     { id: 1, label: 'Year 1 (2026)' },
                     { id: 2, label: 'Year 2 (2027)' },
                     { id: 3, label: 'Year 3 (2028)' }
                   ].map(opt => {
-                    const isPassed = typeof opt.id === 'number' && passedYears.has(opt.id);
-                    const isSelected = scopeYear === opt.id;
+                    const isPassed = passedYears.has(opt.id);
+                    const isSelected = scopeYears.includes(opt.id);
                     return (
                       <button
                         key={opt.id}
                         type="button"
                         onClick={() => {
                           if (isPassed) {
-                            setDragWarningToast(`Year ${opt.id} is already completed in history. Selecting 'All 3 Years' will auto-fulfill open units in Year 2 & 3.`);
-                            setScopeYear('all');
+                            setDragWarningToast(`Year ${opt.id} is already completed in student academic history.`);
+                            setTimeout(() => setDragWarningToast(null), 5000);
+                            return;
+                          }
+                          if (isSelected) {
+                            if (scopeYears.length > 1) {
+                              setScopeYears(scopeYears.filter(y => y !== opt.id));
+                            } else {
+                              setDragWarningToast('At least one academic year must be selected.');
+                              setTimeout(() => setDragWarningToast(null), 4000);
+                            }
                           } else {
-                            setScopeYear(opt.id);
+                            setScopeYears([...scopeYears, opt.id].sort((a, b) => a - b));
                           }
                         }}
-                        className={`p-3 rounded-2xl border text-left text-xs font-extrabold transition-all cursor-pointer flex flex-col justify-between gap-1 font-heading ${
+                        className={`p-3 rounded-2xl border text-left text-xs font-extrabold transition-all cursor-pointer flex flex-col justify-between gap-1.5 font-heading ${
                           isSelected
                             ? 'border-red-700 bg-red-700 text-white shadow-xs'
                             : isPassed
@@ -3589,7 +3603,13 @@ export default function PlanBuilder({
                           <span>{isSelected ? '✓ ' : ''}{opt.label}</span>
                           {isPassed && <span className="text-[10px] font-extrabold font-mono bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 px-1.5 py-0.5 rounded-md">🔒 Passed</span>}
                         </span>
-                        {isPassed && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal font-sans">Completed in History</span>}
+                        {isPassed ? (
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal font-sans">Completed in History</span>
+                        ) : (
+                          <span className={`text-[10px] font-normal font-sans ${isSelected ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'}`}>
+                            {isSelected ? 'Included in Auto-Fill' : 'Click to select'}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -3757,14 +3777,18 @@ export default function PlanBuilder({
                   onClick={() => {
                     setShowAutoGenModal(false);
                     setLayoutType(modalLayoutType);
-                    if (typeof scopeYear === 'number') {
-                      setActiveYearLevel(scopeYear);
+                    const primaryYear = scopeYears[0] || 1;
+                    setActiveYearLevel(primaryYear);
+                    if (scopeYears.length === 1) {
                       setViewMode('single');
+                    } else {
+                      setViewMode('all');
                     }
                     if (onAutoGeneratePlan) {
-                      const reqYearCalc = scopeYear === 2 ? 2027 : scopeYear === 3 ? 2028 : 2026;
+                      const reqYearCalc = primaryYear === 2 ? 2027 : primaryYear === 3 ? 2028 : 2026;
                       onAutoGeneratePlan(student?.student_id, {
-                        targetYearLevel: scopeYear,
+                        targetYears: scopeYears,
+                        targetYearLevel: scopeYears.length === 1 ? primaryYear : scopeYears,
                         requestYear: reqYearCalc,
                         requestPeriods: scopePeriods,
                         layoutType: modalLayoutType

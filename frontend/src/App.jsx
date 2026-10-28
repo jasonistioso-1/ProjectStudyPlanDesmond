@@ -1045,16 +1045,18 @@ export default function App() {
     if (uncompletedYears.length === 0) uncompletedYears = [2, 3];
 
     // Order years so target/requested year is prioritized first, followed by other open years
-    let yearsToFill = uncompletedYears;
-    const reqYearLevel = reqYear === 2028 ? 3 : (reqYear === 2027 ? 2 : 1);
-    if (targetLvlNum && !passedYears.has(targetLvlNum)) {
-      if (options.isStudentRequest || !isAllYears) {
-        yearsToFill = [targetLvlNum];
-      } else {
-        yearsToFill = [targetLvlNum, ...uncompletedYears.filter(y => y !== targetLvlNum)];
-      }
-    } else if (reqYearLevel && !passedYears.has(reqYearLevel)) {
-      yearsToFill = [reqYearLevel, ...uncompletedYears.filter(y => y !== reqYearLevel)];
+    let yearsToFill = [];
+    if (Array.isArray(options.targetYears) && options.targetYears.length > 0) {
+      yearsToFill = options.targetYears.map(Number).filter(y => !passedYears.has(y));
+    } else if (Array.isArray(options.targetYearLevel) && options.targetYearLevel.length > 0) {
+      yearsToFill = options.targetYearLevel.map(Number).filter(y => !passedYears.has(y));
+    } else if (targetLvlNum && !passedYears.has(targetLvlNum)) {
+      yearsToFill = [targetLvlNum];
+    } else {
+      yearsToFill = uncompletedYears;
+    }
+    if (yearsToFill.length === 0) {
+      yearsToFill = uncompletedYears.length > 0 ? uncompletedYears : [2, 3];
     }
 
     // Determine exact target slots (year_level, period_id) being auto-filled:
@@ -1135,7 +1137,7 @@ export default function App() {
           { year: 2, period_id: 4, cores: ['ICT283', 'ICT285', 'ICT201'] },
           { year: 2, period_id: 5, cores: ['ICT202', 'ICT292'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 3, cores: ['BSC203', 'ICT203', 'ICT302', 'MAS183'] },
+          { year: 3, period_id: 3, cores: ['ICT203', 'ICT302', 'ICT304'] },
           { year: 3, period_id: 4, cores: ['ICT206', 'ICT374', 'ICT301'] },
           { year: 3, period_id: 5, cores: ['ICT373', 'ICT305'] }
         ],
@@ -1147,8 +1149,8 @@ export default function App() {
           { year: 2, period_id: 1, cores: ['ICT145', 'ICT167', 'ICT285', 'ICT202'] },
           { year: 2, period_id: 2, cores: ['ICT283', 'ICT284', 'ICT201', 'ICT305'] },
           // Year 3 (8 units = 24 CP)
-          { year: 3, period_id: 1, cores: ['ICT292', 'ICT206', 'BSC203', 'ICT203', 'MAS183'] },
-          { year: 3, period_id: 2, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT301', 'ICT305'] }
+          { year: 3, period_id: 1, cores: ['ICT292', 'ICT206', 'ICT203', 'ICT304'] },
+          { year: 3, period_id: 2, cores: ['ICT302', 'ICT373', 'ICT374', 'ICT301'] }
         ]
       },
       bis: {
@@ -1314,7 +1316,6 @@ export default function App() {
           for (const coreCode of presetBlock.cores) {
             if (scheduledCodes.has(coreCode)) continue;
             if (completedCodes.has(coreCode)) continue;
-            if (getPlannedCP() >= neededCanvasCP) break;
             if (!isOfferingValid(coreCode, periodId)) continue;
 
             const unit = (catalogUnits || []).find(u => u.code === coreCode) || {
@@ -1410,7 +1411,7 @@ export default function App() {
           return (a.code || '').localeCompare(b.code || '');
         });
 
-        while ((periodLoads[pKey] || 0) < targetCapacity && getPlannedCP() < neededCanvasCP) {
+        while ((periodLoads[pKey] || 0) < targetCapacity) {
           const candidate = sortedPool.find(u => {
             if (scheduledCodes.has(u.code)) return false;
             if (completedCodes.has(u.code)) return false;
@@ -1468,7 +1469,9 @@ export default function App() {
     const wasApproved = studentCurrentPlan?.status === 'approved' || studentCurrentPlan?.status === 'agreed' || studentCurrentPlan?.status === 'stored';
     const newStatus = 'draft';
 
-    const targetFocusYear = targetLvlNum || (reqYear === 2027 ? 2 : reqYear === 2028 ? 3 : 1);
+    const targetFocusYear = (Array.isArray(options.targetYears) && options.targetYears.length > 0)
+      ? options.targetYears[0]
+      : (targetLvlNum || (reqYear === 2027 ? 2 : reqYear === 2028 ? 3 : 1));
 
     const updatedPlan = {
       ...studentCurrentPlan,
