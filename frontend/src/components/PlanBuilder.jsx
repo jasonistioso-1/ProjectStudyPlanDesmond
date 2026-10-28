@@ -1185,6 +1185,10 @@ export default function PlanBuilder({
 
       // Cross-layout fallback matching:
       if (activeLayout === 'semester') {
+        if (uP >= 3) {
+          if (uY === 2 && uP === 4) return yL === 2 && pI === 2;
+          if (uY === 2 && uP === 5) return yL === 3 && pI === 1;
+        }
         if (pI === 1 && (uP === 3 || (uP === 4 && (u.sequence_order || 0) <= 2))) return true;
         if (pI === 2 && (uP === 5 || (uP === 4 && (u.sequence_order || 0) > 2))) return true;
       } else {

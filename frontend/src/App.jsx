@@ -239,7 +239,9 @@ export default function App() {
       Object.entries(allStudentPlansMap).forEach(([sId, data]) => {
         if (mockClientStudentPlans[Number(sId)]) {
           mockClientStudentPlans[Number(sId)].plan = data.plan;
-          mockClientStudentPlans[Number(sId)].units = data.units;
+          if (data?.units && data.units.length > 0) {
+            mockClientStudentPlans[Number(sId)].units = data.units;
+          }
         }
       });
     } catch (e) {}
@@ -1899,31 +1901,36 @@ export default function App() {
 
       setHistory(historyData || []);
       
+      const fallbackPlanObj = mockClientStudentPlans[Number(student.student_id)];
+      const initialUnits = (planData && planData.units && planData.units.length > 0)
+        ? planData.units
+        : (fallbackPlanObj?.units && fallbackPlanObj.units.length > 0 ? fallbackPlanObj.units : []);
+
       const initialPlan = (planData && planData.plan) ? {
         ...planData.plan,
+        status: planOptions?.status || (isStudentDisagreed ? 'rejected' : (planData.plan?.status && planData.plan.status !== 'draft' ? planData.plan.status : (fallbackPlanObj?.plan?.status || 'draft'))),
+        total_credit_points: (planData.plan?.total_credit_points > 0 ? planData.plan.total_credit_points : (fallbackPlanObj?.plan?.total_credit_points || (initialUnits.length * 3))),
         targetYearLevel: planOptions?.targetYearLevel || planData.plan?.targetYearLevel || 1,
         requestYear: planOptions?.requestYear || planData.plan?.requestYear,
         requestPeriods: planOptions?.requestPeriods || planData.plan?.requestPeriods,
-        layoutType: planOptions?.layoutType || planData.plan?.layoutType || 'trimester',
+        layoutType: planOptions?.layoutType || planData.plan?.layoutType || fallbackPlanObj?.plan?.layoutType || 'trimester',
         forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now(),
-        status: planOptions?.status || (isStudentDisagreed ? 'rejected' : (planData.plan?.status || 'draft')),
         rejectionComment: effectiveRejectionComment || planData.plan?.rejectionComment,
         rejection_comment: effectiveRejectionComment || planData.plan?.rejection_comment
       } : {
         plan_id: student.student_id,
         student_id: student.student_id,
-        title: `${student.course_code || 'PT3-BSIT'} Study Plan`,
-        status: planOptions?.status || (isStudentDisagreed ? 'rejected' : 'draft'),
+        title: fallbackPlanObj?.plan?.title || `${student.course_code || 'PT3-BSIT'} Study Plan`,
+        status: planOptions?.status || (isStudentDisagreed ? 'rejected' : (fallbackPlanObj?.plan?.status || 'draft')),
         rejectionComment: effectiveRejectionComment,
         rejection_comment: effectiveRejectionComment,
-        total_credit_points: 0,
+        total_credit_points: fallbackPlanObj?.plan?.total_credit_points || (initialUnits.length * 3),
         targetYearLevel: planOptions?.targetYearLevel || 1,
         requestYear: planOptions?.requestYear,
         requestPeriods: planOptions?.requestPeriods,
-        layoutType: planOptions?.layoutType || 'trimester',
+        layoutType: planOptions?.layoutType || fallbackPlanObj?.plan?.layoutType || 'trimester',
         forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now()
       };
-      const initialUnits = (planData && planData.units) ? planData.units : [];
 
       setCurrentPlan(initialPlan);
       setPlanUnits(initialUnits);

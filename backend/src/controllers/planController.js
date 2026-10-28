@@ -82,7 +82,18 @@ export async function getPlanByStudent(req, res) {
             [plan.plan_id]
         );
 
-        res.json({ plan, units: unitRows });
+        let effectiveUnits = unitRows;
+        if ((!unitRows || unitRows.length === 0) && mockStudentPlans[numId]?.units?.length > 0) {
+            effectiveUnits = mockStudentPlans[numId].units;
+            if (!plan.total_credit_points || plan.total_credit_points === 0) {
+                plan.total_credit_points = mockStudentPlans[numId].plan.total_credit_points || 72;
+            }
+            if (plan.status === 'draft' && mockStudentPlans[numId].plan.status) {
+                plan.status = mockStudentPlans[numId].plan.status;
+            }
+        }
+
+        res.json({ plan, units: effectiveUnits });
     } catch (err) {
         console.warn('Database query failed in getPlanByStudent, returning fallback plan:', err.message);
         const fallback = mockStudentPlans[numId] || {
