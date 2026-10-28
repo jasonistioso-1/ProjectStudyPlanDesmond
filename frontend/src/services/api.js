@@ -261,7 +261,7 @@ export const mockClientStudentPlans = {
         ]
     },
     2: {
-        plan: { plan_id: 2, student_id: 2, title: 'PT3-BSIT Computer Science Plan 2026', status: 'agreed', total_credit_points: 72 },
+        plan: { plan_id: 2, student_id: 2, title: 'PT3-BSIT Computer Science Plan 2026', status: 'agreed', total_credit_points: 72, layoutType: 'trimester' },
         units: [
             // Year 1 - Trimester 1 (period_id: 3) - 12 CP
             { unit_id: 1, code: 'ICT100', title: 'Transition to IT', credit_points: 3, year_level: 1, period_id: 3, sequence_order: 1 },

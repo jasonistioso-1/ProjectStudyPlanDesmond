@@ -1124,36 +1124,20 @@ export default function PlanBuilder({
     let historyUnitsForSlot = [];
     if (yearHistory.length > 0) {
       if (activeLayout === 'semester') {
-        const itemsWithPeriod = yearHistory.filter(h => 
+        // Strictly match semester period (S1 = 1, S2 = 2). Trimester units are NOT shown in semester slots!
+        historyUnitsForSlot = yearHistory.filter(h => 
           Number(h.period_id) === pI || 
-          (pI === 1 && (h.period_code === 'S1' || h.period_id === 1)) || 
-          (pI === 2 && (h.period_code === 'S2' || h.period_id === 2))
+          (pI === 1 && (h.period_code === 'S1' || Number(h.period_id) === 1)) || 
+          (pI === 2 && (h.period_code === 'S2' || Number(h.period_id) === 2))
         );
-        if (itemsWithPeriod.length > 0) {
-          historyUnitsForSlot = itemsWithPeriod;
-        } else {
-          // Trimester history mapped to semester layout slots
-          if (pI === 1) {
-            const s1Matches = yearHistory.filter(h => h.period_code === 'T1' || Number(h.period_id) === 3);
-            historyUnitsForSlot = s1Matches.length > 0 ? s1Matches : yearHistory.slice(0, 6);
-          } else if (pI === 2) {
-            const s2Matches = yearHistory.filter(h => h.period_code === 'T2' || h.period_code === 'T3' || Number(h.period_id) === 4 || Number(h.period_id) === 5);
-            historyUnitsForSlot = s2Matches.length > 0 ? s2Matches : yearHistory.slice(6, 12);
-          }
-        }
       } else {
-        const itemsWithPeriod = yearHistory.filter(h => 
+        // Strictly match trimester period (T1 = 3, T2 = 4, T3 = 5). Semester units are NOT shown in trimester slots!
+        historyUnitsForSlot = yearHistory.filter(h => 
           Number(h.period_id) === pI || 
-          (pI === 3 && (h.period_code === 'T1' || h.period_id === 3)) || 
-          (pI === 4 && (h.period_code === 'T2' || h.period_id === 4)) || 
-          (pI === 5 && (h.period_code === 'T3' || h.period_id === 5))
+          (pI === 3 && (h.period_code === 'T1' || Number(h.period_id) === 3)) || 
+          (pI === 4 && (h.period_code === 'T2' || Number(h.period_id) === 4)) || 
+          (pI === 5 && (h.period_code === 'T3' || Number(h.period_id) === 5))
         );
-        if (itemsWithPeriod.length > 0) {
-          historyUnitsForSlot = itemsWithPeriod;
-        } else {
-          const termIdx = pI === 3 ? 0 : pI === 4 ? 1 : 2;
-          historyUnitsForSlot = yearHistory.slice(termIdx * 4, (termIdx + 1) * 4);
-        }
       }
     }
 
@@ -1177,32 +1161,11 @@ export default function PlanBuilder({
       });
     }
 
-    // 2. Otherwise return planned units on canvas for this year and period
+    // 2. Otherwise return planned units on canvas for this year and period (strictly matching period)
     const termUnits = planUnits.filter(u => {
       const uY = Number(u.year_level);
       const uP = Number(u.period_id);
-
-      // Same year matching:
-      if (uY === yL) {
-        if (uP === pI) return true;
-
-        // Cross-layout fallback matching within the same year:
-        if (activeLayout === 'semester') {
-          if (pI === 1 && (uP === 3 || (uP === 4 && (u.sequence_order || 0) <= 2))) return true;
-          if (pI === 2 && (uP === 5 || (uP === 4 && (u.sequence_order || 0) > 2))) return true;
-        } else {
-          if (pI === 3 && uP === 1 && (u.sequence_order || 0) <= 2) return true;
-          if (pI === 4 && ((uP === 1 && (u.sequence_order || 0) > 2) || (uP === 2 && (u.sequence_order || 0) <= 2))) return true;
-          if (pI === 5 && uP === 2 && (u.sequence_order || 0) > 2) return true;
-        }
-      }
-
-      // Cross-year fallback: if legacy plan stored year 2 trimester 4/5 units for an advanced student
-      if (activeLayout === 'semester') {
-        if (uY === 2 && uP === 4 && yL === 2 && pI === 2) return true;
-        if (uY === 2 && uP === 5 && yL === 3 && pI === 1) return true;
-      }
-      return false;
+      return uY === yL && uP === pI;
     });
 
     // Ensure no duplicate unit codes or already-completed unit codes can be rendered
@@ -3036,7 +2999,7 @@ export default function PlanBuilder({
                                 completedUnitCodes={completedUnitCodes}
                                 historyMap={historyMap}
                                 isReadOnly={isYearPassed}
-                                isPassedYear={isYearPassed}
+                                isPassedYear={isYearPassed && unitsInPeriod.some(u => u.isCompleted || completedUnitCodes.has(u.code))}
                                 isChair={isChair}
                                 changeRequest={changeReq}
                                 onResolveChangeRequest={onRemoveSemesterRequest ? () => onRemoveSemesterRequest(periodKey) : undefined}

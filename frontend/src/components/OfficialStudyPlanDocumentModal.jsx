@@ -119,11 +119,11 @@ export default function OfficialStudyPlanDocumentModal({ student, planUnits = []
       if (uYear !== Number(yearLevel)) return false;
 
       if (uPid === Number(targetPid)) return true;
-      if (targetPid === 3 && (u.period_code === 'T1' || uPid === 1)) return true;
-      if (targetPid === 4 && (u.period_code === 'T2' || uPid === 2)) return true;
-      if (targetPid === 5 && (u.period_code === 'T3')) return true;
-      if (targetPid === 1 && (u.period_code === 'S1' || uPid === 3)) return true;
-      if (targetPid === 2 && (u.period_code === 'S2' || uPid === 4 || uPid === 5)) return true;
+      if (targetPid === 3 && (u.period_code === 'T1' || uPid === 3)) return true;
+      if (targetPid === 4 && (u.period_code === 'T2' || uPid === 4)) return true;
+      if (targetPid === 5 && (u.period_code === 'T3' || uPid === 5)) return true;
+      if (targetPid === 1 && (u.period_code === 'S1' || uPid === 1)) return true;
+      if (targetPid === 2 && (u.period_code === 'S2' || uPid === 2)) return true;
 
       return false;
     });
