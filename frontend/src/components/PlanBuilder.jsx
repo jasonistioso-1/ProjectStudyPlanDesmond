@@ -1296,7 +1296,23 @@ export default function PlanBuilder({
               </span>
 
               {/* Submit / Update Plan Request Button */}
-              {planStatus === 'request_submitted' || planStatus === 'rejected' ? (
+              {planStatus === 'recommended' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sigEl = document.getElementById('digital-signature-section');
+                    if (sigEl) {
+                      sigEl.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 font-heading tracking-tight animate-pulse"
+                  title="Study plan recommended by Academic Chair. Review units and sign off below."
+                >
+                  <FileCheck className="w-3.5 h-3.5 text-white" />
+                  <span>Review Recommended Plan</span>
+                  <ArrowRight className="w-4 h-4 opacity-80" />
+                </button>
+              ) : planStatus === 'request_submitted' || planStatus === 'rejected' ? (
                 <button
                   type="button"
                   disabled={true}
@@ -1444,7 +1460,101 @@ export default function PlanBuilder({
           </div>
         ) : (
           <>
+            {/* RECOMMENDED STATUS BANNER (Awaiting Student Review & Digital Sign-Off) */}
+            {planStatus === 'recommended' && (
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-in fade-in duration-300">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <FileCheck className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white font-heading">
+                      Study Plan Recommended by Academic Chair
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-sans">
+                      Academic Chair Dr. Aris Thorne has recommended this degree plan. Please review your mapped course units below and provide your digital signature to proceed.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+                  <span className="text-xs font-mono font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 px-3 py-1 rounded-xl border border-amber-200 dark:border-amber-800">
+                    Awaiting Student Sign-Off
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sigEl = document.getElementById('digital-signature-section');
+                      if (sigEl) {
+                        sigEl.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 font-heading"
+                  >
+                    <span>Sign Plan</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
 
+            {/* REQUEST SUBMITTED STATUS BANNER */}
+            {planStatus === 'request_submitted' && (
+              <div className="bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-in fade-in duration-300">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white font-heading">
+                      Study Plan Request Submitted
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-sans">
+                      Your study plan request is under review by the Academic Chair. You will be notified once a study plan is recommended.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold text-sky-800 dark:text-sky-300 bg-sky-100 dark:bg-sky-900/50 px-3 py-1 rounded-xl border border-sky-200 dark:border-sky-800 shrink-0 self-start sm:self-center">
+                  Awaiting Chair Action
+                </span>
+              </div>
+            )}
+
+            {/* REVISION REQUESTED / REJECTED STATUS BANNER */}
+            {planStatus === 'rejected' && (
+              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-in fade-in duration-300">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white font-heading">
+                      Change Request Under Review
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-sans">
+                      You requested revisions for your study plan. The Academic Chair has been notified and is preparing an updated plan.
+                    </p>
+                    {currentPlan?.rejectionComment && (
+                      <div className="mt-2 bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl p-2.5 shadow-2xs">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <MessageSquareQuote className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                          <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 dark:text-rose-300 font-heading">
+                            Your Revision Feedback:
+                          </span>
+                        </div>
+                        <div className="pl-3.5 border-l-2 border-rose-400 dark:border-rose-600 py-0.5">
+                          <p className="text-xs font-bold text-rose-950 dark:text-rose-100 font-sans italic">
+                            “{currentPlan.rejectionComment}”
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold text-rose-800 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/50 px-3 py-1 rounded-xl border border-rose-200 dark:border-rose-800 shrink-0 self-start sm:self-center">
+                  Revision Pending Chair Review
+                </span>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {years.map(y => {
@@ -1535,6 +1645,13 @@ export default function PlanBuilder({
                               <button
                                 type="button"
                                 onClick={() => {
+                                  if (planStatus === 'recommended') {
+                                    const sigEl = document.getElementById('digital-signature-section');
+                                    if (sigEl) {
+                                      sigEl.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                    return;
+                                  }
                                   if (planStatus === 'request_submitted' || planStatus === 'rejected') {
                                     setDragWarningToast(planStatus === 'rejected' ? 'Revision Pending: You have requested amendments for this study plan. The Academic Chair is reviewing your comments.' : 'Active Request Pending: You already have a study plan request awaiting Academic Chair review.');
                                     setTimeout(() => setDragWarningToast(null), 5000);
@@ -1555,13 +1672,24 @@ export default function PlanBuilder({
                                   setShowSubmitPlanRequestModal(true);
                                 }}
                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold shadow-sm transition-all font-heading ${
-                                  planStatus === 'request_submitted' || planStatus === 'rejected'
+                                  planStatus === 'recommended'
+                                    ? 'bg-amber-600 hover:bg-amber-700 text-white cursor-pointer active:scale-95'
+                                    : planStatus === 'request_submitted' || planStatus === 'rejected'
                                     ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-80'
                                     : 'bg-red-700 hover:bg-red-800 text-white cursor-pointer active:scale-95 hover:shadow-md'
                                 }`}
                               >
-                                <Send className="w-3.5 h-3.5" />
-                                <span>{planStatus === 'rejected' ? 'Revision Pending Chair Review' : planStatus === 'request_submitted' ? 'Request Pending Review' : 'Submit Request to Unlock'}</span>
+                                {planStatus === 'recommended' ? (
+                                  <>
+                                    <FileCheck className="w-3.5 h-3.5" />
+                                    <span>Review Recommended Plan</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Send className="w-3.5 h-3.5" />
+                                    <span>{planStatus === 'rejected' ? 'Revision Pending Chair Review' : planStatus === 'request_submitted' ? 'Request Pending Review' : 'Submit Request to Unlock'}</span>
+                                  </>
+                                )}
                               </button>
                             </div>
                           </div>
@@ -1769,23 +1897,25 @@ export default function PlanBuilder({
           </div>
 
             {/* Unified Student Digital Signature Pad Component (Single Card for 72 CP Plan) */}
-            <SignaturePad
-              student={student}
-              yearLevel="ALL"
-              yearName="Official 3-Year Study Plan (72 CP)"
-              planStatus={planStatus}
-              planUnitsCount={planUnits.length}
-              isAlreadyAgreed={isAlreadyAgreed || Boolean(currentPlan?.studentSignature || currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1])}
-              isYearCompleted={false}
-              isYearLocked={false}
-              onAgreePlan={(sigObj) => {
-                if (onAgreePlan) onAgreePlan(sigObj, 'ALL');
-              }}
-              onRejectPlan={(reason) => {
-                if (onRejectPlan) onRejectPlan(reason, 'ALL');
-              }}
-              currentSignature={currentPlan?.studentSignature || currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1]}
-            />
+            <div id="digital-signature-section" className="scroll-mt-8">
+              <SignaturePad
+                student={student}
+                yearLevel="ALL"
+                yearName="Official 3-Year Study Plan (72 CP)"
+                planStatus={planStatus}
+                planUnitsCount={planUnits.length}
+                isAlreadyAgreed={planStatus !== 'recommended' && (isAlreadyAgreed || Boolean(currentPlan?.studentSignature || currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1]))}
+                isYearCompleted={false}
+                isYearLocked={false}
+                onAgreePlan={(sigObj) => {
+                  if (onAgreePlan) onAgreePlan(sigObj, 'ALL');
+                }}
+                onRejectPlan={(reason) => {
+                  if (onRejectPlan) onRejectPlan(reason, 'ALL');
+                }}
+                currentSignature={planStatus === 'recommended' ? null : (currentPlan?.studentSignature || currentPlan?.signature || currentPlan?.yearSignatures?.['ALL'] || currentPlan?.yearSignatures?.[1])}
+              />
+            </div>
           </>
         )}
 
@@ -2084,8 +2214,14 @@ export default function PlanBuilder({
                 <button
                   type="button"
                   onClick={() => {
-                    if (planStatus === 'request_submitted' || planStatus === 'rejected') {
-                      alert(planStatus === 'rejected' ? 'Revision Pending: You have requested amendments for this study plan. The Academic Chair is reviewing your comments.' : 'Active Request Pending: You already have a study plan request under review by the Academic Chair. Duplicate requests are not permitted.');
+                    if (planStatus === 'recommended' || planStatus === 'request_submitted' || planStatus === 'rejected') {
+                      alert(
+                        planStatus === 'recommended'
+                          ? 'A study plan has already been recommended by your Academic Chair. Please review and sign off below rather than submitting a new request.'
+                          : planStatus === 'rejected'
+                          ? 'Revision Pending: You have requested amendments for this study plan. The Academic Chair is reviewing your comments.'
+                          : 'Active Request Pending: You already have a study plan request under review by the Academic Chair. Duplicate requests are not permitted.'
+                      );
                       return;
                     }
                     if (reqPeriods.length === 0) {

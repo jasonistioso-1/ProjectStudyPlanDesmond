@@ -27,10 +27,14 @@ export default function SignaturePad({
   const isDrawingRef = useRef(false);
 
   useEffect(() => {
-    if (currentSignature) {
+    if (planStatus === 'recommended' || planStatus === 'draft' || planStatus === 'request_submitted') {
+      setSavedSignatureData(null);
+    } else if (currentSignature) {
       setSavedSignatureData(currentSignature);
+    } else {
+      setSavedSignatureData(null);
     }
-  }, [currentSignature]);
+  }, [currentSignature, planStatus]);
 
   const handleConfirmRejection = () => {
     if (!rejectReason.trim()) {
@@ -242,7 +246,7 @@ export default function SignaturePad({
   }
 
   // 3. RENDER AGREED & SIGNED STATE FOR THIS YEAR
-  const isSigned = isAlreadyAgreed || planStatus === 'agreed' || planStatus === 'approved' || planStatus === 'stored' || Boolean(savedSignatureData);
+  const isSigned = (planStatus !== 'recommended' && planStatus !== 'draft' && planStatus !== 'request_submitted') && (isAlreadyAgreed || planStatus === 'agreed' || planStatus === 'approved' || planStatus === 'stored' || Boolean(savedSignatureData));
   if (isSigned) {
     const sig = savedSignatureData || {
       verificationHash: `SIG-Y${yearLevel || 1}-${student?.student_number || '31234561'}`,
