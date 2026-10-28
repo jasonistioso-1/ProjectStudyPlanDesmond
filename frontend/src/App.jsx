@@ -43,7 +43,12 @@ import {
   Award,
   ShieldCheck,
   Download,
-  Search
+  Search,
+  Calendar,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw
 } from 'lucide-react';
 
 const initialSampleStudents = [
@@ -460,6 +465,159 @@ export default function App() {
   const [auditLogsList, setAuditLogsList] = useState([]);
   const [auditSearchQuery, setAuditSearchQuery] = useState('');
   const [auditTab, setAuditTab] = useState('data_audit'); // 'data_audit' | 'system_spec'
+
+  // Change Log Calendar & Daily Reset Logic
+  const getLocalDayKey = useCallback((date = new Date()) => {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }, []);
+
+  const getTodayKey = useCallback(() => getLocalDayKey(new Date()), [getLocalDayKey]);
+
+  const [auditSelectedDate, setAuditSelectedDate] = useState(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  });
+  const [showAuditCalendar, setShowAuditCalendar] = useState(false);
+  const [auditCalendarMonth, setAuditCalendarMonth] = useState(() => new Date());
+
+  // Date display helper for Change Log
+  const formatSelectedDateDisplay = useCallback((dateKey) => {
+    if (dateKey === 'all') return 'All Historical Logs';
+    if (!dateKey) return '';
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const isToday = dateKey === getTodayKey();
+    const formatted = dateObj.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+    return isToday ? `Today (${formatted})` : formatted;
+  }, [getTodayKey]);
+
+  // Stepper to navigate day-by-day
+  const handleStepAuditDay = useCallback((delta) => {
+    const baseKey = auditSelectedDate === 'all' ? getTodayKey() : auditSelectedDate;
+    const [y, m, d] = baseKey.split('-').map(Number);
+    const targetDate = new Date(y, m - 1, d + delta);
+    const nextKey = getLocalDayKey(targetDate);
+    setAuditSelectedDate(nextKey);
+    setAuditCalendarMonth(new Date(targetDate.getFullYear(), targetDate.getMonth(), 1));
+  }, [auditSelectedDate, getTodayKey, getLocalDayKey]);
+
+  // Map of dateKey -> count of logs
+  const auditDatesWithLogs = useMemo(() => {
+    const map = new Map();
+    auditLogsList.forEach(log => {
+      if (activeRole === 'student') {
+        const matchesCurrentStudent = selectedStudent ? (
+          (log.student_number && log.student_number === selectedStudent.student_number) ||
+          (log.first_name && log.first_name.toLowerCase() === selectedStudent.first_name.toLowerCase()) ||
+          (log.student_name && log.student_name.toLowerCase().includes(selectedStudent.first_name.toLowerCase()))
+        ) : true;
+        if (!matchesCurrentStudent) return;
+      }
+      const key = getLocalDayKey(log.created_at);
+      if (key) {
+        map.set(key, (map.get(key) || 0) + 1);
+      }
+    });
+    return map;
+  }, [auditLogsList, activeRole, selectedStudent, getLocalDayKey]);
+
+  // Active dates with logs in the currently viewed calendar month
+  const activeMonthDatesWithLogs = useMemo(() => {
+    const targetY = auditCalendarMonth.getFullYear();
+    const targetM = auditCalendarMonth.getMonth();
+    return Array.from(auditDatesWithLogs.entries()).filter(([key]) => {
+      const [y, m] = key.split('-').map(Number);
+      return y === targetY && (m - 1) === targetM;
+    }).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [auditDatesWithLogs, auditCalendarMonth]);
+
+  // Calendar grid day cells
+  const auditCalendarGridDays = useMemo(() => {
+    const year = auditCalendarMonth.getFullYear();
+    const month = auditCalendarMonth.getMonth();
+    const firstDayIndex = new Date(year, month, 1).getDay(); // 0 is Sunday
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    const days = [];
+
+    // Prev month days
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const dayNum = daysInPrevMonth - i;
+      const prevDate = new Date(year, month - 1, dayNum);
+      days.push({
+        dateKey: getLocalDayKey(prevDate),
+        dayNumber: dayNum,
+        isCurrentMonth: false
+      });
+    }
+
+    // Current month days
+    for (let d = 1; d <= daysInMonth; d++) {
+      const currDate = new Date(year, month, d);
+      days.push({
+        dateKey: getLocalDayKey(currDate),
+        dayNumber: d,
+        isCurrentMonth: true
+      });
+    }
+
+    // Next month days to complete week rows
+    const remaining = (7 - (days.length % 7)) % 7;
+    for (let d = 1; d <= remaining; d++) {
+      const nextDate = new Date(year, month + 1, d);
+      days.push({
+        dateKey: getLocalDayKey(nextDate),
+        dayNumber: d,
+        isCurrentMonth: false
+      });
+    }
+
+    return days;
+  }, [auditCalendarMonth, getLocalDayKey]);
+
+  // Filtered audit logs respecting Role, Calendar Date (Daily Reset), and Search Query
+  const filteredAuditLogs = useMemo(() => {
+    return auditLogsList.filter(log => {
+      // 1. Role filter (Student View mode)
+      if (activeRole === 'student') {
+        const matchesCurrentStudent = selectedStudent ? (
+          (log.student_number && log.student_number === selectedStudent.student_number) ||
+          (log.first_name && log.first_name.toLowerCase() === selectedStudent.first_name.toLowerCase()) ||
+          (log.student_name && log.student_name.toLowerCase().includes(selectedStudent.first_name.toLowerCase()))
+        ) : true;
+        if (!matchesCurrentStudent) return false;
+      }
+
+      // 2. Date filter (Calendar / Daily Reset)
+      if (auditSelectedDate && auditSelectedDate !== 'all') {
+        const logDateKey = getLocalDayKey(log.created_at);
+        if (logDateKey !== auditSelectedDate) return false;
+      }
+
+      // 3. Search query filter
+      if (!auditSearchQuery.trim()) return true;
+      const q = auditSearchQuery.toLowerCase();
+      const name = (log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : '')).toLowerCase();
+      const num = (log.student_number || '').toLowerCase();
+      const reason = (log.amendment_reason || '').toLowerCase();
+      const status = (log.plan_status || '').toLowerCase();
+      const author = (log.created_by || '').toLowerCase();
+      return name.includes(q) || num.includes(q) || reason.includes(q) || status.includes(q) || author.includes(q);
+    });
+  }, [auditLogsList, activeRole, selectedStudent, auditSelectedDate, auditSearchQuery, getLocalDayKey]);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState(null);
@@ -621,7 +779,12 @@ export default function App() {
 
   // Export Change Log & Audit Trail as Printable PDF Document
   const handleDownloadAuditPDF = () => {
-    const logRows = auditLogsList.map((log) => {
+    const listToExport = filteredAuditLogs && filteredAuditLogs.length > 0 ? filteredAuditLogs : auditLogsList;
+    const dateScopeText = auditSelectedDate === 'all'
+      ? 'Complete Historical Audit Trail'
+      : `Daily Filter Scope: ${formatSelectedDateDisplay(auditSelectedDate)}`;
+
+    const logRows = listToExport.map((log) => {
       const studentName = log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : (selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student Profile'));
       const studentNum = log.student_number || selectedStudent?.student_number || '31234561';
       const statusLabel = log.plan_status === 'logged_in' ? 'LOGIN / ACCOUNT SWITCH' :
@@ -658,7 +821,7 @@ export default function App() {
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 35px; color: #0f172a; }
           .header { border-bottom: 3px solid #b91c1c; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
           .title { font-size: 20px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
-          .subtitle { font-size: 12px; color: #64748b; margin-top: 4px; }
+          .subtitle { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600; }
           table { width: 100%; border-collapse: collapse; margin-top: 15px; }
           th { background-color: #0f172a; color: white; padding: 10px; text-align: left; font-size: 11px; text-transform: uppercase; }
           .footer { margin-top: 30px; border-top: 1px solid #cbd5e1; padding-top: 15px; font-size: 10px; color: #64748b; display: flex; justify-content: space-between; }
@@ -668,11 +831,11 @@ export default function App() {
         <div class="header">
           <div>
             <div class="title">Official Study Plan Change Log & Data Audit Trail</div>
-            <div class="subtitle">PT03 Solutions Academic Governance System & Historical Audit Log</div>
+            <div class="subtitle">${dateScopeText} &bull; PT03 Solutions Academic Governance System</div>
           </div>
           <div style="text-align: right; font-size: 11px; font-family: monospace;">
             <div>Export Date: ${new Date().toLocaleString()}</div>
-            <div>Total Audit Records: ${auditLogsList.length}</div>
+            <div>Records in Export: ${listToExport.length}</div>
           </div>
         </div>
         <table>
@@ -1600,6 +1763,8 @@ export default function App() {
 
   useEffect(() => {
     if (showAuditModal) {
+      setAuditSelectedDate(getTodayKey());
+      setAuditCalendarMonth(new Date());
       fetchAuditLog().then(res => {
         if (res && res.length > 0) {
           setAuditLogsList(prev => {
@@ -1610,7 +1775,7 @@ export default function App() {
         }
       }).catch(console.error);
     }
-  }, [showAuditModal]);
+  }, [showAuditModal, getTodayKey]);
 
   const loadInitialData = async () => {
     try {
@@ -2657,6 +2822,211 @@ export default function App() {
               </div>
             </div>
 
+            {/* Calendar & Date Filter Bar */}
+            <div className="mb-3 p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80 flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                  <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">
+                    {formatSelectedDateDisplay(auditSelectedDate)}
+                  </span>
+                  {auditSelectedDate !== 'all' && (
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+                      (auditDatesWithLogs.get(auditSelectedDate) || 0) > 0
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                    }`}>
+                      {auditDatesWithLogs.get(auditSelectedDate) || 0} logs
+                    </span>
+                  )}
+                </div>
+
+                {auditSelectedDate === getTodayKey() && (
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 hidden sm:inline-block">
+                    Daily Fresh Log
+                  </span>
+                )}
+              </div>
+
+              {/* Navigation Stepper & Calendar Toggle */}
+              <div className="flex items-center gap-1 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => handleStepAuditDay(-1)}
+                  className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                  title="Previous Day"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuditSelectedDate(getTodayKey());
+                    setAuditCalendarMonth(new Date());
+                  }}
+                  className={`px-2.5 py-1 text-[11px] font-extrabold rounded-lg border transition-all cursor-pointer ${
+                    auditSelectedDate === getTodayKey()
+                      ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+                      : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-100'
+                  }`}
+                  title="Reset to Today"
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStepAuditDay(1)}
+                  className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                  title="Next Day"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
+
+                <button
+                  type="button"
+                  onClick={() => setShowAuditCalendar(prev => !prev)}
+                  className={`px-2.5 py-1 text-[11px] font-extrabold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
+                    showAuditCalendar
+                      ? 'bg-red-600 text-white border-red-600'
+                      : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-100'
+                  }`}
+                  title="Toggle Calendar Grid"
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  <span>{showAuditCalendar ? 'Hide Calendar' : 'Calendar View'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAuditSelectedDate(prev => prev === 'all' ? getTodayKey() : 'all')}
+                  className={`px-2 py-1 text-[11px] font-extrabold rounded-lg border transition-all cursor-pointer ${
+                    auditSelectedDate === 'all'
+                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900'
+                      : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-100'
+                  }`}
+                  title="Toggle between Daily View and All History"
+                >
+                  {auditSelectedDate === 'all' ? 'Daily View' : 'All History'}
+                </button>
+              </div>
+            </div>
+
+            {/* Expandable Visual Calendar Drawer */}
+            {showAuditCalendar && (
+              <div className="mb-3.5 p-3.5 bg-slate-50 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between mb-2.5 px-1">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-red-600" />
+                    <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">
+                      {auditCalendarMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setAuditCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                      className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                      title="Previous Month"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = new Date();
+                        setAuditCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+                        setAuditSelectedDate(getTodayKey());
+                      }}
+                      className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                    >
+                      Current Month
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuditCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                      className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                      title="Next Month"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-7 gap-1 text-center font-mono font-bold text-[10px] text-slate-400 mb-1">
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                    <div key={day} className="py-0.5">{day}</div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-1 text-center">
+                  {auditCalendarGridDays.map((cell, idx) => {
+                    const count = auditDatesWithLogs.get(cell.dateKey) || 0;
+                    const isSelected = auditSelectedDate === cell.dateKey;
+                    const isToday = cell.dateKey === getTodayKey();
+
+                    return (
+                      <button
+                        key={cell.dateKey + idx}
+                        type="button"
+                        onClick={() => {
+                          setAuditSelectedDate(cell.dateKey);
+                        }}
+                        className={`py-1 px-0.5 rounded-lg text-xs font-mono transition-all flex flex-col items-center justify-center relative cursor-pointer min-h-[32px] ${
+                          !cell.isCurrentMonth
+                            ? 'text-slate-300 dark:text-slate-600 hover:bg-slate-100/50 dark:hover:bg-slate-700/30'
+                            : isSelected
+                            ? 'bg-red-600 text-white font-black shadow-xs'
+                            : isToday
+                            ? 'border border-red-500 font-extrabold text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30'
+                            : count > 0
+                            ? 'font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-700/60 hover:bg-red-50 dark:hover:bg-red-950/50 border border-slate-200 dark:border-slate-700'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                        }`}
+                      >
+                        <span>{cell.dayNumber}</span>
+                        {count > 0 && (
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
+                              isSelected ? 'bg-white' : 'bg-red-600 dark:bg-red-400'
+                            }`}
+                            title={`${count} changes recorded`}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {activeMonthDatesWithLogs.length > 0 && (
+                  <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-700/80 flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      Dates with changes:
+                    </span>
+                    {activeMonthDatesWithLogs.map(([dateKey, count]) => {
+                      const isSelected = auditSelectedDate === dateKey;
+                      const [, m, d] = dateKey.split('-');
+                      return (
+                        <button
+                          key={dateKey}
+                          type="button"
+                          onClick={() => setAuditSelectedDate(dateKey)}
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition-all border cursor-pointer ${
+                            isSelected
+                              ? 'bg-red-600 text-white border-red-600 shadow-2xs'
+                              : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-red-400'
+                          }`}
+                        >
+                          {d}/{m} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Search & Filter Bar */}
             <div className="relative mb-3.5">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -2670,41 +3040,45 @@ export default function App() {
             </div>
 
             {/* Change Log Entries - Data Audit Trail (NFR-07) */}
-            <div className="space-y-3 max-h-80 overflow-y-auto text-xs font-sans pr-1">
-              {(() => {
-                const filtered = auditLogsList.filter(log => {
-                  // In Student View mode, show ONLY actions matching current student!
-                  if (activeRole === 'student') {
-                    const matchesCurrentStudent = selectedStudent ? (
-                      (log.student_number && log.student_number === selectedStudent.student_number) ||
-                      (log.first_name && log.first_name.toLowerCase() === selectedStudent.first_name.toLowerCase()) ||
-                      (log.student_name && log.student_name.toLowerCase().includes(selectedStudent.first_name.toLowerCase()))
-                    ) : true;
-
-                    if (!matchesCurrentStudent) return false;
-                  }
-
-                  if (!auditSearchQuery.trim()) return true;
-                  const q = auditSearchQuery.toLowerCase();
-                  const name = (log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : '')).toLowerCase();
-                  const num = (log.student_number || '').toLowerCase();
-                  const reason = (log.amendment_reason || '').toLowerCase();
-                  const status = (log.plan_status || '').toLowerCase();
-                  const author = (log.created_by || '').toLowerCase();
-                  return name.includes(q) || num.includes(q) || reason.includes(q) || status.includes(q) || author.includes(q);
-                });
-
-                if (filtered.length === 0) {
-                  return (
-                    <div className="text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                        {auditSearchQuery ? 'No audit entries matching your search query.' : 'No plan data audit logs recorded yet.'}
-                      </p>
-                    </div>
-                  );
-                }
-
-                return filtered.map((log, idx) => {
+            <div className="space-y-3 max-h-72 overflow-y-auto text-xs font-sans pr-1">
+              {filteredAuditLogs.length === 0 ? (
+                <div className="text-center py-8 px-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 space-y-2">
+                  <div className="w-10 h-10 mx-auto rounded-full bg-slate-100 dark:bg-slate-700/60 flex items-center justify-center text-slate-400">
+                    <Calendar className="w-5 h-5 text-red-500/80" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {auditSearchQuery
+                      ? 'No audit entries matching your search query.'
+                      : auditSelectedDate === getTodayKey()
+                      ? 'No Change Logs Recorded Yet Today'
+                      : `No Logs on ${formatSelectedDateDisplay(auditSelectedDate)}`}
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                    {auditSearchQuery
+                      ? 'Try clearing your search query or switching date filters.'
+                      : 'Change logs reset daily so records do not pile up in one place. Actions taken today will appear here fresh.'}
+                  </p>
+                  <div className="pt-2 flex items-center justify-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setAuditSelectedDate('all')}
+                      className="px-3 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                    >
+                      View All Historical Logs ({auditLogsList.length})
+                    </button>
+                    {auditDatesWithLogs.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAuditCalendar(true)}
+                        className="px-3 py-1 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                      >
+                        Pick Active Date from Calendar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                filteredAuditLogs.map((log, idx) => {
                   const studentName = log.student_name || (log.first_name ? `${log.first_name} ${log.last_name || ''}` : (selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : 'Student Profile'));
                   const studentNum = log.student_number || selectedStudent?.student_number || '31234561';
 
@@ -2754,8 +3128,8 @@ export default function App() {
                       </p>
                     </div>
                   );
-                });
-              })()}
+                })
+              )}
             </div>
 
             <div className="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
