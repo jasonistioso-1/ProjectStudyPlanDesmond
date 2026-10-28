@@ -202,6 +202,20 @@ export default function App() {
   }, [studentsList]);
 
   const handleLogout = () => {
+    // Preserve active working plan before logging out
+    if (selectedStudent && currentPlan && planUnits && planUnits.length > 0) {
+      const sId = selectedStudent.student_id;
+      const draft = { plan: currentPlan, units: planUnits };
+      try {
+        localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify(draft));
+        const saved = localStorage.getItem('spr_student_plans_cache');
+        const parsed = saved ? JSON.parse(saved) : {};
+        parsed[sId] = draft;
+        parsed[Number(sId)] = draft;
+        parsed[String(sId)] = draft;
+        localStorage.setItem('spr_student_plans_cache', JSON.stringify(parsed));
+      } catch (e) {}
+    }
     setCurrentUser(null);
     setShowStudentSelectModal(false);
     setShowImportModal(false);
@@ -221,12 +235,21 @@ export default function App() {
   const [currentPlan, setCurrentPlan] = useState(() => {
     try {
       const savedUser = localStorage.getItem('spr_logged_user');
-      const savedPlans = localStorage.getItem('spr_student_plans_cache');
-      if (savedUser && savedPlans) {
+      let sId = 1;
+      if (savedUser) {
         const u = JSON.parse(savedUser);
+        if (u.student_id) sId = u.student_id;
+      }
+      const single = localStorage.getItem(`spr_student_${sId}_plan`);
+      if (single) {
+        const p = JSON.parse(single);
+        if (p?.plan) return p.plan;
+      }
+      const savedPlans = localStorage.getItem('spr_student_plans_cache');
+      if (savedPlans) {
         const plans = JSON.parse(savedPlans);
-        const sId = u.student_id || 1;
-        if (plans[sId]?.plan) return plans[sId].plan;
+        const entry = plans[sId] || plans[Number(sId)] || plans[String(sId)];
+        if (entry?.plan) return entry.plan;
       }
     } catch (e) {}
     return mockClientStudentPlans[1].plan;
@@ -234,12 +257,21 @@ export default function App() {
   const [planUnits, setPlanUnits] = useState(() => {
     try {
       const savedUser = localStorage.getItem('spr_logged_user');
-      const savedPlans = localStorage.getItem('spr_student_plans_cache');
-      if (savedUser && savedPlans) {
+      let sId = 1;
+      if (savedUser) {
         const u = JSON.parse(savedUser);
+        if (u.student_id) sId = u.student_id;
+      }
+      const single = localStorage.getItem(`spr_student_${sId}_plan`);
+      if (single) {
+        const p = JSON.parse(single);
+        if (p?.units && p.units.length > 0) return p.units;
+      }
+      const savedPlans = localStorage.getItem('spr_student_plans_cache');
+      if (savedPlans) {
         const plans = JSON.parse(savedPlans);
-        const sId = u.student_id || 1;
-        if (plans[sId]?.units) return plans[sId].units;
+        const entry = plans[sId] || plans[Number(sId)] || plans[String(sId)];
+        if (entry?.units && entry.units.length > 0) return entry.units;
       }
     } catch (e) {}
     return mockClientStudentPlans[1].units;
@@ -250,6 +282,16 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+          [1, 2, 3, 4].forEach(id => {
+            const single = localStorage.getItem(`spr_student_${id}_plan`);
+            if (single) {
+              const p = JSON.parse(single);
+              if (p?.units && p.units.length > 0) {
+                parsed[id] = p;
+                parsed[String(id)] = p;
+              }
+            }
+          });
           return parsed;
         }
       }
@@ -1594,6 +1636,10 @@ export default function App() {
       };
       try {
         localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+        localStorage.setItem(`spr_student_${targetStudent.student_id}_plan`, JSON.stringify({
+          plan: updatedPlan,
+          units: uniqueScheduledUnits
+        }));
       } catch (e) {}
       return nextMap;
     });
@@ -1609,7 +1655,7 @@ export default function App() {
       student_id: targetStudent.student_id,
       title: `${targetStudent.course_code || 'PT3-BSIT'} Study Plan`,
       status: newStatus,
-      units: scheduledUnits,
+      units: uniqueScheduledUnits,
       created_by: 'Academic Chair'
     }).catch(err => console.warn('Background savePlan error:', err));
 
@@ -1778,7 +1824,7 @@ export default function App() {
         if (savedUser && savedUser.role === 'student') {
           const target = loadedStudents.find(s => s.student_id === savedUser.student_id || s.student_number === savedUser.student_number) || loadedStudents[1] || loadedStudents[0];
           handleSelectStudent(target, 'student');
-        } else {
+        } else if (savedUser && savedUser.role === 'chair') {
           const target = loadedStudents.find(s => s.student_id === 1) || loadedStudents[1] || loadedStudents[0];
           handleSelectStudent(target, 'chair');
         }
@@ -1810,31 +1856,36 @@ export default function App() {
       const updatedUnits = typeof newUnitsOrUpdater === 'function' ? newUnitsOrUpdater(prevUnits) : newUnitsOrUpdater;
       if (selectedStudent) {
         const sId = selectedStudent.student_id;
+        const currentEntryPlan = currentPlan || (allStudentPlansMap[sId]?.plan) || mockClientStudentPlans[Number(sId)]?.plan;
         setAllStudentPlansMap(prevMap => {
           const currentEntry = prevMap[sId] || prevMap[Number(sId)] || {};
           const nextMap = {
             ...prevMap,
             [sId]: {
-              plan: currentPlan || currentEntry.plan,
+              plan: currentEntryPlan || currentEntry.plan,
               units: updatedUnits
             },
             [Number(sId)]: {
-              plan: currentPlan || currentEntry.plan,
+              plan: currentEntryPlan || currentEntry.plan,
               units: updatedUnits
             },
             [String(sId)]: {
-              plan: currentPlan || currentEntry.plan,
+              plan: currentEntryPlan || currentEntry.plan,
               units: updatedUnits
             }
           };
           try {
             localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+            localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify({
+              plan: currentEntryPlan || currentEntry.plan,
+              units: updatedUnits
+            }));
           } catch (e) {}
           return nextMap;
         });
         if (mockClientStudentPlans[Number(sId)]) {
           mockClientStudentPlans[Number(sId)].units = updatedUnits;
-          if (currentPlan) mockClientStudentPlans[Number(sId)].plan = currentPlan;
+          if (currentEntryPlan) mockClientStudentPlans[Number(sId)].plan = currentEntryPlan;
         }
       }
       return updatedUnits;
@@ -1879,8 +1930,8 @@ export default function App() {
   };
 
   const handleSelectStudent = async (student, roleOverride = null, planOptions = null) => {
-    // 1. Preserve active working draft in cache map and localStorage
-    if (selectedStudent && currentPlan) {
+    // 1. Preserve active working draft ONLY when switching away from a different student
+    if (selectedStudent && student && Number(selectedStudent.student_id) !== Number(student.student_id) && planUnits && planUnits.length > 0) {
       const sId = selectedStudent.student_id;
       const currentDraft = {
         plan: currentPlan,
@@ -1895,6 +1946,7 @@ export default function App() {
         };
         try {
           localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+          localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify(currentDraft));
         } catch (e) {}
         return nextMap;
       });
@@ -1922,11 +1974,34 @@ export default function App() {
     const categoryTag = student.account_category === 'admin' || student.student_id === 0 ? '' : ` (${student.account_category === 'new_student' ? 'New Student' : 'Existing Student'})`;
     showToast(`Loaded profile for ${student.first_name} ${student.last_name}${categoryTag}`);
 
-    // 2. If student ALREADY has a working draft in memory, load it directly to prevent wiping data!
+    // 2. Resolve cached draft for this student from localStorage, React state, or allStudentPlansMap
+    let storedStudentPlan = null;
+    try {
+      const singleKey = `spr_student_${student.student_id}_plan`;
+      const single = localStorage.getItem(singleKey);
+      if (single) {
+        const p = JSON.parse(single);
+        if (p?.units && p.units.length > 0) storedStudentPlan = p;
+      }
+      if (!storedStudentPlan) {
+        const saved = localStorage.getItem('spr_student_plans_cache');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const sData = parsed[student.student_id] || parsed[Number(student.student_id)] || parsed[String(student.student_id)];
+          if (sData?.units && sData.units.length > 0) storedStudentPlan = sData;
+        }
+      }
+    } catch (e) {}
+
     const isSameStudentActive = selectedStudent && Number(selectedStudent.student_id) === Number(student.student_id);
-    let cached = (isSameStudentActive && planUnits && planUnits.length > 0)
-      ? { plan: currentPlan, units: planUnits }
-      : (allStudentPlansMap[student.student_id] || allStudentPlansMap[Number(student.student_id)] || allStudentPlansMap[String(student.student_id)]);
+    let cached = null;
+    if (storedStudentPlan && (!planUnits || storedStudentPlan.units.length >= (planUnits?.length || 0) || !isSameStudentActive)) {
+      cached = storedStudentPlan;
+    } else if (isSameStudentActive && planUnits && planUnits.length > 0) {
+      cached = { plan: currentPlan, units: planUnits };
+    } else {
+      cached = storedStudentPlan || allStudentPlansMap[student.student_id] || allStudentPlansMap[Number(student.student_id)] || allStudentPlansMap[String(student.student_id)];
+    }
 
     // Check if there is an active disagreement / revision request from notifications
     const disagreementNotif = (notifications || []).find(n => 
@@ -2070,17 +2145,31 @@ export default function App() {
       fetchStudentHistory(student.student_id).then(h => setHistory(h || [])).catch(console.error);
 
       // Keep cache maps synchronized with resolved status
-      setAllStudentPlansMap(prev => ({
-        ...prev,
-        [student.student_id]: {
-          plan: planToSet,
-          units: cached.units || []
-        },
-        [String(student.student_id)]: {
-          plan: planToSet,
-          units: cached.units || []
-        }
-      }));
+      setAllStudentPlansMap(prev => {
+        const nextMap = {
+          ...prev,
+          [student.student_id]: {
+            plan: planToSet,
+            units: cached.units || []
+          },
+          [Number(student.student_id)]: {
+            plan: planToSet,
+            units: cached.units || []
+          },
+          [String(student.student_id)]: {
+            plan: planToSet,
+            units: cached.units || []
+          }
+        };
+        try {
+          localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+          localStorage.setItem(`spr_student_${student.student_id}_plan`, JSON.stringify({
+            plan: planToSet,
+            units: cached.units || []
+          }));
+        } catch (e) {}
+        return nextMap;
+      });
       if (mockClientStudentPlans[Number(student.student_id)]) {
         mockClientStudentPlans[Number(student.student_id)].plan = planToSet;
         if (cached.units && cached.units.length > 0) {
@@ -2321,6 +2410,10 @@ export default function App() {
       };
       try {
         localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+        localStorage.setItem(`spr_student_${sIdNum}_plan`, JSON.stringify({
+          plan: updatedPlan,
+          units: planUnits
+        }));
       } catch (e) {}
       return nextMap;
     });
@@ -2409,13 +2502,29 @@ export default function App() {
     };
     setCurrentPlan(updatedPlan);
     setAllStudentPlansMap(prev => {
+      const sId = selectedStudent.student_id;
       const nextMap = {
         ...prev,
-        [selectedStudent.student_id]: {
+        [sId]: {
+          plan: updatedPlan,
+          units: planUnits
+        },
+        [Number(sId)]: {
+          plan: updatedPlan,
+          units: planUnits
+        },
+        [String(sId)]: {
           plan: updatedPlan,
           units: planUnits
         }
       };
+      try {
+        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+        localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify({
+          plan: updatedPlan,
+          units: planUnits
+        }));
+      } catch (e) {}
       return nextMap;
     });
 
@@ -2479,21 +2588,29 @@ export default function App() {
       version_number: (currentPlan?.version_number || 1) + 1
     };
     setCurrentPlan(updatedPlan);
+    const sId = selectedStudent.student_id;
     const nextMap = {
       ...allStudentPlansMap,
-      [selectedStudent.student_id]: {
+      [sId]: {
         plan: updatedPlan,
         units: planUnits
       },
-      [String(selectedStudent.student_id)]: {
+      [String(sId)]: {
         plan: updatedPlan,
         units: planUnits
       },
-      [Number(selectedStudent.student_id)]: {
+      [Number(sId)]: {
         plan: updatedPlan,
         units: planUnits
       }
     };
+    try {
+      localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+      localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify({
+        plan: updatedPlan,
+        units: planUnits
+      }));
+    } catch (e) {}
     setAllStudentPlansMap(nextMap);
 
     if (mockClientStudentPlans[Number(selectedStudent.student_id)]) {
@@ -2594,13 +2711,32 @@ export default function App() {
       version_number: (currentPlan?.version_number || 1) + 1 
     };
     setCurrentPlan(updatedPlan);
-    setAllStudentPlansMap(prev => ({
-      ...prev,
-      [selectedStudent.student_id]: {
-        plan: updatedPlan,
-        units: planUnits
-      }
-    }));
+    const sId = selectedStudent.student_id;
+    setAllStudentPlansMap(prev => {
+      const nextMap = {
+        ...prev,
+        [sId]: {
+          plan: updatedPlan,
+          units: planUnits
+        },
+        [Number(sId)]: {
+          plan: updatedPlan,
+          units: planUnits
+        },
+        [String(sId)]: {
+          plan: updatedPlan,
+          units: planUnits
+        }
+      };
+      try {
+        localStorage.setItem('spr_student_plans_cache', JSON.stringify(nextMap));
+        localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify({
+          plan: updatedPlan,
+          units: planUnits
+        }));
+      } catch (e) {}
+      return nextMap;
+    });
     if (mockClientStudentPlans[Number(selectedStudent.student_id)]) {
       mockClientStudentPlans[Number(selectedStudent.student_id)].plan = updatedPlan;
       mockClientStudentPlans[Number(selectedStudent.student_id)].units = planUnits;

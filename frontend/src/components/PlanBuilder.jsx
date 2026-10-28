@@ -1220,12 +1220,14 @@ export default function PlanBuilder({
   // Total CP: strictly equal to the sum of credit points rendered across all 3 years on canvas
   const totalCP = useMemo(() => {
     if (isNewStudentInitial) return 0;
+    const activeLayout = isChair ? layoutType : studentLayoutMode;
+    const activePeriodList = activeLayout === 'semester' ? semesterPeriods : trimesterPeriods;
     const canvasSum = years.reduce((sum, y) => {
-      const yearUnits = defaultPeriodList.flatMap(p => getSemesterUnits(y.level, p.period_id));
+      const yearUnits = activePeriodList.flatMap(p => getSemesterUnits(y.level, p.period_id, activeLayout));
       return sum + yearUnits.reduce((ySum, u) => ySum + Number(u.credit_points || 3), 0);
     }, 0);
     return Math.max(canvasSum, completedHistoryCP + plannedCanvasCP);
-  }, [years, defaultPeriodList, layoutType, planUnits, history, isNewStudentInitial, completedHistoryCP, plannedCanvasCP]);
+  }, [years, defaultPeriodList, layoutType, studentLayoutMode, isChair, semesterPeriods, trimesterPeriods, planUnits, history, isNewStudentInitial, completedHistoryCP, plannedCanvasCP]);
 
   // Governance Workflow Stepper Steps
   const workflowSteps = [

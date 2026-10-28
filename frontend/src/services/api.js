@@ -422,6 +422,28 @@ export const mockArchivedStudentPlans = {
     }
 };
 
+// Hydrate in-memory mockClientStudentPlans with any persisted student plans from localStorage
+try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+        const cached = window.localStorage.getItem('spr_student_plans_cache');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && typeof parsed === 'object') {
+                Object.entries(parsed).forEach(([sId, data]) => {
+                    const idNum = Number(sId);
+                    if (mockClientStudentPlans[idNum] && data?.units && data.units.length > 0) {
+                        mockClientStudentPlans[idNum].plan = {
+                            ...mockClientStudentPlans[idNum].plan,
+                            ...(data.plan || {})
+                        };
+                        mockClientStudentPlans[idNum].units = [...data.units];
+                    }
+                });
+            }
+        }
+    }
+} catch (e) {}
+
 export async function fetchPlanByStudent(studentId) {
     try {
         const res = await fetch(`${API_BASE}/plans/student/${studentId}`);
@@ -430,18 +452,66 @@ export async function fetchPlanByStudent(studentId) {
         return data;
     } catch (err) {
         console.warn('API fetchPlanByStudent fallback activated:', err.message);
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const sKey = `spr_student_${studentId}_plan`;
+                const single = window.localStorage.getItem(sKey);
+                if (single) {
+                    const parsedSingle = JSON.parse(single);
+                    if (parsedSingle?.units && parsedSingle.units.length > 0) return parsedSingle;
+                }
+                const saved = window.localStorage.getItem('spr_student_plans_cache');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    const sData = parsed[studentId] || parsed[Number(studentId)] || parsed[String(studentId)];
+                    if (sData && sData.units && sData.units.length > 0) {
+                        return sData;
+                    }
+                }
+            }
+        } catch (e) {}
         return mockClientStudentPlans[Number(studentId)] || mockClientStudentPlans[1];
     }
 }
 
 export async function saveStudyPlan(planData) {
-    const res = await fetch(`${API_BASE}/plans`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(planData)
-    });
-    if (!res.ok) throw new Error('Failed to save study plan');
-    return res.json();
+    try {
+        const sId = Number(planData.student_id);
+        if (mockClientStudentPlans[sId]) {
+            mockClientStudentPlans[sId].plan = {
+                ...mockClientStudentPlans[sId].plan,
+                status: planData.status || mockClientStudentPlans[sId].plan.status,
+                title: planData.title || mockClientStudentPlans[sId].plan.title,
+                total_credit_points: (planData.units || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0)
+            };
+            if (Array.isArray(planData.units) && planData.units.length > 0) {
+                mockClientStudentPlans[sId].units = planData.units;
+            }
+        }
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const saved = window.localStorage.getItem('spr_student_plans_cache');
+            const currentCache = saved ? JSON.parse(saved) : {};
+            currentCache[sId] = {
+                plan: mockClientStudentPlans[sId]?.plan || { status: planData.status },
+                units: planData.units || []
+            };
+            window.localStorage.setItem('spr_student_plans_cache', JSON.stringify(currentCache));
+            window.localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify(currentCache[sId]));
+        }
+    } catch (e) {}
+
+    try {
+        const res = await fetch(`${API_BASE}/plans`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(planData)
+        });
+        if (!res.ok) throw new Error('Failed to save study plan');
+        return await res.json();
+    } catch (err) {
+        console.warn('API saveStudyPlan fallback activated:', err.message);
+        return { success: true, message: 'Saved to local storage cache' };
+    }
 }
 
 export async function validatePlan(validationData) {
