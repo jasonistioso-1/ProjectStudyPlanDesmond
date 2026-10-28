@@ -548,8 +548,8 @@ export default function App() {
       timestamp: formatNotificationTimestamp(Date.now() - 1800000),
       createdTimeMs: Date.now() - 1800000,
       read: false,
-      actionType: 'AUTO_GENERATE',
-      actionLabel: 'Review & Auto-Generate'
+      actionType: 'REVIEW',
+      actionLabel: 'View Semester Plan'
     },
     {
       id: 'n-1',
@@ -564,8 +564,8 @@ export default function App() {
       timestamp: formatNotificationTimestamp(Date.now() - 3600000),
       createdTimeMs: Date.now() - 3600000,
       read: false,
-      actionType: 'AUTO_GENERATE',
-      actionLabel: 'Review & Auto-Generate'
+      actionType: 'REVIEW',
+      actionLabel: 'View Trimester Plan'
     },
     {
       id: 'n-2',
@@ -845,19 +845,11 @@ export default function App() {
 
     setActiveTab('STUDY_PLAN');
 
-    // Run unified auto-generate plan when notification action is AUTO_GENERATE or a student plan request
-    const isPlanRequestNotif = notif.actionType === 'AUTO_GENERATE' || notif.title?.includes('Plan Request') || notif.title?.includes('Replan Request');
-    if (isPlanRequestNotif && notif.studentId) {
-      await handleAutoGeneratePlan(notif.studentId, {
-        targetYearLevel: targetYr,
-        requestYear: notifYear,
-        requestPeriods: notifPeriods,
-        layoutType: notifLayout,
-        isStudentRequest: true
-      });
-      const stName = targetStudentObj ? `${targetStudentObj.first_name} ${targetStudentObj.last_name}` : 'Student';
-      showToast(`⚡ Auto-generated ${notifLayout} study plan for ${stName} (${notifYear}) based on request!`);
-    }
+    // Do NOT autofill/auto-generate on notification click: direct strictly to the student's study plan
+    // in the requested layout (Semester vs Trimester) and target year level.
+    const stName = targetStudentObj ? `${targetStudentObj.first_name} ${targetStudentObj.last_name}` : 'Student';
+    const layoutLabel = notifLayout === 'semester' ? 'Semester View (2 Semesters)' : 'Trimester View (3 Terms)';
+    showToast(`📌 Viewing study plan for ${stName} (${layoutLabel} - Year ${targetYr} ${notifYear})`);
 
     // Auto-scroll directly down to student feedback alert banner if disagreement, or target year block
     const scrollToTargetSection = () => {
@@ -918,8 +910,8 @@ export default function App() {
       timestamp: formatNotificationTimestamp(),
       createdTimeMs: Date.now(),
       read: false,
-      actionType: 'AUTO_GENERATE',
-      actionLabel: 'Review & Auto-Generate'
+      actionType: 'REVIEW',
+      actionLabel: detectedLayout === 'semester' ? 'View Semester Plan' : 'View Trimester Plan'
     };
 
     setNotifications(prev => [newNotif, ...prev]);

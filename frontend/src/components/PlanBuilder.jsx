@@ -230,6 +230,10 @@ export default function PlanBuilder({
     if (currentPlan?.targetYearLevel || currentPlan?.forceScrollTrigger) {
       const targetLvl = Number(currentPlan.targetYearLevel) || 1;
       setActiveYearLevel(targetLvl);
+      if (currentPlan?.layoutType) {
+        setLayoutType(currentPlan.layoutType);
+        setModalLayoutType(currentPlan.layoutType);
+      }
 
       const scrollToTarget = () => {
         const yearBlock = document.getElementById(`year-block-${targetLvl}`) || document.getElementById('study-plan-years-section') || document.getElementById('year-grid-canvas');
