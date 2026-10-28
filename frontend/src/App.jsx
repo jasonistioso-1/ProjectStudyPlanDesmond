@@ -505,12 +505,12 @@ export default function App() {
         id: 'n-1',
         role: 'chair',
         studentId: 1,
-        targetYear: 1,
-        requestYear: 2026,
+        targetYear: 2,
+        requestYear: 2027,
         requestPeriods: [3, 4, 5],
         layoutType: 'trimester',
         title: 'Existing Student Plan Request from Alex Mercer',
-        message: 'Alex Mercer submitted a study plan request for Trimesters 1, 2, 3 (2026).',
+        message: 'Alex Mercer submitted a study plan request for Trimesters 1, 2, 3 (2027).',
         timestamp: formatNotificationTimestamp(Date.now() - 3600000),
         createdTimeMs: Date.now() - 3600000,
         read: false,
@@ -797,13 +797,15 @@ export default function App() {
 
     setActiveTab('STUDY_PLAN');
 
-    // Run unified auto-generate plan when notification action is AUTO_GENERATE
-    if (notif.actionType === 'AUTO_GENERATE' && notif.studentId) {
+    // Run unified auto-generate plan when notification action is AUTO_GENERATE or a student plan request
+    const isPlanRequestNotif = notif.actionType === 'AUTO_GENERATE' || notif.title?.includes('Plan Request') || notif.title?.includes('Replan Request');
+    if (isPlanRequestNotif && notif.studentId) {
       await handleAutoGeneratePlan(notif.studentId, {
         targetYearLevel: targetYr,
         requestYear: notifYear,
         requestPeriods: notifPeriods,
-        layoutType: notifLayout
+        layoutType: notifLayout,
+        isStudentRequest: true
       });
       const stName = targetStudentObj ? `${targetStudentObj.first_name} ${targetStudentObj.last_name}` : 'Student';
       showToast(`⚡ Auto-generated ${notifLayout} study plan for ${stName} (${notifYear}) based on request!`);
@@ -998,13 +1000,19 @@ export default function App() {
     // Order years so target/requested year is prioritized first, followed by other open years
     let yearsToFill = uncompletedYears;
     if (targetLvlNum && !passedYears.has(targetLvlNum)) {
-      yearsToFill = [targetLvlNum, ...uncompletedYears.filter(y => y !== targetLvlNum)];
+      if (options.isStudentRequest || !isAllYears) {
+        yearsToFill = [targetLvlNum];
+      } else {
+        yearsToFill = [targetLvlNum, ...uncompletedYears.filter(y => y !== targetLvlNum)];
+      }
     }
 
-    // Determine exact target slots (year_level, period_id) being auto-filled
+    // Determine exact target slots (year_level, period_id) being auto-filled:
+    // Only modify slots that match the selected/checked year(s) AND checked period(s)
     const isTargetSlot = (yearLevel, periodId) => {
       const matchesYear = yearsToFill.map(Number).includes(Number(yearLevel));
-      return matchesYear;
+      const matchesPeriod = requestedPeriods.map(Number).includes(Number(periodId));
+      return matchesYear && matchesPeriod;
     };
 
     const scheduledUnits = [];
@@ -1303,19 +1311,57 @@ export default function App() {
 
     const poolCatalog = (catalogUnits && catalogUnits.length > 0) ? catalogUnits : masterFallbackUnits;
 
+    const getCandidatePriority = (candidate, targetYear) => {
+      const cLvl = Number(candidate.level || 100);
+      const yr = Number(targetYear);
+      if (yr === 1) {
+        return cLvl <= 199 ? 1 : 99; // Year 1: strictly 100-level
+      }
+      if (yr === 2) {
+        if (cLvl >= 200 && cLvl <= 299) return 1; // Year 2: prefer 200-level
+        if (cLvl <= 199) return 2; // fallback to 100-level elective
+        return 99; // 300-level not allowed in Year 2
+      }
+      if (yr === 3) {
+        if (cLvl >= 300) return 1; // Year 3: prefer 300-level
+        if (cLvl >= 200 && cLvl <= 299) return 2; // fallback to 200-level advanced elective
+        return 3;
+      }
+      return 10;
+    };
+
     for (const year of yearsToFill) {
       if (passedYears.has(Number(year))) continue;
       for (const periodId of requestedPeriods) {
         const pKey = `y${Number(year)}_p${Number(periodId)}`;
         const targetCapacity = getTargetPeriodCP(periodId);
 
+        const sortedPool = [...poolCatalog].sort((a, b) => {
+          const pA = getCandidatePriority(a, year);
+          const pB = getCandidatePriority(b, year);
+          if (pA !== pB) return pA - pB;
+          return (a.code || '').localeCompare(b.code || '');
+        });
+
         while ((periodLoads[pKey] || 0) < targetCapacity && scheduledUnits.length * 3 < neededCanvasCP) {
-          const candidate = poolCatalog.find(u => {
+          const candidate = sortedPool.find(u => {
             if (scheduledCodes.has(u.code)) return false;
             if (completedCodes.has(u.code)) return false;
-            const uLvl = Number(u.level || 100);
-            const yrNum = Number(year);
-            if (yrNum === 1 && uLvl > 199) return false;
+
+            // Level validation
+            const priority = getCandidatePriority(u, year);
+            if (priority >= 99) return false;
+
+            // General Elective check (only 1 of MSP200 or COM203 allowed in entire degree)
+            if (u.code === 'MSP200' && (scheduledCodes.has('COM203') || completedCodes.has('COM203'))) return false;
+            if (u.code === 'COM203' && (scheduledCodes.has('MSP200') || completedCodes.has('MSP200'))) return false;
+
+            // Teaching Period Offering validation
+            if (!isOfferingValid(u.code, periodId)) return false;
+
+            // Prerequisite validation
+            if (!isPrereqSatisfied(u, year, periodId, scheduledUnits, false)) return false;
+
             return true;
           });
 
