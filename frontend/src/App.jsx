@@ -486,9 +486,29 @@ export default function App() {
     } catch (e) {}
     return [
       {
+        id: 'n-0',
+        role: 'chair',
+        studentId: 2,
+        targetYear: 3,
+        requestYear: 2028,
+        requestPeriods: [1, 2],
+        layoutType: 'semester',
+        title: 'Replan Request from Sarah Jenkins (Existing Student)',
+        message: 'Sarah Jenkins requested a semester study plan for Semester 1 (S1), Semester 2 (S2) 2028.',
+        timestamp: formatNotificationTimestamp(Date.now() - 1800000),
+        createdTimeMs: Date.now() - 1800000,
+        read: false,
+        actionType: 'AUTO_GENERATE',
+        actionLabel: 'Review & Auto-Generate'
+      },
+      {
         id: 'n-1',
         role: 'chair',
         studentId: 1,
+        targetYear: 1,
+        requestYear: 2026,
+        requestPeriods: [3, 4, 5],
+        layoutType: 'trimester',
         title: 'Existing Student Plan Request from Alex Mercer',
         message: 'Alex Mercer submitted a study plan request for Trimesters 1, 2, 3 (2026).',
         timestamp: formatNotificationTimestamp(Date.now() - 3600000),
@@ -503,8 +523,8 @@ export default function App() {
         studentId: 2,
         title: 'Study Plan Signed and Agreed',
         message: 'You have agreed and signed your 72 CP Study Plan for Computer Science (PT3-BSIT-CS02).',
-        timestamp: formatNotificationTimestamp(Date.now() - 1800000),
-        createdTimeMs: Date.now() - 1800000,
+        timestamp: formatNotificationTimestamp(Date.now() - 900000),
+        createdTimeMs: Date.now() - 900000,
         read: false,
         actionType: 'REVIEW',
         actionLabel: 'View Agreed Plan'
@@ -689,10 +709,41 @@ export default function App() {
     setNotifications(prev => prev.map(n => n.role === targetRole ? { ...n, read: true } : n));
   };
 
-  const handleSelectNotification = (notif) => {
+  const handleSelectNotification = async (notif) => {
     setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
 
-    const targetYr = notif.targetYear || 1;
+    // 1. Extract and normalize notification request metadata
+    let notifLayout = notif.layoutType;
+    if (!notifLayout) {
+      if (notif.message && notif.message.toLowerCase().includes('semester')) {
+        notifLayout = 'semester';
+      } else if (notif.message && notif.message.toLowerCase().includes('trimester')) {
+        notifLayout = 'trimester';
+      }
+    }
+    if (!notifLayout) notifLayout = 'trimester';
+
+    let notifYear = notif.requestYear;
+    let targetYr = notif.targetYear;
+    if (!notifYear) {
+      const matchYr = notif.message?.match(/202[6-9]/);
+      if (matchYr) {
+        notifYear = Number(matchYr[0]);
+        targetYr = notifYear === 2027 ? 2 : notifYear === 2028 ? 3 : 1;
+      }
+    }
+    if (!targetYr) targetYr = notifYear === 2027 ? 2 : notifYear === 2028 ? 3 : 1;
+    if (!notifYear) notifYear = targetYr === 2 ? 2027 : targetYr === 3 ? 2028 : 2026;
+
+    let notifPeriods = notif.requestPeriods;
+    if (!notifPeriods || notifPeriods.length === 0) {
+      if (notifLayout === 'semester') {
+        notifPeriods = [1, 2];
+      } else {
+        notifPeriods = [3, 4, 5];
+      }
+    }
+
     const isDisagreementNotif = notif.title?.includes('Disagreed') || 
                                 notif.title?.includes('Change Requested') || 
                                 notif.title?.includes('Rejected') ||
@@ -706,6 +757,9 @@ export default function App() {
 
     const planOptions = {
       targetYearLevel: targetYr,
+      requestYear: notifYear,
+      requestPeriods: notifPeriods,
+      layoutType: notifLayout,
       forceScrollTrigger: Date.now(),
       rejectionComment: isDisagreementNotif ? (extractedComment || 'Student requested changes') : undefined,
       status: isDisagreementNotif ? 'rejected' : (isRecommendedNotif ? 'recommended' : undefined)
@@ -716,12 +770,12 @@ export default function App() {
       targetStudentObj = studentsList.find(s => Number(s.student_id) === Number(notif.studentId));
       if (targetStudentObj) {
         if (currentUser?.role === 'chair') {
-          handleSelectStudent(targetStudentObj, 'chair', planOptions);
+          await handleSelectStudent(targetStudentObj, 'chair', planOptions);
         } else if (currentUser?.role === 'student') {
           const myProfile = studentsList.find(s => Number(s.student_id) === Number(currentUser.student_id)) || targetStudentObj;
-          handleSelectStudent(myProfile, 'student', planOptions);
+          await handleSelectStudent(myProfile, 'student', planOptions);
         } else {
-          handleSelectStudent(targetStudentObj, notif.role === 'chair' ? 'chair' : 'student', planOptions);
+          await handleSelectStudent(targetStudentObj, notif.role === 'chair' ? 'chair' : 'student', planOptions);
         }
       }
     }
@@ -743,12 +797,16 @@ export default function App() {
 
     setActiveTab('STUDY_PLAN');
 
+    // Run unified auto-generate plan when notification action is AUTO_GENERATE
     if (notif.actionType === 'AUTO_GENERATE' && notif.studentId) {
-      handleAutoGeneratePlan(notif.studentId, {
+      await handleAutoGeneratePlan(notif.studentId, {
         targetYearLevel: targetYr,
-        requestPeriods: notif.requestPeriods,
-        layoutType: notif.layoutType
+        requestYear: notifYear,
+        requestPeriods: notifPeriods,
+        layoutType: notifLayout
       });
+      const stName = targetStudentObj ? `${targetStudentObj.first_name} ${targetStudentObj.last_name}` : 'Student';
+      showToast(`⚡ Auto-generated ${notifLayout} study plan for ${stName} (${notifYear}) based on request!`);
     }
 
     // Auto-scroll directly down to student feedback alert banner if disagreement, or target year block
@@ -800,6 +858,9 @@ export default function App() {
       role: 'chair',
       studentId: selectedStudent.student_id,
       targetYear: targetYrLvl,
+      requestYear: year,
+      requestPeriods: periodIds,
+      layoutType: detectedLayout,
       title: wasApproved
         ? `Replan Request from ${stName} (${studentCategoryPrefix})`
         : `${studentCategoryPrefix} Plan Request from ${stName}`,
@@ -861,12 +922,25 @@ export default function App() {
     );
   };
 
-  const handleAutoGeneratePlan = (targetStudentId, options = {}) => {
-    const targetStudent = studentsList.find(s => s.student_id === (targetStudentId || selectedStudent?.student_id)) || selectedStudent;
+  const handleAutoGeneratePlan = async (targetStudentId, options = {}) => {
+    const targetStudent = studentsList.find(s => Number(s.student_id) === Number(targetStudentId || selectedStudent?.student_id)) || selectedStudent;
     if (!targetStudent) return;
 
+    // Fetch fresh student history for target student to avoid reading stale React state
+    let studentHistory = history;
+    if (!studentHistory || studentHistory.length === 0 || Number(selectedStudent?.student_id) !== Number(targetStudent.student_id)) {
+      try {
+        studentHistory = await fetchStudentHistory(targetStudent.student_id);
+        if (Number(selectedStudent?.student_id) === Number(targetStudent.student_id)) {
+          setHistory(studentHistory || []);
+        }
+      } catch (e) {
+        studentHistory = history || [];
+      }
+    }
+
     // Filter completed passed units from student history
-    const completedHistory = (history || []).filter(h => h.status === 'completed');
+    const completedHistory = (studentHistory || []).filter(h => h.status === 'completed');
     const completedCodes = new Set(completedHistory.map(h => h.unit_code || h.code));
 
     // Calculate passed years from history (e.g. 6+ completed units in Year 1 / 2026 means Year 1 is passed)
@@ -876,14 +950,33 @@ export default function App() {
     const yr2Count = completedHistory.filter(h => (h.year_taken === 2027 || h.academic_year === 2027)).length;
     if (yr2Count >= 6) passedYears.add(2);
 
-    const reqYear = options.requestYear || currentPlan?.requestYear || 2026;
-    let targetYearLvl = options.targetYearLevel !== undefined ? options.targetYearLevel : (currentPlan?.targetYearLevel || 'all');
+    // Resolve target student's existing plan and units from cache/state
+    let studentCurrentPlan = currentPlan;
+    let studentExistingUnits = planUnits;
+    if (Number(selectedStudent?.student_id) !== Number(targetStudent.student_id)) {
+      const cached = allStudentPlansMap[targetStudent.student_id] || allStudentPlansMap[Number(targetStudent.student_id)] || allStudentPlansMap[String(targetStudent.student_id)];
+      if (cached) {
+        studentCurrentPlan = cached.plan || currentPlan;
+        studentExistingUnits = cached.units || [];
+      }
+    }
 
-    const layoutType = options.layoutType || currentPlan?.layoutType || (options.requestPeriods && options.requestPeriods.some(p => p === 1 || p === 2) ? 'semester' : 'trimester');
+    const reqYear = options.requestYear || studentCurrentPlan?.requestYear || 2026;
+    let targetYearLvl = options.targetYearLevel !== undefined ? options.targetYearLevel : (studentCurrentPlan?.targetYearLevel || 'all');
+
+    const layoutType = options.layoutType || studentCurrentPlan?.layoutType || (options.requestPeriods && options.requestPeriods.some(p => p === 1 || p === 2) ? 'semester' : 'trimester');
     const defaultPeriods = layoutType === 'semester' ? [1, 2] : [3, 4, 5];
-    const requestedPeriods = (options.requestPeriods && options.requestPeriods.length > 0)
+    let requestedPeriods = (options.requestPeriods && options.requestPeriods.length > 0)
       ? options.requestPeriods.map(Number)
-      : (currentPlan?.requestPeriods ? currentPlan.requestPeriods.map(Number) : defaultPeriods);
+      : (studentCurrentPlan?.requestPeriods ? studentCurrentPlan.requestPeriods.map(Number) : defaultPeriods);
+
+    if (layoutType === 'semester') {
+      requestedPeriods = requestedPeriods.filter(p => p === 1 || p === 2);
+      if (requestedPeriods.length === 0) requestedPeriods = [1, 2];
+    } else {
+      requestedPeriods = requestedPeriods.filter(p => p >= 3 && p <= 5);
+      if (requestedPeriods.length === 0) requestedPeriods = [3, 4, 5];
+    }
 
     // Determine numerical target year level if specific year (1, 2, 3) selected, or 'all'
     const targetLvlNum = typeof targetYearLvl === 'number'
@@ -905,8 +998,11 @@ export default function App() {
     // Determine exact target slots (year_level, period_id) being auto-filled
     const isTargetSlot = (yearLevel, periodId) => {
       const matchesYear = yearsToFill.map(Number).includes(Number(yearLevel));
-      const matchesPeriod = requestedPeriods.map(Number).includes(Number(periodId));
-      return matchesYear && matchesPeriod;
+      if (matchesYear) return true;
+      const isPeriodInLayout = layoutType === 'semester'
+        ? (Number(periodId) === 1 || Number(periodId) === 2)
+        : (Number(periodId) >= 3 && Number(periodId) <= 5);
+      return !isPeriodInLayout;
     };
 
     const scheduledUnits = [];
@@ -914,7 +1010,7 @@ export default function App() {
     const periodLoads = {};
 
     // Preserve any existing draft units whose slot is NOT in the target auto-fill scope
-    const existingDraftUnits = (planUnits || currentPlan?.plan_units || []);
+    const existingDraftUnits = (studentExistingUnits || studentCurrentPlan?.plan_units || []);
     for (const u of existingDraftUnits) {
       if (!isTargetSlot(u.year_level, u.period_id)) {
         scheduledUnits.push(u);
@@ -1259,22 +1355,24 @@ export default function App() {
     runValidation(targetStudent.student_id, targetStudent.location_id, uniqueScheduledUnits);
 
     // Revert status to 'draft' if plan was previously approved/agreed
-    const wasApproved = currentPlan?.status === 'approved' || currentPlan?.status === 'agreed' || currentPlan?.status === 'stored';
+    const wasApproved = studentCurrentPlan?.status === 'approved' || studentCurrentPlan?.status === 'agreed' || studentCurrentPlan?.status === 'stored';
     const newStatus = 'draft';
 
-    const targetFocusYear = targetLvlNum || (currentPlan?.requestYear === 2027 ? 2 : currentPlan?.requestYear === 2028 ? 3 : 1);
+    const targetFocusYear = targetLvlNum || (reqYear === 2027 ? 2 : reqYear === 2028 ? 3 : 1);
 
     const updatedPlan = {
-      ...currentPlan,
+      ...studentCurrentPlan,
       status: newStatus,
       total_credit_points: totalGeneratedCP,
       layoutType: layoutType,
       targetYearLevel: targetFocusYear,
+      requestYear: reqYear,
+      requestPeriods: requestedPeriods,
       forceScrollTrigger: Date.now(),
-      studentSignature: wasApproved ? null : currentPlan?.studentSignature,
-      signature: wasApproved ? null : currentPlan?.signature,
+      studentSignature: wasApproved ? null : studentCurrentPlan?.studentSignature,
+      signature: wasApproved ? null : studentCurrentPlan?.signature,
       updated_at: formatCurrentDateTime(),
-      version_number: (currentPlan?.version_number || 1) + 1
+      version_number: (studentCurrentPlan?.version_number || 1) + 1
     };
     setCurrentPlan(updatedPlan);
 
@@ -1293,13 +1391,17 @@ export default function App() {
       )
     );
 
-    // Synchronize allStudentPlansMap for targetStudent with updatedPlan and scheduledUnits
+    // Synchronize allStudentPlansMap for targetStudent with updatedPlan and uniqueScheduledUnits
     setAllStudentPlansMap(prev => {
       const nextMap = {
         ...prev,
         [targetStudent.student_id]: {
           plan: updatedPlan,
-          units: scheduledUnits
+          units: uniqueScheduledUnits
+        },
+        [String(targetStudent.student_id)]: {
+          plan: updatedPlan,
+          units: uniqueScheduledUnits
         }
       };
       try {
@@ -1311,7 +1413,7 @@ export default function App() {
     // In-memory mock cache synchronization
     if (mockClientStudentPlans[Number(targetStudent.student_id)]) {
       mockClientStudentPlans[Number(targetStudent.student_id)].plan = updatedPlan;
-      mockClientStudentPlans[Number(targetStudent.student_id)].units = scheduledUnits;
+      mockClientStudentPlans[Number(targetStudent.student_id)].units = uniqueScheduledUnits;
     }
 
     // Persist to backend DB in background
@@ -1676,6 +1778,9 @@ export default function App() {
       const planToSet = {
         ...cached.plan,
         targetYearLevel: planOptions?.targetYearLevel || cached.plan?.targetYearLevel || 1,
+        requestYear: planOptions?.requestYear || cached.plan?.requestYear,
+        requestPeriods: planOptions?.requestPeriods || cached.plan?.requestPeriods,
+        layoutType: planOptions?.layoutType || cached.plan?.layoutType || 'trimester',
         forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now(),
         status: planOptions?.status || (isStudentDisagreed ? 'rejected' : (cached.plan?.status || 'draft')),
         rejectionComment: effectiveRejectionComment,
@@ -1700,6 +1805,9 @@ export default function App() {
       const initialPlan = (planData && planData.plan) ? {
         ...planData.plan,
         targetYearLevel: planOptions?.targetYearLevel || planData.plan?.targetYearLevel || 1,
+        requestYear: planOptions?.requestYear || planData.plan?.requestYear,
+        requestPeriods: planOptions?.requestPeriods || planData.plan?.requestPeriods,
+        layoutType: planOptions?.layoutType || planData.plan?.layoutType || 'trimester',
         forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now(),
         status: planOptions?.status || (isStudentDisagreed ? 'rejected' : (planData.plan?.status || 'draft')),
         rejectionComment: effectiveRejectionComment || planData.plan?.rejectionComment,
@@ -1713,6 +1821,9 @@ export default function App() {
         rejection_comment: effectiveRejectionComment,
         total_credit_points: 0,
         targetYearLevel: planOptions?.targetYearLevel || 1,
+        requestYear: planOptions?.requestYear,
+        requestPeriods: planOptions?.requestPeriods,
+        layoutType: planOptions?.layoutType || 'trimester',
         forceScrollTrigger: planOptions?.forceScrollTrigger || Date.now()
       };
       const initialUnits = (planData && planData.units) ? planData.units : [];

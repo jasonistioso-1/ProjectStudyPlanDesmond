@@ -258,9 +258,15 @@ export default function PlanBuilder({
       return;
     }
 
-    // Default to 'all' or next open year so that all remaining uncompleted years (e.g. Years 2 and 3) are populated
+    // Synchronize modal layout type with current plan's layoutType or canvas layoutType
+    const targetLayout = currentPlan?.layoutType || layoutType || 'trimester';
+    setModalLayoutType(targetLayout);
+
+    // Default to target year from request or next open year so that target scope matches request
     let defaultYear = 'all';
-    if (currentPlan?.requestYear) {
+    if (currentPlan?.targetYearLevel && currentPlan.targetYearLevel !== 'all' && !passedYears.has(Number(currentPlan.targetYearLevel))) {
+      defaultYear = Number(currentPlan.targetYearLevel);
+    } else if (currentPlan?.requestYear) {
       const reqY = Number(currentPlan.requestYear) === 2027 ? 2 : Number(currentPlan.requestYear) === 2028 ? 3 : 1;
       if (!passedYears.has(reqY)) defaultYear = reqY;
     } else if (activeYearLevel && typeof activeYearLevel === 'number' && !passedYears.has(activeYearLevel)) {
@@ -268,9 +274,23 @@ export default function PlanBuilder({
     }
     setScopeYear(defaultYear);
 
-    if (currentPlan?.requestPeriods && currentPlan.requestPeriods.length > 0) {
-      setScopePeriods(currentPlan.requestPeriods.map(Number));
+    // Synchronize periods based on layout
+    if (targetLayout === 'semester') {
+      let semPeriods = [1, 2];
+      if (currentPlan?.requestPeriods && currentPlan.requestPeriods.length > 0) {
+        const filtered = currentPlan.requestPeriods.map(Number).filter(p => p === 1 || p === 2);
+        if (filtered.length > 0) semPeriods = filtered;
+      }
+      setScopePeriods(semPeriods);
+    } else {
+      let triPeriods = [3, 4, 5];
+      if (currentPlan?.requestPeriods && currentPlan.requestPeriods.length > 0) {
+        const filtered = currentPlan.requestPeriods.map(Number).filter(p => p >= 3 && p <= 5);
+        if (filtered.length > 0) triPeriods = filtered;
+      }
+      setScopePeriods(triPeriods);
     }
+
     setShowAutoGenModal(true);
   };
 
@@ -293,6 +313,7 @@ export default function PlanBuilder({
     }
     if (currentPlan && currentPlan.layoutType) {
       setLayoutType(currentPlan.layoutType);
+      setModalLayoutType(currentPlan.layoutType);
     }
   }, [currentPlan, student]);
 
@@ -892,7 +913,7 @@ export default function PlanBuilder({
     if (onValidate) onValidate(updated);
   };
 
-  // Preset 3-Year Singapore Trimester Fast-Track Plan (72 CP across 3 Years)
+  // Preset Plan Generation - Delegated to unified onAutoGeneratePlan with official degree presets
   const handleGeneratePresetPlan = () => {
     if (isPlanLocked) {
       setDragWarningToast(`This Study Plan is currently ${planStatus.toUpperCase()} and locked from canvas edits. Click 'Retrieve & Amend' in Stored Repository to make modifications.`);
@@ -900,89 +921,14 @@ export default function PlanBuilder({
       return;
     }
 
-    const isNewStudent = !history || history.length === 0;
-    const completedCodesSet = new Set(
-      (history || []).filter(h => h.status === 'completed').map(h => h.unit_code || h.code)
-    );
-
-    // Gather candidate units from active catalogUnits or fallback standard list
-    let availableCatalog = (catalogUnits || []).filter(u => {
-      if (!isNewStudent && completedCodesSet.has(u.code)) return false;
-      return true;
-    });
-
-    if (availableCatalog.length === 0) {
-      availableCatalog = [
-        { code: 'ICT100', title: 'Transition to IT', credit_points: 3, level: 100 },
-        { code: 'ICT159', title: 'Foundations of Programming', credit_points: 3, level: 100 },
-        { code: 'ICT158', title: 'Intro to Computer Systems', credit_points: 3, level: 100 },
-        { code: 'ICT167', title: 'Principles of Computer Science', credit_points: 3, level: 100 },
-        { code: 'ICT169', title: 'Foundations of Data Communications', credit_points: 3, level: 100 },
-        { code: 'MAS162', title: 'Discrete Mathematics', credit_points: 3, level: 100 },
-        { code: 'ICT170', title: 'Foundations of Computer Systems', credit_points: 3, level: 100 },
-        { code: 'ICT145', title: 'Python Programming', credit_points: 3, level: 100 },
-        { code: 'ICT201', title: 'IT Project Management', credit_points: 3, level: 200 },
-        { code: 'ICT202', title: 'Data Analytics & Processing', credit_points: 3, level: 200 },
-        { code: 'ICT285', title: 'Databases', credit_points: 3, level: 200 },
-        { code: 'ICT203', title: 'Software Architecture & Design', credit_points: 3, level: 200 },
-        { code: 'ICT283', title: 'Data Structures & Algorithms', credit_points: 3, level: 200 },
-        { code: 'ICT284', title: 'Systems Analysis & Design', credit_points: 3, level: 200 },
-        { code: 'ICT206', title: 'Distributed Systems', credit_points: 3, level: 200 },
-        { code: 'ICT292', title: 'Information Systems Architecture', credit_points: 3, level: 200 },
-        { code: 'BSC203', title: 'Intro to ICT Research Methods', credit_points: 3, level: 200 },
-        { code: 'ICT301', title: 'Enterprise Architecture', credit_points: 3, level: 300 },
-        { code: 'ICT302', title: 'IT Professional Practice (Capstone)', credit_points: 3, level: 300 },
-        { code: 'ICT305', title: 'Data Visualisation', credit_points: 3, level: 300 },
-        { code: 'ICT303', title: 'Cloud Infrastructure & DevOps', credit_points: 3, level: 300 },
-        { code: 'ICT304', title: 'Enterprise Software Systems', credit_points: 3, level: 300 },
-        { code: 'ICT374', title: 'Operating Systems', credit_points: 3, level: 300 },
-        { code: 'ICT373', title: 'Software Architecture', credit_points: 3, level: 300 }
-      ];
+    if (onAutoGeneratePlan) {
+      onAutoGeneratePlan(student?.student_id, {
+        targetYearLevel: activeYearLevel || 'all',
+        layoutType: layoutType
+      });
+    } else {
+      handleOpenAutoGenModal();
     }
-
-    // Sort by level: 100 level -> Year 1, 200 level -> Year 2, 300 level -> Year 3
-    const getUnitLvl = (u) => Number(u.level || (u.code ? u.code.replace(/[^0-9]/g, '').charAt(0) + '00' : 100));
-
-    const level100 = availableCatalog.filter(u => getUnitLvl(u) <= 199);
-    const level200 = availableCatalog.filter(u => {
-      const lvl = getUnitLvl(u);
-      return lvl >= 200 && lvl <= 299;
-    });
-    const level300 = availableCatalog.filter(u => getUnitLvl(u) >= 300);
-
-    const generated = [];
-
-    const distributeToYear = (units, fallbackSlice, yearLevel) => {
-      const source = units.length > 0 ? units : fallbackSlice;
-      const p3 = source.slice(0, 4);
-      const p4 = source.slice(4, 8);
-      const p5 = source.slice(8, 12);
-
-      p3.forEach((u, idx) => {
-        if (generated.length < 24) {
-          generated.push({ ...u, unit_id: u.unit_id || Math.floor(Math.random() * 1000) + 10, year_level: yearLevel, period_id: 3, sequence_order: idx + 1, credit_points: u.credit_points || 3 });
-        }
-      });
-      p4.forEach((u, idx) => {
-        if (generated.length < 24) {
-          generated.push({ ...u, unit_id: u.unit_id || Math.floor(Math.random() * 1000) + 100, year_level: yearLevel, period_id: 4, sequence_order: idx + 5, credit_points: u.credit_points || 3 });
-        }
-      });
-      p5.forEach((u, idx) => {
-        if (generated.length < 24) {
-          generated.push({ ...u, unit_id: u.unit_id || Math.floor(Math.random() * 1000) + 200, year_level: yearLevel, period_id: 5, sequence_order: idx + 9, credit_points: u.credit_points || 3 });
-        }
-      });
-    };
-
-    if (!passedYears.has(1)) {
-      distributeToYear(level100, availableCatalog.slice(0, 12), 1);
-    }
-    distributeToYear(level200, availableCatalog.filter(u => getUnitLvl(u) >= 200 && getUnitLvl(u) <= 299), 2);
-    distributeToYear(level300, availableCatalog.filter(u => getUnitLvl(u) >= 300), 3);
-
-    setPlanUnits(generated);
-    if (onValidate) onValidate(generated);
   };
 
   // Clear all units from plan (Reset to 0 CP)
@@ -3001,7 +2947,7 @@ export default function PlanBuilder({
                 {/* Drag & Drop Year Grid Canvas */}
                 <div className="space-y-5">
                   {(viewMode === 'all' ? years : years.filter(y => y.level === activeYearLevel)).map(yearObj => {
-                    const isYearPassed = layoutType === 'trimester' && passedYears.has(yearObj.level);
+                    const isYearPassed = passedYears.has(yearObj.level);
                     const yearRenderedUnits = defaultPeriodList.flatMap(p => getSemesterUnits(yearObj.level, p.period_id));
                     const yearDisplayCP = yearRenderedUnits.reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
 
@@ -3516,7 +3462,21 @@ export default function PlanBuilder({
                   <span className="font-mono font-bold bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-lg text-[11px]">
                     Student Request
                   </span>
-                  <span>Requested Year {currentPlan.requestYear} ({currentPlan.requestPeriods ? currentPlan.requestPeriods.map(p=> p===3?'T1':p===4?'T2':'T3').join(', ') : 'All Trimesters'})</span>
+                  <span>
+                    Requested Year {currentPlan.requestYear} (
+                    {currentPlan.requestPeriods && currentPlan.requestPeriods.length > 0
+                      ? currentPlan.requestPeriods.map(p => {
+                          const num = Number(p);
+                          if (num === 1) return 'S1';
+                          if (num === 2) return 'S2';
+                          if (num === 3) return 'T1';
+                          if (num === 4) return 'T2';
+                          if (num === 5) return 'T3';
+                          return `P${num}`;
+                        }).join(', ')
+                      : (currentPlan.layoutType === 'semester' ? 'Both Semesters' : 'All Trimesters')}
+                    )
+                  </span>
                 </div>
               )}
 
@@ -3777,8 +3737,10 @@ export default function PlanBuilder({
                       setViewMode('single');
                     }
                     if (onAutoGeneratePlan) {
+                      const reqYearCalc = scopeYear === 2 ? 2027 : scopeYear === 3 ? 2028 : 2026;
                       onAutoGeneratePlan(student?.student_id, {
                         targetYearLevel: scopeYear,
+                        requestYear: reqYearCalc,
                         requestPeriods: scopePeriods,
                         layoutType: modalLayoutType
                       });
