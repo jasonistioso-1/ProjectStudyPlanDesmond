@@ -2637,16 +2637,16 @@ export default function App() {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shadow-2xs">
+            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 pr-12">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shadow-2xs shrink-0">
                 <Clock className="w-5 h-5" />
               </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
                   <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-heading">
                     Study Plan Change Log
                   </h3>
-                  <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full border ${
+                  <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full border shrink-0 ${
                     activeRole === 'student'
                       ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                       : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
@@ -2654,11 +2654,6 @@ export default function App() {
                     {activeRole === 'student' ? 'Student View (My Actions Only)' : 'Academic Chair (Full Audit Log)'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                  {activeRole === 'student'
-                    ? `Showing change log activity performed by ${selectedStudent ? selectedStudent.first_name : 'student'}.`
-                    : 'Real-time database audit log recording study plan status changes, recommendations, and unit amendments.'}
-                </p>
               </div>
             </div>
 
@@ -2730,7 +2725,7 @@ export default function App() {
                             v{(log.version_number || 1)}.0
                           </span>
                         </div>
-                        <span className={`px-2.5 py-0.5 rounded-md uppercase font-extrabold text-[9px] font-mono border text-right truncate ${
+                        <span className={`px-2.5 py-0.5 rounded-md uppercase font-extrabold text-[9px] font-mono border text-right shrink-0 ${
                           log.plan_status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' :
                           log.plan_status === 'agreed' ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' :
                           log.plan_status === 'recommended' ? 'bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' :
