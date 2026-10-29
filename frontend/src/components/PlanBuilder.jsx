@@ -1346,7 +1346,7 @@ export default function PlanBuilder({
                   title="Submit study plan request for Academic Chair review"
                 >
                   <Send className="w-3.5 h-3.5 text-white" />
-                  <span>Submit Plan Request</span>
+                  <span>{planStatus === 'approved' ? 'Request Replan / Amendment' : 'Submit Plan Request'}</span>
                   <ArrowRight className="w-4 h-4 opacity-80" />
                 </button>
               )}
@@ -2037,7 +2037,7 @@ export default function PlanBuilder({
                   </div>
                   <div>
                     <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight font-heading">
-                      Submit Study Plan Request
+                      {planStatus === 'approved' ? 'Request Study Plan Amendment (Replan)' : 'Submit Study Plan Request'}
                     </h3>
                   </div>
                 </div>

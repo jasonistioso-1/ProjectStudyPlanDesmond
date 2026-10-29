@@ -969,7 +969,7 @@ export default function App() {
                                 notif.title?.includes('Rejected') ||
                                 notif.actionLabel?.includes('Review Student Feedback');
     const isRecommendedNotif = notif.title?.includes('Recommended') || notif.actionLabel?.includes('Recommended');
-    const isRequestNotif = notif.title?.includes('Plan Request') || notif.title?.includes('Replan Request');
+    const isRequestNotif = notif.title?.includes('Plan Request') || notif.title?.includes('Replan Request') || notif.title?.includes('Request Submitted');
 
     const extractedComment = notif.rejectionComment || 
                              notif.comment || 
@@ -1166,12 +1166,31 @@ export default function App() {
         : p
     ));
 
+    const studentAckNotif = {
+      id: `n-st-${Date.now()}`,
+      role: 'student',
+      studentId: selectedStudent.student_id,
+      targetYear: targetYrLvl,
+      requestYear: year,
+      requestPeriods: periodIds,
+      layoutType: detectedLayout,
+      title: wasApproved
+        ? 'Replan Request Submitted'
+        : 'Study Plan Request Submitted',
+      message: `Your study plan request for ${detectedLayout} (${termLabels} ${year}) has been submitted to Academic Chair Dr. Aris Thorne for review.`,
+      timestamp: formatNotificationTimestamp(),
+      createdTimeMs: Date.now(),
+      read: false,
+      actionType: 'REVIEW',
+      actionLabel: 'View Request Status'
+    };
+
     setNotifications(prev => {
       const filtered = prev.filter(n => !(
         (Number(n.studentId) === sIdNum || String(n.studentId) === sIdStr) &&
-        (n.title?.includes('Agreed') || n.title?.includes('Signed') || n.title?.includes('Recommended') || n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Plan Request') || n.title?.includes('Replan Request'))
+        (n.title?.includes('Approved') || n.title?.includes('Agreed') || n.title?.includes('Signed') || n.title?.includes('Recommended') || n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Plan Request') || n.title?.includes('Replan Request') || n.title?.includes('Request Submitted'))
       ));
-      const nextList = [newNotif, ...filtered];
+      const nextList = [newNotif, studentAckNotif, ...filtered];
       try {
         localStorage.setItem('spr_notifications_list', JSON.stringify(nextList));
       } catch (e) {}
@@ -2786,7 +2805,7 @@ export default function App() {
 
   // Chair Unlock Plan for Amendment
   const handleUnlockForAmendment = () => {
-    if (!currentPlan) return;
+    if (!currentPlan || !selectedStudent) return;
     const nextVersion = Number(((currentPlan?.version_number || 1) + 0.1).toFixed(1));
     const updatedTime = formatCurrentDateTime();
     const updatedPlan = {
@@ -2798,6 +2817,34 @@ export default function App() {
       updated_at: updatedTime
     };
     setCurrentPlan(updatedPlan);
+
+    const sId = selectedStudent.student_id;
+    const sIdNum = Number(sId);
+    const sIdStr = String(sId);
+    const studentDraft = {
+      plan: updatedPlan,
+      units: planUnits || []
+    };
+
+    setAllStudentPlansMap(prev => ({
+      ...prev,
+      [sId]: studentDraft,
+      [sIdNum]: studentDraft,
+      [sIdStr]: studentDraft
+    }));
+
+    try {
+      localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify(studentDraft));
+      localStorage.setItem(`spr_student_${sIdNum}_plan`, JSON.stringify(studentDraft));
+      localStorage.setItem(`spr_student_${sIdStr}_plan`, JSON.stringify(studentDraft));
+      const savedCache = localStorage.getItem('spr_student_plans_cache');
+      const parsedCache = savedCache ? JSON.parse(savedCache) : {};
+      parsedCache[sId] = studentDraft;
+      parsedCache[sIdNum] = studentDraft;
+      parsedCache[sIdStr] = studentDraft;
+      localStorage.setItem('spr_student_plans_cache', JSON.stringify(parsedCache));
+    } catch (e) {}
+
     setStoredPlansList(prev => prev.map(p =>
       String(p.student_id) === String(selectedStudent?.student_id)
         ? { ...p, status: 'draft', isAmending: true, version_number: nextVersion, updated_at: updatedTime }
