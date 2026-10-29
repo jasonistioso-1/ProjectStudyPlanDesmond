@@ -177,11 +177,6 @@ export default function App() {
       const saved = localStorage.getItem('spr_notifications_list');
       if (saved) notifList = JSON.parse(saved);
 
-      const studentNotif = (notifList || []).find(n => 
-        (Number(n.studentId) === sIdNum || String(n.studentId) === String(sIdNum)) &&
-        (n.title?.includes('Agreed') || n.title?.includes('Signed') || n.title?.includes('Approved') || n.title?.includes('Recommended') || n.title?.includes('Plan') || n.title?.includes('Change Requested') || n.title?.includes('Disagreed') || n.actionLabel?.includes('Final Approve'))
-      );
-
       const singleKey = `spr_student_${sIdNum}_plan`;
       const single = localStorage.getItem(singleKey);
       let storedPlanData = single ? JSON.parse(single) : null;
@@ -193,15 +188,34 @@ export default function App() {
         }
       }
 
-      const isApproved = studentNotif?.title?.includes('Approved') || storedPlanData?.plan?.status === 'approved';
-      const isAgreed = !isApproved && (studentNotif?.title?.includes('Agreed') || studentNotif?.title?.includes('Signed') || studentNotif?.actionLabel?.includes('Final Approve') || storedPlanData?.plan?.status === 'agreed' || Boolean(storedPlanData?.plan?.studentSignature) || Boolean(storedPlanData?.plan?.signature));
-      const isDisagreed = !isApproved && !isAgreed && (studentNotif?.title?.includes('Disagreed') || studentNotif?.title?.includes('Change Requested') || studentNotif?.title?.includes('Rejected') || storedPlanData?.plan?.status === 'rejected');
-      const isRecommended = !isApproved && !isAgreed && !isDisagreed && (studentNotif?.title?.includes('Recommended') || studentNotif?.actionLabel?.includes('Recommended') || storedPlanData?.plan?.status === 'recommended');
-      const isRequested = !isApproved && !isAgreed && !isDisagreed && !isRecommended && (studentNotif?.title?.includes('Plan Request') || studentNotif?.title?.includes('Replan Request') || storedPlanData?.plan?.status === 'request_submitted');
+      // Filter all notifications for this student and sort newest first
+      const studentNotifs = (notifList || []).filter(n => 
+        (Number(n.studentId) === sIdNum || String(n.studentId) === String(sIdNum)) &&
+        (n.title?.includes('Agreed') || n.title?.includes('Signed') || n.title?.includes('Approved') || n.title?.includes('Recommended') || n.title?.includes('Plan Request') || n.title?.includes('Replan Request') || n.title?.includes('Change Requested') || n.title?.includes('Disagreed') || n.actionLabel?.includes('Final Approve'))
+      );
+      studentNotifs.sort((a, b) => (b.createdTimeMs || 0) - (a.createdTimeMs || 0));
+      const latestNotif = studentNotifs[0];
 
-      let targetYr = storedPlanData?.plan?.targetYearLevel || studentNotif?.targetYear;
+      let effectiveStatus = storedPlanData?.plan?.status || 'draft';
+      if (latestNotif) {
+        if (latestNotif.title?.includes('Approved')) {
+          effectiveStatus = 'approved';
+        } else if (latestNotif.title?.includes('Agreed') || latestNotif.title?.includes('Signed') || latestNotif.actionLabel?.includes('Final Approve')) {
+          effectiveStatus = 'agreed';
+        } else if (latestNotif.title?.includes('Disagreed') || latestNotif.title?.includes('Change Requested') || latestNotif.title?.includes('Rejected')) {
+          effectiveStatus = 'rejected';
+        } else if (latestNotif.title?.includes('Recommended') || latestNotif.actionLabel?.includes('Recommended')) {
+          effectiveStatus = 'recommended';
+        } else if (latestNotif.title?.includes('Plan Request') || latestNotif.title?.includes('Replan Request')) {
+          effectiveStatus = 'request_submitted';
+        }
+      } else if (storedPlanData?.plan?.status) {
+        effectiveStatus = storedPlanData.plan.status;
+      }
+
+      let targetYr = storedPlanData?.plan?.targetYearLevel || latestNotif?.targetYear;
       if (!targetYr) {
-        const matchYr = studentNotif?.message?.match(/202[6-9]/);
+        const matchYr = latestNotif?.message?.match(/202[6-9]/);
         if (matchYr) {
           const yr = Number(matchYr[0]);
           targetYr = yr === 2027 ? 2 : yr === 2028 ? 3 : 1;
@@ -212,17 +226,16 @@ export default function App() {
         targetYr = (sIdNum === 1 || sIdNum === 2) ? 2 : 1;
       }
 
-      const effectiveStatus = isApproved ? 'approved' : (isAgreed ? 'agreed' : (isDisagreed ? 'rejected' : (isRecommended ? 'recommended' : (isRequested ? 'request_submitted' : (storedPlanData?.plan?.status || 'draft')))));
-      const layout = storedPlanData?.plan?.layoutType || studentNotif?.layoutType || 'trimester';
+      const layout = storedPlanData?.plan?.layoutType || latestNotif?.layoutType || 'trimester';
 
       return {
         targetYearLevel: targetYr,
         requestYear: targetYr === 2 ? 2027 : targetYr === 3 ? 2028 : 2026,
-        requestPeriods: storedPlanData?.plan?.requestPeriods || (layout === 'semester' ? [1, 2] : [3, 4, 5]),
+        requestPeriods: storedPlanData?.plan?.requestPeriods || latestNotif?.requestPeriods || (layout === 'semester' ? [1, 2] : [3, 4, 5]),
         layoutType: layout,
         forceScrollTrigger: Date.now(),
         status: effectiveStatus,
-        rejectionComment: studentNotif?.rejectionComment || studentNotif?.comment || storedPlanData?.plan?.rejectionComment
+        rejectionComment: latestNotif?.rejectionComment || latestNotif?.comment || storedPlanData?.plan?.rejectionComment
       };
     } catch (e) {
       return null;
@@ -262,9 +275,9 @@ export default function App() {
 
   const handleLogout = () => {
     // Preserve active working plan before logging out
-    if (selectedStudent && currentPlan && planUnits && planUnits.length > 0) {
+    if (selectedStudent && currentPlan) {
       const sId = selectedStudent.student_id;
-      const draft = { plan: currentPlan, units: planUnits };
+      const draft = { plan: currentPlan, units: planUnits || [] };
       try {
         localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify(draft));
         const saved = localStorage.getItem('spr_student_plans_cache');
@@ -1086,71 +1099,102 @@ export default function App() {
       actionLabel: detectedLayout === 'semester' ? 'View Semester Plan' : 'View Trimester Plan'
     };
 
-    setNotifications(prev => [newNotif, ...prev]);
+    const basePlan = currentPlan || mockClientStudentPlans[Number(selectedStudent.student_id)]?.plan || {
+      plan_id: selectedStudent.student_id,
+      student_id: selectedStudent.student_id,
+      title: `${selectedStudent.course_code || 'PT3-BSIT'} Study Plan`,
+      version_number: 1
+    };
+    const updatedPlan = {
+      ...basePlan,
+      status: 'request_submitted',
+      layoutType: detectedLayout,
+      studentSignature: null,
+      signature: null,
+      requestYear: year,
+      targetYearLevel: targetYrLvl,
+      requestPeriods: periodIds,
+      requestComment: comment,
+      updated_at: formatCurrentDateTime(),
+      version_number: (basePlan?.version_number || 1) + 1,
+      manuallySubmittedInSession: true
+    };
+    setCurrentPlan(updatedPlan);
 
-    if (currentPlan) {
-      const updatedPlan = {
-        ...currentPlan,
-        status: 'request_submitted',
-        layoutType: detectedLayout,
-        studentSignature: null,
-        signature: null,
-        requestYear: year,
-        targetYearLevel: targetYrLvl,
-        requestPeriods: periodIds,
-        requestComment: comment,
-        updated_at: formatCurrentDateTime(),
-        version_number: (currentPlan?.version_number || 1) + 1,
-        manuallySubmittedInSession: true
-      };
-      setCurrentPlan(updatedPlan);
+    const sId = selectedStudent.student_id;
+    const sIdNum = Number(sId);
+    const sIdStr = String(sId);
+    const studentDraft = {
+      plan: updatedPlan,
+      units: planUnits || []
+    };
 
-      if (mockClientStudentPlans[Number(selectedStudent.student_id)]) {
-        mockClientStudentPlans[Number(selectedStudent.student_id)].plan = updatedPlan;
-      }
-
-      setAllStudentPlansMap(prev => {
-        const nextMap = {
-          ...prev,
-          [selectedStudent.student_id]: {
-            plan: updatedPlan,
-            units: planUnits
-          },
-          [String(selectedStudent.student_id)]: {
-            plan: updatedPlan,
-            units: planUnits
-          }
-        };
-        return nextMap;
-      });
-
-      setStoredPlansList(prev => prev.map(p =>
-        Number(p.student_id) === Number(selectedStudent.student_id) || String(p.student_id) === String(selectedStudent.student_id)
-          ? {
-              ...p,
-              status: 'request_submitted',
-              updated_at: updatedPlan.updated_at,
-              version_number: updatedPlan.version_number
-            }
-          : p
-      ));
-
-      saveStudyPlan({
-        student_id: selectedStudent.student_id,
-        title: `${selectedStudent.course_code || 'PT3-BSIT'} Study Plan`,
-        status: 'request_submitted',
-        units: planUnits,
-        created_by: `Student: ${stName}`
-      }).catch(err => console.warn('Save on submit plan request error:', err));
-
-      updatePlanRecordAndLogAudit(
-        'request_submitted',
-        wasApproved
-          ? `Previously APPROVED study plan re-opened: Student submitted new replan request for Year ${targetYrLvl} (${year}) (${detectedLayout.toUpperCase()} layout)`
-          : `Student submitted study plan request for Year ${targetYrLvl} (${year}) (${detectedLayout.toUpperCase()} layout)`,
-        `Student: ${stName}`
-      );
+    if (mockClientStudentPlans[sIdNum]) {
+      mockClientStudentPlans[sIdNum].plan = updatedPlan;
     }
+
+    setAllStudentPlansMap(prev => {
+      const nextMap = {
+        ...prev,
+        [sId]: studentDraft,
+        [sIdNum]: studentDraft,
+        [sIdStr]: studentDraft
+      };
+      return nextMap;
+    });
+
+    try {
+      localStorage.setItem(`spr_student_${sId}_plan`, JSON.stringify(studentDraft));
+      localStorage.setItem(`spr_student_${sIdNum}_plan`, JSON.stringify(studentDraft));
+      localStorage.setItem(`spr_student_${sIdStr}_plan`, JSON.stringify(studentDraft));
+      const savedCache = localStorage.getItem('spr_student_plans_cache');
+      const parsedCache = savedCache ? JSON.parse(savedCache) : {};
+      parsedCache[sId] = studentDraft;
+      parsedCache[sIdNum] = studentDraft;
+      parsedCache[sIdStr] = studentDraft;
+      localStorage.setItem('spr_student_plans_cache', JSON.stringify(parsedCache));
+    } catch (e) {}
+
+    setStoredPlansList(prev => prev.map(p =>
+      Number(p.student_id) === sIdNum || String(p.student_id) === sIdStr
+        ? {
+            ...p,
+            status: 'request_submitted',
+            updated_at: updatedPlan.updated_at,
+            version_number: updatedPlan.version_number
+          }
+        : p
+    ));
+
+    setNotifications(prev => {
+      const filtered = prev.filter(n => !(
+        (Number(n.studentId) === sIdNum || String(n.studentId) === sIdStr) &&
+        (n.title?.includes('Agreed') || n.title?.includes('Signed') || n.title?.includes('Recommended') || n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Plan Request') || n.title?.includes('Replan Request'))
+      ));
+      const nextList = [newNotif, ...filtered];
+      try {
+        localStorage.setItem('spr_notifications_list', JSON.stringify(nextList));
+      } catch (e) {}
+      return nextList;
+    });
+
+    saveStudyPlan({
+      student_id: selectedStudent.student_id,
+      title: `${selectedStudent.course_code || 'PT3-BSIT'} Study Plan`,
+      status: 'request_submitted',
+      units: planUnits || [],
+      created_by: `Student: ${stName}`
+    }).catch(err => console.warn('Save on submit plan request error:', err));
+
+    updatePlanRecordAndLogAudit(
+      'request_submitted',
+      wasApproved
+        ? `Previously APPROVED study plan re-opened: Student submitted new replan request for Year ${targetYrLvl} (${year}) (${detectedLayout.toUpperCase()} layout)`
+        : `Student submitted study plan request for Year ${targetYrLvl} (${year}) (${detectedLayout.toUpperCase()} layout)`,
+      `Student: ${stName}`,
+      selectedStudent,
+      planUnits
+    );
 
     showToast(
       wasApproved
@@ -2057,21 +2101,21 @@ export default function App() {
       const single = localStorage.getItem(singleKey);
       if (single) {
         const p = JSON.parse(single);
-        if (p?.units && p.units.length > 0) storedStudentPlan = p;
+        if (p?.plan) storedStudentPlan = p;
       }
       if (!storedStudentPlan) {
         const saved = localStorage.getItem('spr_student_plans_cache');
         if (saved) {
           const parsed = JSON.parse(saved);
           const sData = parsed[student.student_id] || parsed[Number(student.student_id)] || parsed[String(student.student_id)];
-          if (sData?.units && sData.units.length > 0) storedStudentPlan = sData;
+          if (sData?.plan) storedStudentPlan = sData;
         }
       }
     } catch (e) {}
 
     const isSameStudentActive = selectedStudent && Number(selectedStudent.student_id) === Number(student.student_id);
     let cached = null;
-    if (storedStudentPlan && (!planUnits || storedStudentPlan.units.length >= (planUnits?.length || 0) || !isSameStudentActive)) {
+    if (storedStudentPlan && (!planUnits || (storedStudentPlan.units && storedStudentPlan.units.length >= (planUnits?.length || 0)) || !isSameStudentActive)) {
       cached = storedStudentPlan;
     } else if (isSameStudentActive && planUnits && planUnits.length > 0) {
       cached = { plan: currentPlan, units: planUnits };
@@ -2079,55 +2123,26 @@ export default function App() {
       cached = storedStudentPlan || allStudentPlansMap[student.student_id] || allStudentPlansMap[Number(student.student_id)] || allStudentPlansMap[String(student.student_id)];
     }
 
-    // Check if there is an active agreement notification (Student agreed & digitally signed plan)
-    const agreeNotif = (notifications || []).find(n => 
+    // Filter notifications for this student and sort newest first by createdTimeMs
+    const studentNotifications = (notifications || []).filter(n =>
       (Number(n.studentId) === Number(student.student_id) || String(n.studentId) === String(student.student_id)) &&
-      (n.title?.includes('Agreed') || n.title?.includes('Signed') || n.actionLabel?.includes('Final Approve'))
+      (n.title?.includes('Agreed') || n.title?.includes('Signed') || n.title?.includes('Approved') || n.title?.includes('Recommended') || n.title?.includes('Plan Request') || n.title?.includes('Replan Request') || n.title?.includes('Change Requested') || n.title?.includes('Disagreed') || n.actionLabel?.includes('Final Approve'))
     );
+    studentNotifications.sort((a, b) => (b.createdTimeMs || 0) - (a.createdTimeMs || 0));
+    const latestNotif = studentNotifications[0];
 
-    // Check if there is an active approval notification
-    const approvedNotif = (notifications || []).find(n => 
-      (Number(n.studentId) === Number(student.student_id) || String(n.studentId) === String(student.student_id)) &&
-      (n.title?.includes('Approved & Finalized') || n.title?.includes('Officially Approved') || n.actionLabel?.includes('View Approved Plan'))
-    );
-
-    // Check if there is an active disagreement / revision request from notifications
-    const disagreementNotif = (notifications || []).find(n => 
-      (Number(n.studentId) === Number(student.student_id) || String(n.studentId) === String(student.student_id)) &&
-      (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected'))
-    );
-    const notifComment = disagreementNotif?.rejectionComment || 
-                         disagreementNotif?.comment || 
-                         (disagreementNotif?.message?.match(/"([^"]+)"/)?.[1]) || 
-                         null;
-
-    const isStudentDisagreed = !agreeNotif && !approvedNotif && (
-      Boolean(resolvedPlanOptions?.rejectionComment) || 
-      Boolean(notifComment) || 
-      Boolean(disagreementNotif) || 
-      resolvedPlanOptions?.status === 'rejected' || 
-      (cached?.plan?.status === 'rejected' && !cached?.plan?.studentSignature)
-    );
+    const isStudentDisagreed = (latestNotif && (latestNotif.title?.includes('Disagreed') || latestNotif.title?.includes('Change Requested') || latestNotif.title?.includes('Rejected'))) ||
+      (!latestNotif && (Boolean(resolvedPlanOptions?.rejectionComment) || resolvedPlanOptions?.status === 'rejected' || (cached?.plan?.status === 'rejected' && !cached?.plan?.studentSignature)));
 
     const effectiveRejectionComment = isStudentDisagreed ? (
       resolvedPlanOptions?.rejectionComment || 
-      notifComment || 
+      latestNotif?.rejectionComment || 
+      latestNotif?.comment || 
+      (latestNotif?.message?.match(/"([^"]+)"/)?.[1]) || 
       cached?.plan?.rejectionComment || 
       cached?.plan?.rejection_comment || 
       null
     ) : null;
-
-    // Check for active recommendation notification from chair for this student
-    const recommendedNotif = (notifications || []).find(n => 
-      (Number(n.studentId) === Number(student.student_id) || String(n.studentId) === String(student.student_id)) &&
-      (n.title?.includes('Recommended') || n.actionLabel?.includes('Recommended'))
-    );
-
-    // Check for active plan request notification (Student submitted request to Chair)
-    const requestNotif = (notifications || []).find(n => 
-      (Number(n.studentId) === Number(student.student_id) || String(n.studentId) === String(student.student_id)) &&
-      (n.title?.includes('Plan Request') || n.title?.includes('Replan Request'))
-    );
 
     const storedRecord = (storedPlansList || []).find(p => 
       Number(p.student_id) === Number(student.student_id) || String(p.student_id) === String(student.student_id)
@@ -2135,32 +2150,27 @@ export default function App() {
     const fallbackMock = mockClientStudentPlans[Number(student.student_id)];
 
     // Resolve the true latest lifecycle status for this student:
-    // Precedence: approved > agreed > rejected > recommended > request_submitted > draft
     let resolvedStatus = 'draft';
     if (resolvedPlanOptions?.status) {
       resolvedStatus = resolvedPlanOptions.status;
-    } else if (approvedNotif || cached?.plan?.status === 'approved' || storedRecord?.status === 'approved') {
-      resolvedStatus = 'approved';
-    } else if (agreeNotif || cached?.plan?.status === 'agreed' || storedRecord?.status === 'agreed' || cached?.plan?.studentSignature || cached?.plan?.signature) {
-      resolvedStatus = 'agreed';
-    } else if (isStudentDisagreed) {
-      resolvedStatus = 'rejected';
-    } else if (recommendedNotif) {
-      // Active recommendation from Chair awaiting student review
-      resolvedStatus = 'recommended';
-    } else if (cached?.plan?.status === 'recommended' || storedRecord?.status === 'recommended' || fallbackMock?.plan?.status === 'recommended') {
-      resolvedStatus = 'recommended';
-    } else if (requestNotif) {
-      // Active study plan request awaiting chair review
-      resolvedStatus = 'request_submitted';
-    } else if (cached?.plan?.status === 'request_submitted' || storedRecord?.status === 'request_submitted' || fallbackMock?.plan?.status === 'request_submitted') {
-      resolvedStatus = 'request_submitted';
-    } else if (cached?.plan?.status === 'rejected' || storedRecord?.status === 'rejected') {
-      resolvedStatus = 'rejected';
+    } else if (latestNotif) {
+      if (latestNotif.title?.includes('Approved')) {
+        resolvedStatus = 'approved';
+      } else if (latestNotif.title?.includes('Agreed') || latestNotif.title?.includes('Signed') || latestNotif.actionLabel?.includes('Final Approve')) {
+        resolvedStatus = 'agreed';
+      } else if (latestNotif.title?.includes('Disagreed') || latestNotif.title?.includes('Change Requested') || latestNotif.title?.includes('Rejected')) {
+        resolvedStatus = 'rejected';
+      } else if (latestNotif.title?.includes('Recommended') || latestNotif.actionLabel?.includes('Recommended')) {
+        resolvedStatus = 'recommended';
+      } else if (latestNotif.title?.includes('Plan Request') || latestNotif.title?.includes('Replan Request')) {
+        resolvedStatus = 'request_submitted';
+      }
+    } else if (cached?.plan?.status) {
+      resolvedStatus = cached.plan.status;
     } else if (storedRecord?.status) {
       resolvedStatus = storedRecord.status;
     } else {
-      resolvedStatus = cached?.plan?.status || fallbackMock?.plan?.status || 'draft';
+      resolvedStatus = fallbackMock?.plan?.status || 'draft';
     }
 
     if (resolvedStatus === 'recommended' || resolvedStatus === 'request_submitted') {

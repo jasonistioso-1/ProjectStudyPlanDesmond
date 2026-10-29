@@ -2327,14 +2327,16 @@ export default function PlanBuilder({
                     planStatus === 'agreed' ? 'bg-sky-100/90 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 border-sky-300 dark:border-sky-800' :
                     planStatus === 'recommended' ? 'bg-amber-100/90 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' :
                     planStatus === 'rejected' ? 'bg-rose-100/90 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border-rose-300' :
+                    planStatus === 'request_submitted' ? 'bg-indigo-100/90 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800' :
                     'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                   }`}>
-                    {currentPlan?.isAmending ? 'Amendment Draft' : planStatus === 'draft' ? 'Drafting Sequence' : planStatus === 'rejected' ? 'Change Requested' : planStatus}
+                    {currentPlan?.isAmending ? 'Amendment Draft' : planStatus === 'draft' ? 'Drafting Sequence' : planStatus === 'rejected' ? 'Change Requested' : planStatus === 'request_submitted' ? 'Student Plan Request' : planStatus}
                   </span>
                 </div>
 
                 <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                   {currentPlan?.isAmending && 'You are currently amending this study plan. Canvas is unlocked. Adjust units freely, then click Re-Recommend or Final Approve.'}
+                  {!currentPlan?.isAmending && planStatus === 'request_submitted' && 'Student submitted a study plan request. Review preferences, arrange units on canvas, and click Recommend Study Plan below.'}
                   {!currentPlan?.isAmending && planStatus === 'draft' && 'Structure units on the canvas and click Recommend to Student at the bottom when ready.'}
                   {!currentPlan?.isAmending && planStatus === 'rejected' && 'Student disagreed with the recommended plan and requested amendments. Please review the student feedback note, adjust units, and re-recommend.'}
                   {!currentPlan?.isAmending && planStatus === 'recommended' && 'Plan recommended to student & locked from canvas edits. To modify units, click Unlock & Amend Canvas.'}
