@@ -179,7 +179,7 @@ export default function App() {
 
       const studentNotif = (notifList || []).find(n => 
         (Number(n.studentId) === sIdNum || String(n.studentId) === String(sIdNum)) &&
-        (n.title?.includes('Recommended') || n.title?.includes('Approved') || n.title?.includes('Plan') || n.title?.includes('Change Requested') || n.title?.includes('Disagreed'))
+        (n.title?.includes('Agreed') || n.title?.includes('Signed') || n.title?.includes('Approved') || n.title?.includes('Recommended') || n.title?.includes('Plan') || n.title?.includes('Change Requested') || n.title?.includes('Disagreed') || n.actionLabel?.includes('Final Approve'))
       );
 
       const singleKey = `spr_student_${sIdNum}_plan`;
@@ -193,10 +193,11 @@ export default function App() {
         }
       }
 
-      const isRecommended = studentNotif?.title?.includes('Recommended') || studentNotif?.actionLabel?.includes('Recommended') || storedPlanData?.plan?.status === 'recommended';
-      const isDisagreed = studentNotif?.title?.includes('Disagreed') || studentNotif?.title?.includes('Change Requested') || studentNotif?.title?.includes('Rejected') || storedPlanData?.plan?.status === 'rejected';
       const isApproved = studentNotif?.title?.includes('Approved') || storedPlanData?.plan?.status === 'approved';
-      const isRequested = studentNotif?.title?.includes('Plan Request') || studentNotif?.title?.includes('Replan Request') || storedPlanData?.plan?.status === 'request_submitted';
+      const isAgreed = !isApproved && (studentNotif?.title?.includes('Agreed') || studentNotif?.title?.includes('Signed') || studentNotif?.actionLabel?.includes('Final Approve') || storedPlanData?.plan?.status === 'agreed' || Boolean(storedPlanData?.plan?.studentSignature) || Boolean(storedPlanData?.plan?.signature));
+      const isDisagreed = !isApproved && !isAgreed && (studentNotif?.title?.includes('Disagreed') || studentNotif?.title?.includes('Change Requested') || studentNotif?.title?.includes('Rejected') || storedPlanData?.plan?.status === 'rejected');
+      const isRecommended = !isApproved && !isAgreed && !isDisagreed && (studentNotif?.title?.includes('Recommended') || studentNotif?.actionLabel?.includes('Recommended') || storedPlanData?.plan?.status === 'recommended');
+      const isRequested = !isApproved && !isAgreed && !isDisagreed && !isRecommended && (studentNotif?.title?.includes('Plan Request') || studentNotif?.title?.includes('Replan Request') || storedPlanData?.plan?.status === 'request_submitted');
 
       let targetYr = storedPlanData?.plan?.targetYearLevel || studentNotif?.targetYear;
       if (!targetYr) {
@@ -211,7 +212,7 @@ export default function App() {
         targetYr = (sIdNum === 1 || sIdNum === 2) ? 2 : 1;
       }
 
-      const effectiveStatus = isApproved ? 'approved' : (isRecommended ? 'recommended' : (isDisagreed ? 'rejected' : (isRequested ? 'request_submitted' : (storedPlanData?.plan?.status || 'draft'))));
+      const effectiveStatus = isApproved ? 'approved' : (isAgreed ? 'agreed' : (isDisagreed ? 'rejected' : (isRecommended ? 'recommended' : (isRequested ? 'request_submitted' : (storedPlanData?.plan?.status || 'draft')))));
       const layout = storedPlanData?.plan?.layoutType || studentNotif?.layoutType || 'trimester';
 
       return {
@@ -944,6 +945,12 @@ export default function App() {
       }
     }
 
+    const isApprovedNotif = notif.title?.includes('Approved & Finalized') || 
+                            notif.title?.includes('Officially Approved') || 
+                            notif.actionLabel?.includes('View Approved Plan');
+    const isAgreedNotif = notif.title?.includes('Agreed') || 
+                          notif.title?.includes('Signed') || 
+                          notif.actionLabel?.includes('Final Approve');
     const isDisagreementNotif = notif.title?.includes('Disagreed') || 
                                 notif.title?.includes('Change Requested') || 
                                 notif.title?.includes('Rejected') ||
@@ -956,6 +963,12 @@ export default function App() {
                              (notif.message?.match(/"([^"]+)"/)?.[1]) || 
                              null;
 
+    const notifStatus = isApprovedNotif ? 'approved' : 
+                        (isAgreedNotif ? 'agreed' : 
+                        (isDisagreementNotif ? 'rejected' : 
+                        (isRecommendedNotif ? 'recommended' : 
+                        (isRequestNotif ? 'request_submitted' : undefined))));
+
     const planOptions = {
       targetYearLevel: targetYr,
       requestYear: notifYear,
@@ -963,7 +976,7 @@ export default function App() {
       layoutType: notifLayout,
       forceScrollTrigger: Date.now(),
       rejectionComment: isDisagreementNotif ? (extractedComment || 'Student requested changes') : undefined,
-      status: isDisagreementNotif ? 'rejected' : (isRecommendedNotif ? 'recommended' : (isRequestNotif ? 'request_submitted' : undefined))
+      status: notifStatus
     };
 
     let targetStudentObj = null;
@@ -987,10 +1000,12 @@ export default function App() {
       setActiveRole('chair');
       const stName = targetStudentObj ? `${targetStudentObj.first_name} ${targetStudentObj.last_name}` : 'Student';
       const stNum = targetStudentObj?.student_number ? ` (${targetStudentObj.student_number})` : '';
+      const auditStatus = notifStatus || currentPlan?.status || 'draft';
       updatePlanRecordAndLogAudit(
-        isDisagreementNotif ? 'rejected' : (currentPlan?.status || 'draft'),
+        auditStatus,
         `Academic Chair reviewed student request notification for ${stName}${stNum}: "${notif.title} - ${notif.message}"`,
-        'Academic Chair'
+        'Academic Chair',
+        targetStudentObj
       );
     } else {
       setActiveRole(notif.role === 'chair' ? 'chair' : 'student');
@@ -2064,6 +2079,18 @@ export default function App() {
       cached = storedStudentPlan || allStudentPlansMap[student.student_id] || allStudentPlansMap[Number(student.student_id)] || allStudentPlansMap[String(student.student_id)];
     }
 
+    // Check if there is an active agreement notification (Student agreed & digitally signed plan)
+    const agreeNotif = (notifications || []).find(n => 
+      (Number(n.studentId) === Number(student.student_id) || String(n.studentId) === String(student.student_id)) &&
+      (n.title?.includes('Agreed') || n.title?.includes('Signed') || n.actionLabel?.includes('Final Approve'))
+    );
+
+    // Check if there is an active approval notification
+    const approvedNotif = (notifications || []).find(n => 
+      (Number(n.studentId) === Number(student.student_id) || String(n.studentId) === String(student.student_id)) &&
+      (n.title?.includes('Approved & Finalized') || n.title?.includes('Officially Approved') || n.actionLabel?.includes('View Approved Plan'))
+    );
+
     // Check if there is an active disagreement / revision request from notifications
     const disagreementNotif = (notifications || []).find(n => 
       (Number(n.studentId) === Number(student.student_id) || String(n.studentId) === String(student.student_id)) &&
@@ -2074,16 +2101,21 @@ export default function App() {
                          (disagreementNotif?.message?.match(/"([^"]+)"/)?.[1]) || 
                          null;
 
-    const effectiveRejectionComment = resolvedPlanOptions?.rejectionComment || 
-                                      notifComment || 
-                                      cached?.plan?.rejectionComment || 
-                                      cached?.plan?.rejection_comment || 
-                                      null;
+    const isStudentDisagreed = !agreeNotif && !approvedNotif && (
+      Boolean(resolvedPlanOptions?.rejectionComment) || 
+      Boolean(notifComment) || 
+      Boolean(disagreementNotif) || 
+      resolvedPlanOptions?.status === 'rejected' || 
+      (cached?.plan?.status === 'rejected' && !cached?.plan?.studentSignature)
+    );
 
-    const isStudentDisagreed = Boolean(effectiveRejectionComment) || 
-                               Boolean(disagreementNotif) || 
-                               resolvedPlanOptions?.status === 'rejected' || 
-                               cached?.plan?.status === 'rejected';
+    const effectiveRejectionComment = isStudentDisagreed ? (
+      resolvedPlanOptions?.rejectionComment || 
+      notifComment || 
+      cached?.plan?.rejectionComment || 
+      cached?.plan?.rejection_comment || 
+      null
+    ) : null;
 
     // Check for active recommendation notification from chair for this student
     const recommendedNotif = (notifications || []).find(n => 
@@ -2103,9 +2135,14 @@ export default function App() {
     const fallbackMock = mockClientStudentPlans[Number(student.student_id)];
 
     // Resolve the true latest lifecycle status for this student:
+    // Precedence: approved > agreed > rejected > recommended > request_submitted > draft
     let resolvedStatus = 'draft';
     if (resolvedPlanOptions?.status) {
       resolvedStatus = resolvedPlanOptions.status;
+    } else if (approvedNotif || cached?.plan?.status === 'approved' || storedRecord?.status === 'approved') {
+      resolvedStatus = 'approved';
+    } else if (agreeNotif || cached?.plan?.status === 'agreed' || storedRecord?.status === 'agreed' || cached?.plan?.studentSignature || cached?.plan?.signature) {
+      resolvedStatus = 'agreed';
     } else if (isStudentDisagreed) {
       resolvedStatus = 'rejected';
     } else if (recommendedNotif) {
@@ -2120,8 +2157,6 @@ export default function App() {
       resolvedStatus = 'request_submitted';
     } else if (cached?.plan?.status === 'rejected' || storedRecord?.status === 'rejected') {
       resolvedStatus = 'rejected';
-    } else if (cached?.plan?.studentSignature || cached?.plan?.signature || cached?.plan?.status === 'agreed') {
-      resolvedStatus = (cached?.plan?.status === 'approved' || storedRecord?.status === 'approved') ? 'approved' : 'agreed';
     } else if (storedRecord?.status) {
       resolvedStatus = storedRecord.status;
     } else {
@@ -2520,8 +2555,11 @@ export default function App() {
     setNotifications(prev => [
       notif,
       ...prev
-        .filter(n => !(Number(n.studentId) === Number(selectedStudent.student_id) && (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected'))))
-        .map(n => (Number(n.studentId) === Number(selectedStudent.student_id) && (n.title?.includes('Plan Request') || n.title?.includes('Replan Request'))) ? { ...n, read: true } : n)
+        .filter(n => !(
+          (Number(n.studentId) === Number(selectedStudent.student_id) || String(n.studentId) === String(selectedStudent.student_id)) &&
+          (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected') || n.title?.includes('Agreed') || n.title?.includes('Signed'))
+        ))
+        .map(n => ((Number(n.studentId) === Number(selectedStudent.student_id) || String(n.studentId) === String(selectedStudent.student_id)) && (n.title?.includes('Plan Request') || n.title?.includes('Replan Request'))) ? { ...n, read: true } : n)
     ]);
 
     showToast(`Plan successfully recommended to ${selectedStudent.first_name} ${selectedStudent.last_name} (${selectedStudent.student_number})!`);
@@ -2623,7 +2661,10 @@ export default function App() {
     };
     setNotifications(prev => [
       agreeNotif,
-      ...prev.filter(n => !(Number(n.studentId) === Number(selectedStudent.student_id) && (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected'))))
+      ...prev.filter(n => !(
+        (Number(n.studentId) === Number(selectedStudent.student_id) || String(n.studentId) === String(selectedStudent.student_id)) &&
+        (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected') || n.title?.includes('Recommended') || n.title?.includes('Plan Request') || n.title?.includes('Replan Request'))
+      ))
     ]);
 
     showToast('Study plan agreed and digitally signed by student!');
@@ -2821,7 +2862,10 @@ export default function App() {
     };
     setNotifications(prev => [
       approvedNotif,
-      ...prev.filter(n => !(Number(n.studentId) === Number(selectedStudent.student_id) && (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected') || n.title?.includes('Recommended'))))
+      ...prev.filter(n => !(
+        (Number(n.studentId) === Number(selectedStudent.student_id) || String(n.studentId) === String(selectedStudent.student_id)) &&
+        (n.title?.includes('Disagreed') || n.title?.includes('Change Requested') || n.title?.includes('Rejected') || n.title?.includes('Recommended') || n.title?.includes('Plan Request') || n.title?.includes('Replan Request') || n.title?.includes('Agreed') || n.title?.includes('Signed'))
+      ))
     ]);
     updatePlanRecordAndLogAudit('approved', 'Study Plan officially APPROVED & finalized by Academic Chair', 'Academic Chair');
     showToast('Study Plan officially approved and finalized by Academic Chair!');
