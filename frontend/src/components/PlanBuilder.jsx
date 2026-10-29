@@ -1237,6 +1237,39 @@ export default function PlanBuilder({
     { id: 'approved', label: '4. Final Approved', active: planStatus === 'approved' }
   ];
 
+  // General Electives required calculation for trimesters with < 12 CP (External Consultation with Chair)
+  const generalElectiveRequirements = useMemo(() => {
+    const list = [];
+    if (!years || !Array.isArray(years)) return list;
+
+    const activePeriods = studentLayoutMode === 'semester' ? semesterPeriods : trimesterPeriods;
+
+    years.forEach(y => {
+      activePeriods.forEach(p => {
+        const sUnits = getSemesterUnits(y.level, p.period_id, studentLayoutMode);
+        const semCP = (sUnits || []).reduce((sum, u) => sum + Number(u.credit_points || 3), 0);
+        
+        // Trimester with units mapped that has less than 12 CP (e.g. 6/12 CP or 9/12 CP)
+        if (semCP > 0 && semCP < 12) {
+          const neededElectives = Math.round((12 - semCP) / 3);
+          if (neededElectives > 0) {
+            list.push({
+              yearLevel: y.level,
+              periodCode: p.code,
+              periodName: p.name,
+              currentCP: semCP,
+              neededElectives,
+              periodLabel: `Year ${y.level} - ${p.code}`,
+              text: `Year ${y.level} - ${p.code} · ${neededElectives} ${neededElectives === 1 ? 'General Elective' : 'General Electives'} Required`
+            });
+          }
+        }
+      });
+    });
+
+    return list;
+  }, [years, studentLayoutMode, semesterPeriods, trimesterPeriods, planUnits, history, catalogUnits]);
+
   // =========================================================================
   // RENDER: STUDENT VIEW (READ-ONLY REVIEW & SIGN-OFF)
   // =========================================================================
@@ -1504,6 +1537,39 @@ export default function PlanBuilder({
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* GENERAL ELECTIVE REQUIREMENT NOTIFICATION (External Consultation with Academic Chair) */}
+            {(planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved') && generalElectiveRequirements.length > 0 && (
+              <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-600/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+                    <AlertCircle className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-heading">
+                      Attention: General Elective Required
+                    </h4>
+                  </div>
+                </div>
+
+                <div className="pl-2 sm:pl-3">
+                  <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
+                    {generalElectiveRequirements.map((req, idx) => (
+                      <li key={idx} className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">{req.periodLabel}</span>
+                        <span className="text-slate-400">·</span>
+                        <span>{req.neededElectives} {req.neededElectives === 1 ? 'General Elective' : 'General Electives'} Required</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <p className="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 pt-2 border-t border-amber-200/60 dark:border-amber-800/40 italic font-sans">
+                  Note: Please settle this in person with academic chair
+                </p>
               </div>
             )}
 
