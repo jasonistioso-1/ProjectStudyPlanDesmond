@@ -105,6 +105,7 @@ export default function PlanBuilder({
   const [expandedTrimesters, setExpandedTrimesters] = useState({});
   const [showDisagreeModal, setShowDisagreeModal] = useState(false);
   const [disagreeReasonInput, setDisagreeReasonInput] = useState('');
+  const [isElectivesExpanded, setIsElectivesExpanded] = useState(false);
 
   // Student Submit Request Modal State
   const [showSubmitPlanRequestModal, setShowSubmitPlanRequestModal] = useState(false);
@@ -1542,34 +1543,55 @@ export default function PlanBuilder({
 
             {/* GENERAL ELECTIVE REQUIREMENT NOTIFICATION (External Consultation with Academic Chair) */}
             {(planStatus === 'recommended' || planStatus === 'agreed' || planStatus === 'approved') && generalElectiveRequirements.length > 0 && (
-              <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-600/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
-                    <AlertCircle className="w-4.5 h-4.5" />
-                  </div>
-                  <div>
+              <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800 rounded-2xl p-4 sm:p-5 shadow-xs transition-all space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div 
+                    onClick={() => setIsElectivesExpanded(prev => !prev)}
+                    className="flex items-center gap-2.5 cursor-pointer select-none"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-amber-600/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+                      <AlertCircle className="w-4.5 h-4.5" />
+                    </div>
                     <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-heading">
                       Attention: General Elective Required
                     </h4>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsElectivesExpanded(prev => !prev)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-900 dark:text-amber-200 bg-amber-100/80 hover:bg-amber-200/90 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 transition-colors cursor-pointer border border-amber-300/70 dark:border-amber-800 font-sans shrink-0 active:scale-95"
+                    aria-expanded={isElectivesExpanded}
+                  >
+                    <span>{isElectivesExpanded ? 'Hide List' : 'View List'}</span>
+                    {isElectivesExpanded ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
+                  </button>
                 </div>
 
-                <div className="pl-2 sm:pl-3">
-                  <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
-                    {generalElectiveRequirements.map((req, idx) => (
-                      <li key={idx} className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                        <span className="font-semibold text-slate-900 dark:text-slate-100">{req.periodLabel}</span>
-                        <span className="text-slate-400">·</span>
-                        <span>{req.neededElectives} {req.neededElectives === 1 ? 'General Elective' : 'General Electives'} Required</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {isElectivesExpanded && (
+                  <div className="pt-3 border-t border-amber-200/60 dark:border-amber-800/40 space-y-3 animate-in fade-in duration-200">
+                    <div className="pl-2 sm:pl-3">
+                      <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
+                        {generalElectiveRequirements.map((req, idx) => (
+                          <li key={idx} className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                            <span className="font-semibold text-slate-900 dark:text-slate-100">{req.periodLabel}</span>
+                            <span className="text-slate-400">·</span>
+                            <span>{req.neededElectives} {req.neededElectives === 1 ? 'General Elective' : 'General Electives'} Required</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-                <p className="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 pt-2 border-t border-amber-200/60 dark:border-amber-800/40 italic font-sans">
-                  Note: Please settle this in person with academic chair
-                </p>
+                    <p className="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 pt-2 border-t border-amber-200/60 dark:border-amber-800/40 italic font-sans">
+                      Note: Please enquire with the academic chair
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
